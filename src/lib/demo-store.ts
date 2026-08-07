@@ -265,7 +265,13 @@ function seed() {
     quotes,
     site_logs,
     profiles: [
-      { id: DEMO_USER, full_name: "Visiteur démo", phone: null, email: "demo@batibenin.bj" },
+      {
+        id: DEMO_USER,
+        full_name: "Visiteur démo",
+        phone: null,
+        email: "demo@batibenin.bj",
+        account_type: "maitre_oeuvre",
+      },
     ],
     demo_requests: [] as DemoRow[],
   };
