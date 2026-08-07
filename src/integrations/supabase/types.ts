@@ -344,6 +344,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: Database["public"]["Enums"]["account_type"]
           created_at: string
           full_name: string | null
           id: string
@@ -351,6 +352,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"]
           created_at?: string
           full_name?: string | null
           id: string
@@ -358,6 +360,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_type?: Database["public"]["Enums"]["account_type"]
           created_at?: string
           full_name?: string | null
           id?: string
@@ -652,6 +655,7 @@ export type Database = {
       seed_demo_data: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
+      account_type: "particulier" | "maitre_oeuvre" | "entreprise"
       app_role: "admin" | "user"
       demo_request_status:
         | "nouveau"
@@ -795,6 +799,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_type: ["particulier", "maitre_oeuvre", "entreprise"],
       app_role: ["admin", "user"],
       demo_request_status: [
         "nouveau",

@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { ReadOnlyNotice } from "@/components/feature-gate";
+import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/devis")({
 });
 
 function QuotesPage() {
+  const { canEdit } = useAccess("devis");
   const { project, projectId } = useCurrentProject();
   const { data: quotes = [] } = useQuotes(projectId);
   const { data: categories = [] } = useCategories();
@@ -113,6 +116,7 @@ function QuotesPage() {
         title="Devis"
         subtitle={`${quotes.length} devis · ${fcfa(total)} cumulés`}
         action={
+          canEdit ? (
           <RecordDialog
             title="Nouveau devis"
             fields={fields}
@@ -127,8 +131,11 @@ function QuotesPage() {
             }
             onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
           />
+          ) : undefined
         }
       />
+
+      <ReadOnlyNotice feature="devis" />
 
       <div className="panel overflow-x-auto">
         <table className="w-full min-w-[820px] text-sm">
@@ -192,19 +199,23 @@ function QuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => setEditing(q)}>
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => {
-                          if (confirm("Supprimer ce devis ?")) remove.mutate(q.id);
-                        }}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      {canEdit && (
+                        <>
+                          <Button size="icon" variant="ghost" onClick={() => setEditing(q)}>
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-destructive"
+                            onClick={() => {
+                              if (confirm("Supprimer ce devis ?")) remove.mutate(q.id);
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

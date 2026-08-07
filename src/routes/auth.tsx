@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ACCOUNT_TYPES, type AccountType } from "@/lib/roles";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -37,6 +45,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState(false);
+  const [accountType, setAccountType] = useState<AccountType>("particulier");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -64,7 +73,7 @@ function AuthPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
+        data: { full_name: fullName, account_type: accountType },
       },
     });
     setLoading(false);
@@ -178,6 +187,29 @@ function AuthPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                   />
+                </div>
+                <div>
+                  <Label className="mb-1.5 block text-xs text-muted-foreground">
+                    Je suis…
+                  </Label>
+                  <Select
+                    value={accountType}
+                    onValueChange={(v) => setAccountType(v as AccountType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ACCOUNT_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {ACCOUNT_TYPES.find((t) => t.value === accountType)?.description}
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="email2" className="mb-1.5 block text-xs text-muted-foreground">

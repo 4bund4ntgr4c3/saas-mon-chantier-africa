@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { ReadOnlyNotice } from "@/components/feature-gate";
+import { useAccess } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,6 +97,7 @@ const emptyForm = (): FormState => ({
 });
 
 function JournalPage() {
+  const { canEdit } = useAccess("journal");
   const { project, projectId } = useCurrentProject();
   const { data: logs = [], isLoading } = useSiteLogs(projectId);
   const { data: categories = [] } = useCategories();
@@ -187,11 +190,15 @@ function JournalPage() {
         title="Journal de chantier"
         subtitle={`${logs.length} entrée(s) · avancement déclaré ${latestProgress}% · ${withDifficulties} difficulté(s) signalée(s)`}
         action={
-          <Button onClick={openNew}>
-            <Plus className="size-4" /> Nouvelle entrée
-          </Button>
+          canEdit ? (
+            <Button onClick={openNew}>
+              <Plus className="size-4" /> Nouvelle entrée
+            </Button>
+          ) : undefined
         }
       />
+
+      <ReadOnlyNotice feature="journal" />
 
       <div className="panel mb-4 p-4">
         <div className="mb-2 flex items-center justify-between text-sm">
@@ -211,9 +218,11 @@ function JournalPage() {
             Consignez chaque visite de chantier : avancement, photos, commentaires et
             difficultés rencontrées.
           </p>
-          <Button className="mt-5" onClick={openNew}>
-            <Plus className="size-4" /> Ajouter la première entrée
-          </Button>
+          {canEdit && (
+            <Button className="mt-5" onClick={openNew}>
+              <Plus className="size-4" /> Ajouter la première entrée
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4">
@@ -245,19 +254,24 @@ function JournalPage() {
                   <span className="num mr-2 text-sm font-semibold text-primary">
                     {log.progress}%
                   </span>
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(log)}>
-                    <Pencil className="size-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-destructive"
-                    onClick={() => {
-                      if (confirm("Supprimer cette entrée du journal ?")) remove.mutate(log.id);
-                    }}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                  {canEdit && (
+                    <>
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(log)}>
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          if (confirm("Supprimer cette entrée du journal ?"))
+                            remove.mutate(log.id);
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
 

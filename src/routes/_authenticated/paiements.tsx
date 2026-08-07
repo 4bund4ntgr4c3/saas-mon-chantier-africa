@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { FeatureGate } from "@/components/feature-gate";
 import { useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
@@ -32,7 +33,11 @@ export const Route = createFileRoute("/_authenticated/paiements")({
       },
     ],
   }),
-  component: PaymentsPage,
+  component: () => (
+    <FeatureGate feature="paiements">
+      <PaymentsPage />
+    </FeatureGate>
+  ),
 });
 
 function PaymentsPage() {
