@@ -175,7 +175,7 @@ function Dashboard() {
 
       <StartupChecklist project={project} />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div data-tour="kpis" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
         <Kpi label="Budget global" value={fcfa(budget)} tone="accent" />
         <Kpi label="Dépenses totales" value={fcfa(totalSpent)} tone="primary" />
@@ -230,7 +230,7 @@ function Dashboard() {
         </div>
       )}
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+      <div data-tour="charts" className="mt-3 grid gap-3 lg:grid-cols-2">
         <div className="panel p-4">
           <h2 className="mb-4 font-display text-sm font-semibold">Dépenses par catégorie</h2>
           <ResponsiveContainer width="100%" height={280}>

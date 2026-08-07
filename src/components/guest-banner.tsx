@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exitGuestMode } from "@/lib/guest-mode";
+import { restartTour } from "@/components/onboarding-tour";
 
 export function GuestBanner() {
   const navigate = useNavigate();
@@ -24,9 +25,14 @@ export function GuestBanner() {
           enregistré.
         </span>
       </p>
-      <Button size="sm" onClick={leave}>
-        Créer un compte
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button size="sm" variant="outline" onClick={restartTour}>
+          Revoir la visite
+        </Button>
+        <Button size="sm" onClick={leave}>
+          Créer un compte
+        </Button>
+      </div>
     </div>
   );
 }

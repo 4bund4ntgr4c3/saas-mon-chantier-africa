@@ -115,7 +115,7 @@ function PaymentsPage() {
               payment_date: new Date().toISOString().slice(0, 10),
             }}
             trigger={
-              <Button>
+              <Button data-tour="payment-new">
                 <Plus className="size-4" /> Ajouter un paiement
               </Button>
             }
@@ -124,7 +124,7 @@ function PaymentsPage() {
         }
       />
 
-      <div className="panel overflow-x-auto">
+      <div data-tour="payment-table" className="panel overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">

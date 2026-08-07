@@ -160,7 +160,7 @@ function ExpensesPage() {
               expense_date: new Date().toISOString().slice(0, 10),
             }}
             trigger={
-              <Button>
+              <Button data-tour="expense-new">
                 <Plus className="size-4" /> Ajouter une dépense
               </Button>
             }
@@ -194,7 +194,7 @@ function ExpensesPage() {
         </Select>
       </div>
 
-      <div className="panel overflow-x-auto">
+      <div data-tour="expense-table" className="panel overflow-x-auto">
         <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">
