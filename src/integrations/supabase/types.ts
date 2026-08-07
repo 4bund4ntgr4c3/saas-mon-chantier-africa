@@ -512,6 +512,72 @@ export type Database = {
           },
         ]
       }
+      site_logs: {
+        Row: {
+          category_id: string | null
+          comment: string | null
+          created_at: string
+          difficulties: string | null
+          id: string
+          log_date: string
+          photos: string[]
+          progress: number
+          project_id: string
+          title: string
+          updated_at: string
+          user_id: string
+          weather: string | null
+          workers: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          comment?: string | null
+          created_at?: string
+          difficulties?: string | null
+          id?: string
+          log_date?: string
+          photos?: string[]
+          progress?: number
+          project_id: string
+          title: string
+          updated_at?: string
+          user_id?: string
+          weather?: string | null
+          workers?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          comment?: string | null
+          created_at?: string
+          difficulties?: string | null
+          id?: string
+          log_date?: string
+          photos?: string[]
+          progress?: number
+          project_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weather?: string | null
+          workers?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_logs_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           activity: string | null
