@@ -32,6 +32,7 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const navigate = useNavigate();
   return (
     <div className="relative w-full overflow-hidden bg-background px-6 py-12 lg:px-12">
       {/* Cyan technical grid background */}
