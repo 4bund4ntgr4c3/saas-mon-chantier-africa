@@ -1,0 +1,213 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useCurrentProject } from "@/context/project-context";
+import {
+  useCompanies,
+  useDeleteRow,
+  usePayments,
+  useSaveRow,
+  useSuppliers,
+  type Payment,
+} from "@/lib/data";
+import { fcfa, frDate, labelOf, PAYMENT_METHODS, PAYMENT_TYPES } from "@/lib/format";
+
+export const Route = createFileRoute("/_authenticated/paiements")({
+  head: () => ({
+    meta: [
+      { title: "Paiements et acomptes — BâtiBénin" },
+      {
+        name: "description",
+        content:
+          "Historique des acomptes, paiements partiels et soldes versés aux fournisseurs et entreprises du chantier.",
+      },
+      { property: "og:title", content: "Paiements et acomptes — BâtiBénin" },
+      {
+        property: "og:description",
+        content: "Gardez la trace de chaque versement de votre construction.",
+      },
+    ],
+  }),
+  component: PaymentsPage,
+});
+
+function PaymentsPage() {
+  const { project, projectId } = useCurrentProject();
+  const { data: payments = [] } = usePayments(projectId);
+  const { data: suppliers = [] } = useSuppliers();
+  const { data: companies = [] } = useCompanies();
+  const save = useSaveRow("payments", "Paiement enregistré");
+  const remove = useDeleteRow("payments");
+  const [editing, setEditing] = useState<Payment | null>(null);
+
+  const fields: Field[] = useMemo(
+    () => [
+      { name: "amount", label: "Montant (FCFA)", type: "number", required: true },
+      { name: "payment_date", label: "Date du paiement", type: "date", required: true },
+      {
+        name: "kind",
+        label: "Type de paiement",
+        type: "select",
+        options: PAYMENT_TYPES.map((t) => ({ value: t.value, label: t.label })),
+      },
+      {
+        name: "method",
+        label: "Moyen de paiement",
+        type: "select",
+        options: PAYMENT_METHODS.map((m) => ({ value: m.value, label: m.label })),
+      },
+      {
+        name: "supplier_id",
+        label: "Fournisseur",
+        type: "select",
+        options: suppliers.map((s) => ({ value: s.id, label: s.name })),
+      },
+      {
+        name: "company_id",
+        label: "Entreprise",
+        type: "select",
+        options: companies.map((c) => ({ value: c.id, label: c.name })),
+      },
+      { name: "reference", label: "Référence / n° transaction" },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+    [suppliers, companies],
+  );
+
+  const supName = useMemo(() => new Map(suppliers.map((s) => [s.id, s.name])), [suppliers]);
+  const compName = useMemo(() => new Map(companies.map((c) => [c.id, c.name])), [companies]);
+
+  function toPayload(v: Values) {
+    const g = (k: string) => v[k] ?? "";
+    return {
+      project_id: projectId,
+      amount: toNumber(g("amount")) ?? 0,
+      payment_date: g("payment_date") || new Date().toISOString().slice(0, 10),
+      kind: g("kind") || "comptant",
+      method: g("method") || "especes",
+      supplier_id: orNull(g("supplier_id")),
+      company_id: orNull(g("company_id")),
+      reference: orNull(g("reference")),
+      notes: orNull(g("notes")),
+    };
+  }
+
+  if (!project) return <EmptyProjectNotice />;
+
+  const total = payments.reduce((s, p) => s + Number(p.amount), 0);
+
+  return (
+    <>
+      <PageHeader
+        title="Paiements"
+        subtitle={`${payments.length} versement(s) · ${fcfa(total)}`}
+        action={
+          <RecordDialog
+            title="Nouveau paiement"
+            fields={fields}
+            initial={{
+              kind: "comptant",
+              method: "especes",
+              payment_date: new Date().toISOString().slice(0, 10),
+            }}
+            trigger={
+              <Button>
+                <Plus className="size-4" /> Ajouter un paiement
+              </Button>
+            }
+            onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+          />
+        }
+      />
+
+      <div className="panel overflow-x-auto">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Bénéficiaire</th>
+              <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3">Moyen</th>
+              <th className="px-4 py-3">Référence</th>
+              <th className="px-4 py-3 text-right">Montant</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {payments.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                  Aucun paiement enregistré.
+                </td>
+              </tr>
+            ) : (
+              payments.map((p) => (
+                <tr key={p.id} className="transition-colors hover:bg-secondary/40">
+                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                    {frDate(p.payment_date)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(p.supplier_id && supName.get(p.supplier_id)) ||
+                      (p.company_id && compName.get(p.company_id)) ||
+                      "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline">{labelOf(PAYMENT_TYPES, p.kind)}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {labelOf(PAYMENT_METHODS, p.method)}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{p.reference ?? "—"}</td>
+                  <td className="num whitespace-nowrap px-4 py-3 text-right text-primary">
+                    {fcfa(Number(p.amount))}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => setEditing(p)}>
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          if (confirm("Supprimer ce paiement ?")) remove.mutate(p.id);
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {editing && (
+        <RecordDialog
+          open
+          onOpenChange={(o) => !o && setEditing(null)}
+          title="Modifier le paiement"
+          fields={fields}
+          initial={{
+            amount: String(editing.amount),
+            payment_date: editing.payment_date,
+            kind: editing.kind,
+            method: editing.method,
+            supplier_id: editing.supplier_id ?? "",
+            company_id: editing.company_id ?? "",
+            reference: editing.reference ?? "",
+            notes: editing.notes ?? "",
+          }}
+          onSubmit={async (v) => save.mutateAsync({ id: editing.id, values: toPayload(v) })}
+        />
+      )}
+    </>
+  );
+}
