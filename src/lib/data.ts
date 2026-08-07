@@ -160,6 +160,7 @@ export const JOURNAL_BUCKET = "journal-photos";
 
 /** Téléverse des photos dans le dossier privé de l'utilisateur et renvoie leurs chemins. */
 export async function uploadJournalPhotos(files: File[], projectId: string) {
+  if (isGuestMode()) return [];
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) throw new Error("Session expirée");
   const paths: string[] = [];
