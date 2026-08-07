@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-6 py-12 lg:px-12">
+    <div className="relative w-full overflow-hidden bg-background px-6 py-12 lg:px-12">
       {/* Cyan technical grid background */}
       <div
         className="pointer-events-none absolute inset-0 opacity-10"
@@ -41,7 +41,8 @@ function LandingPage() {
         }}
       />
 
-      <div className="relative z-10 grid w-full max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
+      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
+
         {/* Left content */}
         <div className="space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-3 py-1 text-sm font-semibold uppercase tracking-wider text-accent">
