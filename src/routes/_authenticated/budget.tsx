@@ -74,11 +74,12 @@ function BudgetPage() {
     const amount = Number(raw.replace(/\s/g, "").replace(",", ".")) || 0;
     const existing = lineByCategory.get(categoryId);
     await save.mutateAsync({
-      id: existing?.id,
+      ...(existing ? { id: existing.id } : {}),
       values: existing
         ? { planned_amount: amount }
         : { project_id: projectId, category_id: categoryId, planned_amount: amount },
     });
+
     setDrafts((prev) => {
       const next = { ...prev };
       delete next[categoryId];
