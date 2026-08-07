@@ -192,6 +192,10 @@ function ProjectsPage() {
                 </div>
               </dl>
 
+              <ChecklistProgress project={p} />
+
+
+
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button
                   size="sm"
