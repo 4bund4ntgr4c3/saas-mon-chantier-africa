@@ -164,3 +164,73 @@ export function useDeleteRow(table: TableName) {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+/* ---------- Rôles & demandes de démo (admin) ---------- */
+
+export type DemoRequest = Tables["demo_requests"]["Row"];
+export type DemoRequestStatus = Database["public"]["Enums"]["demo_request_status"];
+
+export function useIsAdmin() {
+  return useQuery({
+    queryKey: ["is_admin"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return false;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", auth.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (error) return false;
+      return !!data;
+    },
+  });
+}
+
+export function useDemoRequests() {
+  return useQuery({
+    queryKey: ["demo_requests"],
+    queryFn: () =>
+      unwrap<DemoRequest[]>(
+        supabase.from("demo_requests").select("*").order("created_at", { ascending: false }),
+      ),
+  });
+}
+
+export function useUpdateDemoRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      values,
+    }: {
+      id: string;
+      values: Tables["demo_requests"]["Update"];
+    }) => {
+      const { error } = await supabase.from("demo_requests").update(values).eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["demo_requests"] });
+      toast.success("Demande mise à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteDemoRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("demo_requests").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["demo_requests"] });
+      toast.success("Demande supprimée");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
