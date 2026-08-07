@@ -95,7 +95,15 @@ export async function exportBudgetPdf(data: BudgetExportData) {
 
   autoTable(doc, {
     startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
-    head: [["Poste", "Prévu", "Réalisé", "Écart", "Consommé"]],
+    head: [
+      [
+        "Poste",
+        { content: "Prévu", styles: { halign: "right" } },
+        { content: "Réalisé", styles: { halign: "right" } },
+        { content: "Écart", styles: { halign: "right" } },
+        { content: "Consommé", styles: { halign: "right" } },
+      ],
+    ],
     body: body.length ? body : [["Aucune donnée budgétaire", "", "", "", ""]],
     foot: [["Total", fcfa(t.planned), fcfa(t.spent), fcfa(t.ecart), ""]],
     theme: "grid",
