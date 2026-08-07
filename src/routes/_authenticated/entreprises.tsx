@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { FeatureGate } from "@/components/feature-gate";
 import { useState } from "react";
 import { Pencil, Phone, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
@@ -24,7 +25,11 @@ export const Route = createFileRoute("/_authenticated/entreprises")({
       },
     ],
   }),
-  component: CompaniesPage,
+  component: () => (
+    <FeatureGate feature="entreprises">
+      <CompaniesPage />
+    </FeatureGate>
+  ),
 });
 
 const FIELDS: Field[] = [

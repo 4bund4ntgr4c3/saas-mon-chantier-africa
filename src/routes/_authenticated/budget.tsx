@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { FeatureGate } from "@/components/feature-gate";
 import { useMemo, useState } from "react";
 import { Check, FileDown, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
@@ -26,7 +27,11 @@ export const Route = createFileRoute("/_authenticated/budget")({
       },
     ],
   }),
-  component: BudgetPage,
+  component: () => (
+    <FeatureGate feature="budget">
+      <BudgetPage />
+    </FeatureGate>
+  ),
 });
 
 function BudgetPage() {
