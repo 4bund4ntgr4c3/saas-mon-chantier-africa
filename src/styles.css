@@ -168,3 +168,14 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+
+/* Mise en évidence d'un élément pendant la visite guidée */
+.tour-highlight {
+  position: relative;
+  z-index: 40;
+  border-radius: 0.5rem;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 9999px color-mix(in oklab, var(--color-background) 55%, transparent);
+  transition: outline-color 150ms ease;
+}
