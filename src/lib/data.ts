@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { isGuestMode } from "@/lib/guest-mode";
+import {
+  demoDelete,
+  demoInsert,
+  demoRows,
+  demoUpdate,
+  type DemoTableName,
+} from "@/lib/demo-store";
 import type { Database } from "@/integrations/supabase/types";
 
 type Tables = Database["public"]["Tables"];
@@ -23,7 +31,9 @@ export function useProjects() {
   return useQuery({
     queryKey: ["projects"],
     queryFn: () =>
-      unwrap<Project[]>(
+      isGuestMode()
+        ? demoRows<Project>("projects")
+        : unwrap<Project[]>(
         supabase.from("projects").select("*").order("created_at", { ascending: false }),
       ),
   });
@@ -33,7 +43,9 @@ export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
     queryFn: () =>
-      unwrap<Category[]>(
+      isGuestMode()
+        ? demoRows<Category>("categories")
+        : unwrap<Category[]>(
         supabase.from("categories").select("*").order("sort_order", { ascending: true }),
       ),
     staleTime: 5 * 60 * 1000,
@@ -44,14 +56,19 @@ export function useSuppliers() {
   return useQuery({
     queryKey: ["suppliers"],
     queryFn: () =>
-      unwrap<Supplier[]>(supabase.from("suppliers").select("*").order("name")),
+      isGuestMode()
+        ? demoRows<Supplier>("suppliers")
+        : unwrap<Supplier[]>(supabase.from("suppliers").select("*").order("name")),
   });
 }
 
 export function useCompanies() {
   return useQuery({
     queryKey: ["companies"],
-    queryFn: () => unwrap<Company[]>(supabase.from("companies").select("*").order("name")),
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Company>("companies")
+        : unwrap<Company[]>(supabase.from("companies").select("*").order("name")),
   });
 }
 
@@ -60,7 +77,9 @@ export function useExpenses(projectId: string | null) {
     queryKey: ["expenses", projectId],
     enabled: !!projectId,
     queryFn: () =>
-      unwrap<Expense[]>(
+      isGuestMode()
+        ? demoRows<Expense>("expenses").filter((r) => (r as { project_id: string }).project_id === projectId)
+        : unwrap<Expense[]>(
         supabase
           .from("expenses")
           .select("*")
@@ -75,7 +94,9 @@ export function usePayments(projectId: string | null) {
     queryKey: ["payments", projectId],
     enabled: !!projectId,
     queryFn: () =>
-      unwrap<Payment[]>(
+      isGuestMode()
+        ? demoRows<Payment>("payments").filter((r) => (r as { project_id: string }).project_id === projectId)
+        : unwrap<Payment[]>(
         supabase
           .from("payments")
           .select("*")
@@ -90,7 +111,9 @@ export function useQuotes(projectId: string | null) {
     queryKey: ["quotes", projectId],
     enabled: !!projectId,
     queryFn: () =>
-      unwrap<Quote[]>(
+      isGuestMode()
+        ? demoRows<Quote>("quotes").filter((r) => (r as { project_id: string }).project_id === projectId)
+        : unwrap<Quote[]>(
         supabase
           .from("quotes")
           .select("*")
@@ -105,7 +128,9 @@ export function useBudgetLines(projectId: string | null) {
     queryKey: ["budget_lines", projectId],
     enabled: !!projectId,
     queryFn: () =>
-      unwrap<BudgetLine[]>(
+      isGuestMode()
+        ? demoRows<BudgetLine>("budget_lines").filter((r) => (r as { project_id: string }).project_id === projectId)
+        : unwrap<BudgetLine[]>(
         supabase.from("budget_lines").select("*").eq("project_id", projectId!),
       ),
   });
@@ -118,7 +143,9 @@ export function useSiteLogs(projectId: string | null) {
     queryKey: ["site_logs", projectId],
     enabled: !!projectId,
     queryFn: () =>
-      unwrap<SiteLog[]>(
+      isGuestMode()
+        ? demoRows<SiteLog>("site_logs").filter((r) => (r as { project_id: string }).project_id === projectId)
+        : unwrap<SiteLog[]>(
         supabase
           .from("site_logs")
           .select("*")
@@ -200,6 +227,9 @@ export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
+      if (isGuestMode()) {
+        return demoRows<Profile & { email: string | null }>("profiles")[0] ?? null;
+      }
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return null;
       const { data, error } = await supabase
@@ -221,6 +251,11 @@ export function useSaveRow(table: TableName, successMessage = "Enregistré") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, values }: { id?: string; values: Record<string, unknown> }) => {
+      if (isGuestMode()) {
+        if (id) demoUpdate(table as DemoTableName, id, values);
+        else demoInsert(table as DemoTableName, values);
+        return;
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const client = supabase.from(table) as any;
       const query = id ? client.update(values).eq("id", id) : client.insert(values);
@@ -239,6 +274,10 @@ export function useDeleteRow(table: TableName) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      if (isGuestMode()) {
+        demoDelete(table as DemoTableName, id);
+        return;
+      }
       const { error } = await supabase.from(table).delete().eq("id", id);
       if (error) throw new Error(error.message);
     },
@@ -260,6 +299,7 @@ export function useIsAdmin() {
     queryKey: ["is_admin"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
+      if (isGuestMode()) return false;
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return false;
       const { data, error } = await supabase
