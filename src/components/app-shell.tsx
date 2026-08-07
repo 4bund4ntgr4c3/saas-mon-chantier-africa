@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
 import { useIsAdmin } from "@/lib/data";
+import { useGuestMode } from "@/lib/guest-mode";
+import { GuestBanner } from "@/components/guest-banner";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -49,6 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { projects, projectId, setProjectId } = useCurrentProject();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: isAdmin } = useIsAdmin();
+  const guest = useGuestMode();
   const nav = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV;
 
   return (
@@ -128,6 +131,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Button>
             </div>
           </header>
+
+          {guest && <GuestBanner />}
 
           <nav className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2 lg:hidden">
             {nav.map((item) => (
