@@ -1,6 +1,8 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Hammer } from "lucide-react";
+import { DemoRequestForm } from "@/components/DemoRequestForm";
+
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
