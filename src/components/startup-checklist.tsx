@@ -107,6 +107,20 @@ function toPayload(step: Step, v: Values) {
 
 const storageKey = (projectId: string) => `batibenin.checklist.${projectId}`;
 
+export const CHECKLIST_STEPS_COUNT = STEPS.length;
+
+export function checklistProgress(project: Project) {
+  let validated: string[] = [];
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem(storageKey(project.id)) : null;
+    validated = raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    validated = [];
+  }
+  const done = STEPS.filter((s) => s.isFilled(project) && validated.includes(s.id)).length;
+  return { done, total: STEPS.length, percent: Math.round((done / STEPS.length) * 100) };
+}
+
 export function StartupChecklist({ project }: { project: Project }) {
   const save = useSaveRow("projects", "Étape enregistrée");
   const [validated, setValidated] = useState<string[]>([]);
