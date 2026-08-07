@@ -6,6 +6,7 @@ import {
   HardHat,
   Hammer,
   LogOut,
+  NotebookPen,
   Receipt,
   Store,
   Inbox,
@@ -28,6 +29,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/tableau-de-bord", label: "Tableau de bord", icon: Gauge },
   { to: "/projets", label: "Projets", icon: HardHat },
+  { to: "/journal", label: "Journal de chantier", icon: NotebookPen },
   { to: "/depenses", label: "Dépenses", icon: Receipt },
   { to: "/devis", label: "Devis", icon: FileText },
   { to: "/paiements", label: "Paiements", icon: Wallet },

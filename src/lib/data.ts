@@ -111,6 +111,64 @@ export function useBudgetLines(projectId: string | null) {
   });
 }
 
+export type SiteLog = Tables["site_logs"]["Row"];
+
+export function useSiteLogs(projectId: string | null) {
+  return useQuery({
+    queryKey: ["site_logs", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      unwrap<SiteLog[]>(
+        supabase
+          .from("site_logs")
+          .select("*")
+          .eq("project_id", projectId!)
+          .order("log_date", { ascending: false })
+          .order("created_at", { ascending: false }),
+      ),
+  });
+}
+
+export const JOURNAL_BUCKET = "journal-photos";
+
+/** Téléverse des photos dans le dossier privé de l'utilisateur et renvoie leurs chemins. */
+export async function uploadJournalPhotos(files: File[], projectId: string) {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new Error("Session expirée");
+  const paths: string[] = [];
+  for (const file of files) {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${auth.user.id}/${projectId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(JOURNAL_BUCKET)
+      .upload(path, file, { contentType: file.type || "image/jpeg" });
+    if (error) throw new Error(error.message);
+    paths.push(path);
+  }
+  return paths;
+}
+
+/** URLs signées pour afficher les photos du journal. */
+export function useSignedPhotos(paths: string[]) {
+  const key = paths.join("|");
+  return useQuery({
+    queryKey: ["journal_photo_urls", key],
+    enabled: paths.length > 0,
+    staleTime: 30 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from(JOURNAL_BUCKET)
+        .createSignedUrls(paths, 60 * 60);
+      if (error) throw new Error(error.message);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((d) => {
+        if (d.path && d.signedUrl) map[d.path] = d.signedUrl;
+      });
+      return map;
+    },
+  });
+}
+
 type TableName =
   | "projects"
   | "suppliers"
@@ -119,7 +177,8 @@ type TableName =
   | "payments"
   | "quotes"
   | "budget_lines"
-  | "categories";
+  | "categories"
+  | "site_logs";
 
 const RELATED: Record<TableName, string[]> = {
   projects: ["projects"],
@@ -130,7 +189,9 @@ const RELATED: Record<TableName, string[]> = {
   quotes: ["quotes"],
   budget_lines: ["budget_lines"],
   categories: ["categories"],
+  site_logs: ["site_logs"],
 };
+
 
 export function useSaveRow(table: TableName, successMessage = "Enregistré") {
   const qc = useQueryClient();
