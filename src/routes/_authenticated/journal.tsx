@@ -159,7 +159,7 @@ function JournalPage() {
     setSaving(true);
     try {
       await save.mutateAsync({
-        id: editing?.id,
+        ...(editing ? { id: editing.id } : {}),
         values: {
           project_id: projectId,
           log_date: form.log_date || new Date().toISOString().slice(0, 10),
