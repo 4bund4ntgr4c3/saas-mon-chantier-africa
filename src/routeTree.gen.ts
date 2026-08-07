@@ -19,6 +19,7 @@ import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authent
 import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authenticated/paiements'
 import { Route as AuthenticatedProjetsRouteImport } from './routes/_authenticated/projets'
 import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
+import { Route as AuthenticatedAdminDemandesDemoRouteImport } from './routes/_authenticated/admin.demandes-demo'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -72,6 +73,12 @@ const AuthenticatedTableauDeBordRoute =
     path: '/tableau-de-bord',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminDemandesDemoRoute =
+  AuthenticatedAdminDemandesDemoRouteImport.update({
+    id: '/admin/demandes-demo',
+    path: '/admin/demandes-demo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesByTo {
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +116,7 @@ export interface FileRoutesById {
   '/_authenticated/paiements': typeof AuthenticatedPaiementsRoute
   '/_authenticated/projets': typeof AuthenticatedProjetsRoute
   '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/_authenticated/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/paiements'
     | '/projets'
     | '/tableau-de-bord'
+    | '/admin/demandes-demo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/paiements'
     | '/projets'
     | '/tableau-de-bord'
+    | '/admin/demandes-demo'
   id:
     | '__root__'
     | '/'
@@ -143,6 +155,7 @@ export interface FileRouteTypes {
     | '/_authenticated/paiements'
     | '/_authenticated/projets'
     | '/_authenticated/tableau-de-bord'
+    | '/_authenticated/admin/demandes-demo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,6 +236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTableauDeBordRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/demandes-demo': {
+      id: '/_authenticated/admin/demandes-demo'
+      path: '/admin/demandes-demo'
+      fullPath: '/admin/demandes-demo'
+      preLoaderRoute: typeof AuthenticatedAdminDemandesDemoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -234,6 +254,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPaiementsRoute: typeof AuthenticatedPaiementsRoute
   AuthenticatedProjetsRoute: typeof AuthenticatedProjetsRoute
   AuthenticatedTableauDeBordRoute: typeof AuthenticatedTableauDeBordRoute
+  AuthenticatedAdminDemandesDemoRoute: typeof AuthenticatedAdminDemandesDemoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -244,6 +265,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPaiementsRoute: AuthenticatedPaiementsRoute,
   AuthenticatedProjetsRoute: AuthenticatedProjetsRoute,
   AuthenticatedTableauDeBordRoute: AuthenticatedTableauDeBordRoute,
+  AuthenticatedAdminDemandesDemoRoute: AuthenticatedAdminDemandesDemoRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -257,13 +279,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

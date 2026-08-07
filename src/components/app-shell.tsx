@@ -8,6 +8,7 @@ import {
   LogOut,
   Receipt,
   Store,
+  Inbox,
   Wallet,
 } from "lucide-react";
 import { type ReactNode } from "react";
@@ -21,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
+import { useIsAdmin } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -33,9 +35,15 @@ const NAV = [
   { to: "/entreprises", label: "Entreprises", icon: Building2 },
 ] as const;
 
+const ADMIN_NAV = [
+  { to: "/admin/demandes-demo", label: "Demandes de démo", icon: Inbox },
+] as const;
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { projects, projectId, setProjectId } = useCurrentProject();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: isAdmin } = useIsAdmin();
+  const nav = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV;
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,7 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </span>
           </Link>
           <nav className="flex flex-1 flex-col gap-1">
-            {NAV.map((item) => {
+            {nav.map((item) => {
               const active = pathname.startsWith(item.to);
               return (
                 <Link
@@ -116,7 +124,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </header>
 
           <nav className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2 lg:hidden">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
