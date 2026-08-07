@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
 import { Route as AuthenticatedDepensesRouteImport } from './routes/_authenticated/depenses'
 import { Route as AuthenticatedDevisRouteImport } from './routes/_authenticated/devis'
 import { Route as AuthenticatedEntreprisesRouteImport } from './routes/_authenticated/entreprises'
 import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authenticated/fournisseurs'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authenticated/paiements'
+import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
 import { Route as AuthenticatedProjetsRouteImport } from './routes/_authenticated/projets'
 import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
 import { Route as AuthenticatedAdminDemandesDemoRouteImport } from './routes/_authenticated/admin.demandes-demo'
@@ -35,6 +38,16 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBudgetRoute = AuthenticatedBudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDepensesRoute = AuthenticatedDepensesRouteImport.update({
   id: '/depenses',
@@ -68,6 +81,11 @@ const AuthenticatedPaiementsRoute = AuthenticatedPaiementsRouteImport.update({
   path: '/paiements',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedParametresRoute = AuthenticatedParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProjetsRoute = AuthenticatedProjetsRouteImport.update({
   id: '/projets',
   path: '/projets',
@@ -89,12 +107,15 @@ const AuthenticatedAdminDemandesDemoRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/budget': typeof AuthenticatedBudgetRoute
   '/depenses': typeof AuthenticatedDepensesRoute
   '/devis': typeof AuthenticatedDevisRoute
   '/entreprises': typeof AuthenticatedEntreprisesRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
+  '/parametres': typeof AuthenticatedParametresRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
@@ -102,12 +123,15 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/budget': typeof AuthenticatedBudgetRoute
   '/depenses': typeof AuthenticatedDepensesRoute
   '/devis': typeof AuthenticatedDevisRoute
   '/entreprises': typeof AuthenticatedEntreprisesRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
+  '/parametres': typeof AuthenticatedParametresRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
@@ -117,12 +141,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/budget': typeof AuthenticatedBudgetRoute
   '/_authenticated/depenses': typeof AuthenticatedDepensesRoute
   '/_authenticated/devis': typeof AuthenticatedDevisRoute
   '/_authenticated/entreprises': typeof AuthenticatedEntreprisesRoute
   '/_authenticated/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/paiements': typeof AuthenticatedPaiementsRoute
+  '/_authenticated/parametres': typeof AuthenticatedParametresRoute
   '/_authenticated/projets': typeof AuthenticatedProjetsRoute
   '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/_authenticated/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
@@ -132,12 +159,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
+    | '/budget'
     | '/depenses'
     | '/devis'
     | '/entreprises'
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
+    | '/parametres'
     | '/projets'
     | '/tableau-de-bord'
     | '/admin/demandes-demo'
@@ -145,12 +175,15 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
+    | '/budget'
     | '/depenses'
     | '/devis'
     | '/entreprises'
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
+    | '/parametres'
     | '/projets'
     | '/tableau-de-bord'
     | '/admin/demandes-demo'
@@ -159,12 +192,15 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
+    | '/_authenticated/budget'
     | '/_authenticated/depenses'
     | '/_authenticated/devis'
     | '/_authenticated/entreprises'
     | '/_authenticated/fournisseurs'
     | '/_authenticated/journal'
     | '/_authenticated/paiements'
+    | '/_authenticated/parametres'
     | '/_authenticated/projets'
     | '/_authenticated/tableau-de-bord'
     | '/_authenticated/admin/demandes-demo'
@@ -174,6 +210,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -198,6 +235,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/budget': {
+      id: '/_authenticated/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof AuthenticatedBudgetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/depenses': {
       id: '/_authenticated/depenses'
@@ -241,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPaiementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/parametres': {
+      id: '/_authenticated/parametres'
+      path: '/parametres'
+      fullPath: '/parametres'
+      preLoaderRoute: typeof AuthenticatedParametresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/projets': {
       id: '/_authenticated/projets'
       path: '/projets'
@@ -266,24 +324,28 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
   AuthenticatedDepensesRoute: typeof AuthenticatedDepensesRoute
   AuthenticatedDevisRoute: typeof AuthenticatedDevisRoute
   AuthenticatedEntreprisesRoute: typeof AuthenticatedEntreprisesRoute
   AuthenticatedFournisseursRoute: typeof AuthenticatedFournisseursRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedPaiementsRoute: typeof AuthenticatedPaiementsRoute
+  AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
   AuthenticatedProjetsRoute: typeof AuthenticatedProjetsRoute
   AuthenticatedTableauDeBordRoute: typeof AuthenticatedTableauDeBordRoute
   AuthenticatedAdminDemandesDemoRoute: typeof AuthenticatedAdminDemandesDemoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
   AuthenticatedDepensesRoute: AuthenticatedDepensesRoute,
   AuthenticatedDevisRoute: AuthenticatedDevisRoute,
   AuthenticatedEntreprisesRoute: AuthenticatedEntreprisesRoute,
   AuthenticatedFournisseursRoute: AuthenticatedFournisseursRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedPaiementsRoute: AuthenticatedPaiementsRoute,
+  AuthenticatedParametresRoute: AuthenticatedParametresRoute,
   AuthenticatedProjetsRoute: AuthenticatedProjetsRoute,
   AuthenticatedTableauDeBordRoute: AuthenticatedTableauDeBordRoute,
   AuthenticatedAdminDemandesDemoRoute: AuthenticatedAdminDemandesDemoRoute,
@@ -296,6 +358,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

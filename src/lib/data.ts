@@ -178,7 +178,8 @@ type TableName =
   | "quotes"
   | "budget_lines"
   | "categories"
-  | "site_logs";
+  | "site_logs"
+  | "profiles";
 
 const RELATED: Record<TableName, string[]> = {
   projects: ["projects"],
@@ -190,7 +191,30 @@ const RELATED: Record<TableName, string[]> = {
   budget_lines: ["budget_lines"],
   categories: ["categories"],
   site_logs: ["site_logs"],
+  profiles: ["profile"],
 };
+
+export type Profile = Tables["profiles"]["Row"];
+
+export function useProfile() {
+  return useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return { ...(data as Profile | null), email: auth.user.email ?? null } as Profile & {
+        email: string | null;
+      };
+    },
+  });
+}
+
 
 
 export function useSaveRow(table: TableName, successMessage = "Enregistré") {

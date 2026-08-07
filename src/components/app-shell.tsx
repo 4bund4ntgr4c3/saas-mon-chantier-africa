@@ -7,6 +7,8 @@ import {
   Hammer,
   LogOut,
   NotebookPen,
+  PiggyBank,
+  Settings,
   Receipt,
   Store,
   Inbox,
@@ -30,11 +32,13 @@ const NAV = [
   { to: "/tableau-de-bord", label: "Tableau de bord", icon: Gauge },
   { to: "/projets", label: "Projets", icon: HardHat },
   { to: "/journal", label: "Journal de chantier", icon: NotebookPen },
+  { to: "/budget", label: "Budget", icon: PiggyBank },
   { to: "/depenses", label: "Dépenses", icon: Receipt },
   { to: "/devis", label: "Devis", icon: FileText },
   { to: "/paiements", label: "Paiements", icon: Wallet },
   { to: "/fournisseurs", label: "Fournisseurs", icon: Store },
   { to: "/entreprises", label: "Entreprises", icon: Building2 },
+  { to: "/parametres", label: "Paramètres", icon: Settings },
 ] as const;
 
 const ADMIN_NAV = [

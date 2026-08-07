@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Connexion — BâtiBénin, suivi de chantier au Bénin" },
@@ -71,6 +72,21 @@ function AuthPage() {
       return;
     }
     if (!data.session) setPendingConfirm(true);
+  }
+
+  async function forgotPassword() {
+    if (!email) {
+      toast.error("Saisissez d'abord votre email.");
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Lien de réinitialisation envoyé par email.");
   }
 
   async function google() {
@@ -135,6 +151,13 @@ function AuthPage() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   Se connecter
                 </Button>
+                <button
+                  type="button"
+                  className="w-full text-center text-xs text-muted-foreground hover:text-primary"
+                  onClick={forgotPassword}
+                >
+                  Mot de passe oublié ?
+                </button>
               </form>
             </TabsContent>
 
