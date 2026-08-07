@@ -70,21 +70,22 @@ function toValues(p: Project): Values {
 }
 
 function toPayload(v: Values) {
+  const g = (k: string) => v[k] ?? "";
   return {
-    name: v.name?.trim() ?? "",
-    city: orNull(v.city),
-    commune: orNull(v.commune),
-    arrondissement: orNull(v.arrondissement),
-    quartier: orNull(v.quartier),
-    address: orNull(v.address),
-    land_area: toNumber(v.land_area),
-    built_area: toNumber(v.built_area),
-    house_type: orNull(v.house_type),
-    levels: toNumber(v.levels) ?? 1,
-    start_date: orNull(v.start_date),
-    end_date: orNull(v.end_date),
-    budget: toNumber(v.budget) ?? 0,
-    status: v.status || "en_cours",
+    name: g("name").trim(),
+    city: orNull(g("city")),
+    commune: orNull(g("commune")),
+    arrondissement: orNull(g("arrondissement")),
+    quartier: orNull(g("quartier")),
+    address: orNull(g("address")),
+    land_area: toNumber(g("land_area")),
+    built_area: toNumber(g("built_area")),
+    house_type: orNull(g("house_type")),
+    levels: toNumber(g("levels")) ?? 1,
+    start_date: orNull(g("start_date")),
+    end_date: orNull(g("end_date")),
+    budget: toNumber(g("budget")) ?? 0,
+    status: g("status") || "en_cours",
   };
 }
 
