@@ -26,22 +26,24 @@ import {
 } from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
 import { useIsAdmin } from "@/lib/data";
+import { accessFor, accountTypeLabel, useAccountType, type Feature } from "@/lib/roles";
+import { Badge } from "@/components/ui/badge";
 import { exitGuestMode, useGuestMode } from "@/lib/guest-mode";
 import { GuestBanner } from "@/components/guest-banner";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/tableau-de-bord", label: "Tableau de bord", icon: Gauge },
-  { to: "/projets", label: "Projets", icon: HardHat },
-  { to: "/journal", label: "Journal de chantier", icon: NotebookPen },
-  { to: "/budget", label: "Budget", icon: PiggyBank },
-  { to: "/depenses", label: "Dépenses", icon: Receipt },
-  { to: "/devis", label: "Devis", icon: FileText },
-  { to: "/paiements", label: "Paiements", icon: Wallet },
-  { to: "/fournisseurs", label: "Fournisseurs", icon: Store },
-  { to: "/entreprises", label: "Entreprises", icon: Building2 },
-  { to: "/parametres", label: "Paramètres", icon: Settings },
-] as const;
+  { to: "/tableau-de-bord", label: "Tableau de bord", icon: Gauge, feature: "tableau-de-bord" },
+  { to: "/projets", label: "Projets", icon: HardHat, feature: "projets" },
+  { to: "/journal", label: "Journal de chantier", icon: NotebookPen, feature: "journal" },
+  { to: "/budget", label: "Budget", icon: PiggyBank, feature: "budget" },
+  { to: "/depenses", label: "Dépenses", icon: Receipt, feature: "depenses" },
+  { to: "/devis", label: "Devis", icon: FileText, feature: "devis" },
+  { to: "/paiements", label: "Paiements", icon: Wallet, feature: "paiements" },
+  { to: "/fournisseurs", label: "Fournisseurs", icon: Store, feature: "fournisseurs" },
+  { to: "/entreprises", label: "Entreprises", icon: Building2, feature: "entreprises" },
+  { to: "/parametres", label: "Paramètres", icon: Settings, feature: "parametres" },
+] as const satisfies readonly { to: string; label: string; icon: typeof Gauge; feature: Feature }[];
 
 const ADMIN_NAV = [
   { to: "/admin/demandes-demo", label: "Demandes de démo", icon: Inbox },
@@ -51,6 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { projects, projectId, setProjectId } = useCurrentProject();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: isAdmin } = useIsAdmin();
+  const { type: accountType } = useAccountType();
   const guest = useGuestMode();
   const navigate = useNavigate();
 
@@ -62,7 +65,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
     await supabase.auth.signOut();
   }
-  const nav = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV;
+  const allowed = NAV.filter((item) => accessFor(accountType, item.feature) !== "none").map(
+    ({ to, label, icon }) => ({ to, label, icon }),
+  );
+  const nav = isAdmin ? [...allowed, ...ADMIN_NAV] : allowed;
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,6 +82,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               Bâti<span className="text-primary">Bénin</span>
             </span>
           </Link>
+          <Badge variant="outline" className="mb-4 self-start">
+            {accountTypeLabel(accountType)}
+          </Badge>
           <nav className="flex flex-1 flex-col gap-1">
             {nav.map((item) => {
               const active = pathname.startsWith(item.to);
