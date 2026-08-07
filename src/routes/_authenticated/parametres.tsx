@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ACCOUNT_TYPES, accessFor, useAccountType, type AccountType, type Feature } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useCategories,
@@ -58,6 +66,17 @@ function slugify(value: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+const FEATURE_LABELS: [Feature, string][] = [
+  ["projets", "Projets"],
+  ["journal", "Journal de chantier"],
+  ["budget", "Budget"],
+  ["depenses", "Dépenses"],
+  ["devis", "Devis"],
+  ["paiements", "Paiements"],
+  ["fournisseurs", "Fournisseurs"],
+  ["entreprises", "Entreprises"],
+];
+
 function SettingsPage() {
   const { data: profile } = useProfile();
   const saveProfile = useSaveRow("profiles", "Profil mis à jour");
@@ -69,6 +88,9 @@ function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [editing, setEditing] = useState<Category | null>(null);
+  const { type: accountType } = useAccountType();
+  const [pendingType, setPendingType] = useState<AccountType | null>(null);
+  const selectedType = pendingType ?? accountType;
 
   useEffect(() => {
     if (!profile) return;
@@ -98,7 +120,11 @@ function SettingsPage() {
     if (!profile?.id) return;
     await saveProfile.mutateAsync({
       id: profile.id,
-      values: { full_name: fullName.trim() || null, phone: phone.trim() || null },
+      values: {
+        full_name: fullName.trim() || null,
+        phone: phone.trim() || null,
+        account_type: selectedType,
+      },
     });
   }
 
@@ -165,6 +191,44 @@ function SettingsPage() {
                 placeholder="+229 ..."
                 onChange={(e) => setPhone(e.target.value)}
               />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs text-muted-foreground">Type de compte</Label>
+              <Select
+                value={selectedType}
+                onValueChange={(v) => setPendingType(v as AccountType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCOUNT_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {ACCOUNT_TYPES.find((t) => t.value === selectedType)?.description}
+              </p>
+              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+                {FEATURE_LABELS.map(([feature, label]) => {
+                  const access = accessFor(selectedType, feature);
+                  return (
+                    <li key={feature} className="flex items-center justify-between gap-3">
+                      <span>{label}</span>
+                      <Badge variant={access === "full" ? "default" : "outline"}>
+                        {access === "full"
+                          ? "Complet"
+                          : access === "read"
+                            ? "Consultation"
+                            : "Masqué"}
+                      </Badge>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
             <Button type="submit" disabled={saveProfile.isPending}>
               Enregistrer mon profil
