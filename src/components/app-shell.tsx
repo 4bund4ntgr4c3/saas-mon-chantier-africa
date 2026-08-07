@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="hidden text-xs uppercase tracking-widest text-muted-foreground sm:block">
                 Chantier
               </span>
-              <Select value={projectId ?? undefined} onValueChange={setProjectId}>
+              <Select value={projectId ?? ""} onValueChange={setProjectId}>
                 <SelectTrigger className="w-[230px]">
                   <SelectValue placeholder="Aucun projet" />
                 </SelectTrigger>
