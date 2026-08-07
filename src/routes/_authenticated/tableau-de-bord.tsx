@@ -31,6 +31,7 @@ import {
   useQuotes,
   useSuppliers,
 } from "@/lib/data";
+import { useAccess } from "@/lib/roles";
 import { compactFcfa, fcfa, labelOf, monthKey, monthLabel, num, PAYMENT_METHODS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/tableau-de-bord")({
@@ -94,6 +95,9 @@ function Dashboard() {
   const { data: payments = [] } = usePayments(projectId);
   const { data: quotes = [] } = useQuotes(projectId);
   const { data: budgetLines = [] } = useBudgetLines(projectId);
+  const { canView: canSeeBudget } = useAccess("budget");
+  const { canView: canSeePayments } = useAccess("paiements");
+  const { canView: canSeeCompanies } = useAccess("entreprises");
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
   const { data: companies = [] } = useCompanies();
@@ -177,14 +181,16 @@ function Dashboard() {
 
       <div data-tour="kpis" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
-        <Kpi label="Budget global" value={fcfa(budget)} tone="accent" />
+        {canSeeBudget && <Kpi label="Budget global" value={fcfa(budget)} tone="accent" />}
         <Kpi label="Dépenses totales" value={fcfa(totalSpent)} tone="primary" />
-        <Kpi
-          label="Budget restant"
-          value={fcfa(remaining)}
-          tone={remaining < 0 ? "danger" : "default"}
-          hint={remaining < 0 ? "Dépassement de budget" : undefined}
-        />
+        {canSeeBudget && (
+          <Kpi
+            label="Budget restant"
+            value={fcfa(remaining)}
+            tone={remaining < 0 ? "danger" : "default"}
+            hint={remaining < 0 ? "Dépassement de budget" : undefined}
+          />
+        )}
         <Kpi
           label="Coût au m²"
           value={builtArea > 0 ? fcfa(totalSpent / builtArea) : "—"}
@@ -192,6 +198,7 @@ function Dashboard() {
         />
       </div>
 
+      {canSeeBudget && (
       <div className="panel mt-3 p-4">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Avancement financier</span>
@@ -201,15 +208,23 @@ function Dashboard() {
         </div>
         <Progress value={progress} />
       </div>
+      )}
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi label="Fournisseurs" value={num(suppliers.length)} />
-        <Kpi label="Entreprises" value={num(companies.length)} />
+        {canSeeCompanies && <Kpi label="Entreprises" value={num(companies.length)} />}
         <Kpi label="Factures / dépenses" value={num(expenses.length)} />
-        <Kpi label="Paiements" value={`${num(payments.length)} · ${num(quotes.length)} devis`} />
+        <Kpi
+          label={canSeePayments ? "Paiements" : "Devis"}
+          value={
+            canSeePayments
+              ? `${num(payments.length)} · ${num(quotes.length)} devis`
+              : num(quotes.length)
+          }
+        />
       </div>
 
-      {alerts.length > 0 && (
+      {canSeeBudget && alerts.length > 0 && (
         <div className="panel mt-3 p-4">
           <h2 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold">
             <AlertTriangle className="size-4 text-primary" /> Postes au-delà de 80 % du budget
@@ -355,14 +370,21 @@ function Dashboard() {
         <span className="flex items-center gap-2">
           <Receipt className="size-3.5" /> {num(expenses.length)} dépenses
         </span>
-        <span className="flex items-center gap-2">
-          <Wallet className="size-3.5" /> {fcfa(payments.reduce((s, p) => s + Number(p.amount), 0))} payés
-        </span>
+        {canSeePayments && (
+          <span className="flex items-center gap-2">
+            <Wallet className="size-3.5" />{" "}
+            {fcfa(payments.reduce((s, p) => s + Number(p.amount), 0))} payés
+          </span>
+        )}
         <span className="flex items-center gap-2">
           <Store className="size-3.5" /> {num(suppliers.length)} fournisseurs
         </span>
         <span className="flex items-center gap-2">
-          <Building2 className="size-3.5" /> {num(companies.length)} entreprises ·{" "}
+          {canSeeCompanies && (
+            <>
+              <Building2 className="size-3.5" /> {num(companies.length)} entreprises ·{" "}
+            </>
+          )}
           <FileText className="size-3.5" /> {num(quotes.length)} devis
         </span>
       </div>
