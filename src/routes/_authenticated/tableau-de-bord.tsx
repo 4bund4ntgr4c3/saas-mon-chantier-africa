@@ -171,7 +171,10 @@ function Dashboard() {
         }
       />
 
+      <StartupChecklist project={project} />
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+
         <Kpi label="Budget global" value={fcfa(budget)} tone="accent" />
         <Kpi label="Dépenses totales" value={fcfa(totalSpent)} tone="primary" />
         <Kpi
