@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
+import { ReadOnlyNotice } from "@/components/feature-gate";
+import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Values } from "@/components/record-form";
 import { checklistProgress, CHECKLIST_STEPS_COUNT } from "@/components/startup-checklist";
 import { Button } from "@/components/ui/button";
@@ -118,6 +120,7 @@ function ChecklistProgress({ project }: { project: Project }) {
 }
 
 function ProjectsPage() {
+  const { canEdit } = useAccess("projets");
   const { projects, projectId, setProjectId } = useCurrentProject();
   const save = useSaveRow("projects", "Projet enregistré");
   const remove = useDeleteRow("projects");
@@ -131,6 +134,7 @@ function ProjectsPage() {
         title="Projets"
         subtitle="Tous vos chantiers de construction"
         action={
+          canEdit ? (
           <RecordDialog
             title="Nouveau projet"
             description="Renseignez les informations du chantier."
@@ -143,8 +147,11 @@ function ProjectsPage() {
             }
             onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
           />
+          ) : undefined
         }
       />
+
+      <ReadOnlyNotice feature="projets" />
 
       {projects.length === 0 ? (
         <div className="panel p-10 text-center text-sm text-muted-foreground">
@@ -204,20 +211,24 @@ function ProjectsPage() {
                 >
                   {projectId === p.id ? "Chantier actif" : "Activer"}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditing(p)}>
-                  <Pencil className="size-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive"
-                  onClick={() => {
-                    if (confirm(`Supprimer le projet « ${p.name} » et toutes ses données ?`))
-                      remove.mutate(p.id);
-                  }}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                {canEdit && (
+                  <>
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(p)}>
+                      <Pencil className="size-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={() => {
+                        if (confirm(`Supprimer le projet « ${p.name} » et toutes ses données ?`))
+                          remove.mutate(p.id);
+                      }}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             </article>
           ))}
