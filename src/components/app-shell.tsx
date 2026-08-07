@@ -6,6 +6,7 @@ import {
   HardHat,
   Hammer,
   LogOut,
+  NotebookPen,
   Receipt,
   Store,
   Inbox,
