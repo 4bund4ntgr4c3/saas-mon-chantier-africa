@@ -19,6 +19,7 @@ import { Route as AuthenticatedEntreprisesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authenticated/fournisseurs'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authenticated/paiements'
+import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
 import { Route as AuthenticatedProjetsRouteImport } from './routes/_authenticated/projets'
 import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
 import { Route as AuthenticatedAdminDemandesDemoRouteImport } from './routes/_authenticated/admin.demandes-demo'
@@ -74,6 +75,11 @@ const AuthenticatedPaiementsRoute = AuthenticatedPaiementsRouteImport.update({
   path: '/paiements',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedParametresRoute = AuthenticatedParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProjetsRoute = AuthenticatedProjetsRouteImport.update({
   id: '/projets',
   path: '/projets',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
+  '/parametres': typeof AuthenticatedParametresRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
+  '/parametres': typeof AuthenticatedParametresRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/_authenticated/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/paiements': typeof AuthenticatedPaiementsRoute
+  '/_authenticated/parametres': typeof AuthenticatedParametresRoute
   '/_authenticated/projets': typeof AuthenticatedProjetsRoute
   '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/_authenticated/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
+    | '/parametres'
     | '/projets'
     | '/tableau-de-bord'
     | '/admin/demandes-demo'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
+    | '/parametres'
     | '/projets'
     | '/tableau-de-bord'
     | '/admin/demandes-demo'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fournisseurs'
     | '/_authenticated/journal'
     | '/_authenticated/paiements'
+    | '/_authenticated/parametres'
     | '/_authenticated/projets'
     | '/_authenticated/tableau-de-bord'
     | '/_authenticated/admin/demandes-demo'
@@ -260,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPaiementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/parametres': {
+      id: '/_authenticated/parametres'
+      path: '/parametres'
+      fullPath: '/parametres'
+      preLoaderRoute: typeof AuthenticatedParametresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/projets': {
       id: '/_authenticated/projets'
       path: '/projets'
@@ -292,6 +311,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFournisseursRoute: typeof AuthenticatedFournisseursRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedPaiementsRoute: typeof AuthenticatedPaiementsRoute
+  AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
   AuthenticatedProjetsRoute: typeof AuthenticatedProjetsRoute
   AuthenticatedTableauDeBordRoute: typeof AuthenticatedTableauDeBordRoute
   AuthenticatedAdminDemandesDemoRoute: typeof AuthenticatedAdminDemandesDemoRoute
@@ -305,6 +325,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFournisseursRoute: AuthenticatedFournisseursRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedPaiementsRoute: AuthenticatedPaiementsRoute,
+  AuthenticatedParametresRoute: AuthenticatedParametresRoute,
   AuthenticatedProjetsRoute: AuthenticatedProjetsRoute,
   AuthenticatedTableauDeBordRoute: AuthenticatedTableauDeBordRoute,
   AuthenticatedAdminDemandesDemoRoute: AuthenticatedAdminDemandesDemoRoute,
