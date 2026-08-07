@@ -17,6 +17,8 @@ import {
 } from "recharts";
 import { AlertTriangle, Building2, FileText, Receipt, Store, Wallet } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { StartupChecklist } from "@/components/startup-checklist";
+
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
@@ -171,7 +173,10 @@ function Dashboard() {
         }
       />
 
+      <StartupChecklist project={project} />
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+
         <Kpi label="Budget global" value={fcfa(budget)} tone="accent" />
         <Kpi label="Dépenses totales" value={fcfa(totalSpent)} tone="primary" />
         <Kpi
