@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDepensesRouteImport } from './routes/_authenticated/depenses'
+import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authenticated/fournisseurs'
 import { Route as AuthenticatedProjetsRouteImport } from './routes/_authenticated/projets'
 import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
 
@@ -35,6 +36,12 @@ const AuthenticatedDepensesRoute = AuthenticatedDepensesRouteImport.update({
   path: '/depenses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFournisseursRoute =
+  AuthenticatedFournisseursRouteImport.update({
+    id: '/fournisseurs',
+    path: '/fournisseurs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProjetsRoute = AuthenticatedProjetsRouteImport.update({
   id: '/projets',
   path: '/projets',
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/depenses': typeof AuthenticatedDepensesRoute
+  '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
 }
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/depenses': typeof AuthenticatedDepensesRoute
+  '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
 }
@@ -67,20 +76,34 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/depenses': typeof AuthenticatedDepensesRoute
+  '/_authenticated/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/_authenticated/projets': typeof AuthenticatedProjetsRoute
   '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/depenses' | '/projets' | '/tableau-de-bord'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/depenses'
+    | '/fournisseurs'
+    | '/projets'
+    | '/tableau-de-bord'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/depenses' | '/projets' | '/tableau-de-bord'
+  to:
+    | '/'
+    | '/auth'
+    | '/depenses'
+    | '/fournisseurs'
+    | '/projets'
+    | '/tableau-de-bord'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/depenses'
+    | '/_authenticated/fournisseurs'
     | '/_authenticated/projets'
     | '/_authenticated/tableau-de-bord'
   fileRoutesById: FileRoutesById
@@ -121,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDepensesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fournisseurs': {
+      id: '/_authenticated/fournisseurs'
+      path: '/fournisseurs'
+      fullPath: '/fournisseurs'
+      preLoaderRoute: typeof AuthenticatedFournisseursRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/projets': {
       id: '/_authenticated/projets'
       path: '/projets'
@@ -140,12 +170,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDepensesRoute: typeof AuthenticatedDepensesRoute
+  AuthenticatedFournisseursRoute: typeof AuthenticatedFournisseursRoute
   AuthenticatedProjetsRoute: typeof AuthenticatedProjetsRoute
   AuthenticatedTableauDeBordRoute: typeof AuthenticatedTableauDeBordRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDepensesRoute: AuthenticatedDepensesRoute,
+  AuthenticatedFournisseursRoute: AuthenticatedFournisseursRoute,
   AuthenticatedProjetsRoute: AuthenticatedProjetsRoute,
   AuthenticatedTableauDeBordRoute: AuthenticatedTableauDeBordRoute,
 }
