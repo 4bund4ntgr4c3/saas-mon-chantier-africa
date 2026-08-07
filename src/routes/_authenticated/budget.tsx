@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, FileDown, FileSpreadsheet } from "lucide-react";
+import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ function BudgetPage() {
   const { data: expenses = [] } = useExpenses(projectId);
   const save = useSaveRow("budget_lines", "Budget mis à jour");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
 
   const lineByCategory = useMemo(
     () => new Map(lines.map((l) => [l.category_id, l])),
@@ -87,12 +89,61 @@ function BudgetPage() {
     });
   }
 
+  async function runExport(kind: "pdf" | "excel") {
+    if (!project) return;
+    setExporting(kind);
+    try {
+      const { exportBudgetExcel, exportBudgetPdf } = await import("@/lib/budget-export");
+      const payload = {
+        projectName: project.name,
+        projectBudget: Number(project.budget ?? 0),
+        unassigned,
+        rows: grouped.flatMap(([phase, cats]) =>
+          cats.map((c) => ({
+            phase,
+            category: c.name,
+            planned: Number(lineByCategory.get(c.id)?.planned_amount ?? 0),
+            spent: spentByCategory.get(c.id) ?? 0,
+          })),
+        ),
+      };
+      if (kind === "pdf") await exportBudgetPdf(payload);
+      else await exportBudgetExcel(payload);
+      toast.success(kind === "pdf" ? "Rapport PDF téléchargé" : "Rapport Excel téléchargé");
+    } catch {
+      toast.error("Export impossible. Réessayez.");
+    } finally {
+      setExporting(null);
+    }
+  }
+
   return (
     <>
       <PageHeader
         title="Budget prévisionnel"
         subtitle={`${fcfa(planned)} planifiés · ${fcfa(spent)} dépensés · enveloppe projet ${fcfa(project.budget)}`}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => runExport("pdf")}
+              disabled={exporting !== null}
+            >
+              <FileDown className="mr-2 size-4" />
+              {exporting === "pdf" ? "Export…" : "Export PDF"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => runExport("excel")}
+              disabled={exporting !== null}
+            >
+              <FileSpreadsheet className="mr-2 size-4" />
+              {exporting === "excel" ? "Export…" : "Export Excel"}
+            </Button>
+          </div>
+        }
       />
+
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <SummaryCard label="Budget planifié par poste" value={fcfa(planned)} />
