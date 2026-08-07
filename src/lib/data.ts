@@ -136,9 +136,9 @@ export function useSaveRow(table: TableName, successMessage = "Enregistré") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, values }: { id?: string; values: Record<string, unknown> }) => {
-      const query = id
-        ? supabase.from(table).update(values).eq("id", id)
-        : supabase.from(table).insert(values);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase.from(table) as any;
+      const query = id ? client.update(values).eq("id", id) : client.insert(values);
       const { error } = await query;
       if (error) throw new Error(error.message);
     },
