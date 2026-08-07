@@ -1,6 +1,8 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Hammer } from "lucide-react";
+import { DemoRequestForm } from "@/components/DemoRequestForm";
+
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-6 py-12 lg:px-12">
+    <div className="relative w-full overflow-hidden bg-background px-6 py-12 lg:px-12">
       {/* Cyan technical grid background */}
       <div
         className="pointer-events-none absolute inset-0 opacity-10"
@@ -41,7 +43,8 @@ function LandingPage() {
         }}
       />
 
-      <div className="relative z-10 grid w-full max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
+      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
+
         {/* Left content */}
         <div className="space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-3 py-1 text-sm font-semibold uppercase tracking-wider text-accent">
@@ -69,12 +72,13 @@ function LandingPage() {
             >
               Démarrer mon projet
             </Link>
-            <Link
-              to="/auth"
+            <a
+              href="#demo"
               className="inline-flex items-center justify-center rounded-sm border border-border px-8 py-4 font-semibold text-foreground transition-all hover:border-accent"
             >
-              Voir la démo technique
-            </Link>
+              Demander une démo
+            </a>
+
           </div>
 
           <div className="flex items-center gap-8 border-t border-border pt-8">
@@ -214,13 +218,40 @@ function LandingPage() {
         </div>
       </div>
 
+      {/* Demo request */}
+      <section
+        id="demo"
+        className="relative z-10 mx-auto mt-8 grid w-full max-w-7xl scroll-mt-8 grid-cols-1 items-start gap-12 border-t border-border py-20 lg:grid-cols-2"
+      >
+        <div className="space-y-6">
+          <div className="font-mono text-[10px] uppercase tracking-widest text-accent">Contact // Démonstration</div>
+          <h2 className="font-display text-4xl leading-tight text-foreground md:text-5xl">
+            Demandez une démo <span className="text-primary">personnalisée.</span>
+          </h2>
+          <p className="max-w-lg text-lg font-light leading-relaxed text-muted-foreground">
+            Un expert BâtiBénin vous présente la plateforme sur vos propres chantiers : budgets FCFA, fournisseurs,
+            dépenses et échéanciers.
+          </p>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>— Session de 30 minutes, en ligne ou à Cotonou</li>
+            <li>— Paramétrage de votre premier projet inclus</li>
+            <li>— Sans engagement</li>
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-6 shadow-2xl md:p-8">
+          <DemoRequestForm />
+        </div>
+      </section>
+
       {/* Footer logo */}
-      <div className="absolute bottom-6 left-6 flex items-center gap-2 text-muted-foreground">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl items-center gap-2 border-t border-border py-6 text-muted-foreground">
         <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
           <Hammer className="size-4" />
         </span>
         <span className="font-display text-sm font-semibold text-foreground">BâtiBénin</span>
       </div>
     </div>
+
   );
 }
