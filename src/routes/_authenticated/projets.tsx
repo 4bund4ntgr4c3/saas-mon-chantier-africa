@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Trash2, Pencil } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { RecordDialog, orNull, toNumber, type Values } from "@/components/record-form";
+import { checklistProgress, CHECKLIST_STEPS_COUNT } from "@/components/startup-checklist";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useCurrentProject } from "@/context/project-context";
 import { useDeleteRow, useSaveRow, type Project } from "@/lib/data";
 import { fcfa, frDate, labelOf, num, PROJECT_STATUSES } from "@/lib/format";
