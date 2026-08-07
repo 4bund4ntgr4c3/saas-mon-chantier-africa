@@ -66,7 +66,7 @@ function Kpi({
 }: {
   label: string;
   value: string;
-  hint?: string;
+  hint?: string | undefined;
   tone?: "default" | "primary" | "accent" | "danger";
 }) {
   const toneClass =
