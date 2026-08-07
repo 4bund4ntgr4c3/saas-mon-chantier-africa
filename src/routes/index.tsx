@@ -1,4 +1,5 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { enterGuestMode } from "@/lib/guest-mode";
 import { supabase } from "@/integrations/supabase/client";
 import { Hammer } from "lucide-react";
 import { DemoRequestForm } from "@/components/DemoRequestForm";
@@ -72,6 +73,16 @@ function LandingPage() {
             >
               Démarrer mon projet
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                enterGuestMode();
+                navigate({ to: "/tableau-de-bord" });
+              }}
+              className="inline-flex items-center justify-center rounded-sm border border-border px-8 py-4 font-semibold text-foreground transition-all hover:border-accent"
+            >
+              Essayer sans compte
+            </button>
             <a
               href="#demo"
               className="inline-flex items-center justify-center rounded-sm border border-border px-8 py-4 font-semibold text-foreground transition-all hover:border-accent"

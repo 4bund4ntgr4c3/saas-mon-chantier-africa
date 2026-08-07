@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Hammer } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { enterGuestMode } from "@/lib/guest-mode";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,11 @@ function AuthPage() {
       return;
     }
     toast.success("Lien de réinitialisation envoyé par email.");
+  }
+
+  function tryDemo() {
+    enterGuestMode();
+    navigate({ to: "/tableau-de-bord" });
   }
 
   async function google() {
@@ -212,6 +218,12 @@ function AuthPage() {
         <Button variant="secondary" className="w-full" onClick={google}>
           Continuer avec Google
         </Button>
+        <Button variant="outline" className="mt-3 w-full" onClick={tryDemo}>
+          Explorer la démo sans compte
+        </Button>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Données d'exemple, aucune inscription requise.
+        </p>
       </div>
     </div>
   );
