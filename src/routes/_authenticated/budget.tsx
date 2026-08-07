@@ -35,6 +35,7 @@ function BudgetPage() {
   const { data: expenses = [] } = useExpenses(projectId);
   const save = useSaveRow("budget_lines", "Budget mis à jour");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
 
   const lineByCategory = useMemo(
     () => new Map(lines.map((l) => [l.category_id, l])),
