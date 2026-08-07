@@ -86,8 +86,8 @@ function ExpensesPage() {
         options: companies.map((c) => ({ value: c.id, label: c.name })),
       },
       { name: "quantity", label: "Quantité", type: "number" },
-      { name: "unit", label: "Unité", placeholder: "sac, m³, tonne…" },
-      { name: "invoice_ref", label: "N° facture / reçu" },
+      { name: "unit_price", label: "Prix unitaire (FCFA)", type: "number" },
+      { name: "reference", label: "N° facture / reçu" },
       { name: "notes", label: "Notes", type: "textarea" },
     ],
     [categories, suppliers, companies],
@@ -103,7 +103,7 @@ function ExpensesPage() {
     const okSearch =
       q === "" ||
       e.label.toLowerCase().includes(q) ||
-      (e.invoice_ref ?? "").toLowerCase().includes(q);
+      (e.reference ?? "").toLowerCase().includes(q);
     return okCat && okSearch;
   });
 
@@ -121,8 +121,8 @@ function ExpensesPage() {
       supplier_id: orNull(g("supplier_id")),
       company_id: orNull(g("company_id")),
       quantity: toNumber(g("quantity")),
-      unit: orNull(g("unit")),
-      invoice_ref: orNull(g("invoice_ref")),
+      unit_price: toNumber(g("unit_price")),
+      reference: orNull(g("reference")),
       notes: orNull(g("notes")),
     };
   }
@@ -137,8 +137,8 @@ function ExpensesPage() {
       supplier_id: e.supplier_id ?? "",
       company_id: e.company_id ?? "",
       quantity: e.quantity != null ? String(e.quantity) : "",
-      unit: e.unit ?? "",
-      invoice_ref: e.invoice_ref ?? "",
+      unit_price: e.unit_price != null ? String(e.unit_price) : "",
+      reference: e.reference ?? "",
       notes: e.notes ?? "",
     };
   }
@@ -222,8 +222,8 @@ function ExpensesPage() {
                   </td>
                   <td className="px-4 py-3">
                     <p>{e.label}</p>
-                    {e.invoice_ref && (
-                      <p className="text-xs text-muted-foreground">Réf. {e.invoice_ref}</p>
+                    {e.reference && (
+                      <p className="text-xs text-muted-foreground">Réf. {e.reference}</p>
                     )}
                   </td>
                   <td className="px-4 py-3">
