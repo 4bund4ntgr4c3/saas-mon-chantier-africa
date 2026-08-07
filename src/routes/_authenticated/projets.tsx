@@ -91,11 +91,39 @@ function toPayload(v: Values) {
   };
 }
 
+function ChecklistProgress({ project }: { project: Project }) {
+  const [progress, setProgress] = useState<{ done: number; total: number; percent: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setProgress(checklistProgress(project));
+  }, [project]);
+
+  const done = progress?.done ?? 0;
+  const percent = progress?.percent ?? 0;
+  const complete = done === CHECKLIST_STEPS_COUNT;
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">Checklist de démarrage</span>
+        <span className={complete ? "num text-primary" : "num"}>
+          {percent}% · {done}/{CHECKLIST_STEPS_COUNT}
+        </span>
+      </div>
+      <Progress value={percent} className="mt-1.5 h-1.5" />
+    </div>
+  );
+}
+
 function ProjectsPage() {
   const { projects, projectId, setProjectId } = useCurrentProject();
   const save = useSaveRow("projects", "Projet enregistré");
   const remove = useDeleteRow("projects");
   const [editing, setEditing] = useState<Project | null>(null);
+
+
 
   return (
     <>
