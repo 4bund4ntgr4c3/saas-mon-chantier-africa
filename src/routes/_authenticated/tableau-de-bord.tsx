@@ -17,6 +17,8 @@ import {
 } from "recharts";
 import { AlertTriangle, Building2, FileText, Receipt, Store, Wallet } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { StartupChecklist } from "@/components/startup-checklist";
+
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
