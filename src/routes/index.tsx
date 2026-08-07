@@ -70,12 +70,13 @@ function LandingPage() {
             >
               Démarrer mon projet
             </Link>
-            <Link
-              to="/auth"
+            <a
+              href="#demo"
               className="inline-flex items-center justify-center rounded-sm border border-border px-8 py-4 font-semibold text-foreground transition-all hover:border-accent"
             >
-              Voir la démo technique
-            </Link>
+              Demander une démo
+            </a>
+
           </div>
 
           <div className="flex items-center gap-8 border-t border-border pt-8">
