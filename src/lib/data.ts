@@ -141,7 +141,7 @@ export async function uploadJournalPhotos(files: File[], projectId: string) {
     const path = `${auth.user.id}/${projectId}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage
       .from(JOURNAL_BUCKET)
-      .upload(path, file, { contentType: file.type || undefined });
+      .upload(path, file, { contentType: file.type || "image/jpeg" });
     if (error) throw new Error(error.message);
     paths.push(path);
   }
