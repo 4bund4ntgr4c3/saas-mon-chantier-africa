@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { MessageCircle, Pencil, Phone, Plus, Trash2 } from "lucide-react";
+import { MessageCircle, Pencil, Phone, Plus, Trash2, Upload } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { RecordDialog, orNull, type Field, type Values } from "@/components/record-form";
+import { ImportDialog, type ImportColumn } from "@/components/import-csv";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useDeleteRow, useSaveRow, useSuppliers, type Supplier } from "@/lib/data";
+import { useDeleteRow, useImportRows, useSaveRow, useSuppliers, type Supplier } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/fournisseurs")({
   head: () => ({
@@ -37,10 +38,34 @@ const FIELDS: Field[] = [
   { name: "commune", label: "Commune", placeholder: "Abomey-Calavi" },
 ];
 
+const IMPORT_COLUMNS: ImportColumn[] = [
+  {
+    key: "name",
+    label: "Nom",
+    aliases: ["nom", "name", "fournisseur", "supplier", "raison sociale", "raison_sociale"],
+  },
+  {
+    key: "activity",
+    label: "Activité",
+    aliases: ["activite", "activité", "activity", "metier", "métier"],
+  },
+  { key: "products", label: "Produits", aliases: ["produits", "products", "produits vendus"] },
+  {
+    key: "phone",
+    label: "Téléphone",
+    aliases: ["telephone", "téléphone", "phone", "tel", "contact"],
+  },
+  { key: "whatsapp", label: "WhatsApp", aliases: ["whatsapp", "wa"] },
+  { key: "email", label: "E-mail", aliases: ["email", "e-mail", "mail", "courriel"] },
+  { key: "city", label: "Ville", aliases: ["ville", "city", "localite", "localité"] },
+  { key: "commune", label: "Commune", aliases: ["commune"] },
+];
+
 function SuppliersPage() {
   const { data: suppliers = [] } = useSuppliers();
   const save = useSaveRow("suppliers", "Fournisseur enregistré");
   const remove = useDeleteRow("suppliers");
+  const importRows = useImportRows("suppliers");
   const [editing, setEditing] = useState<Supplier | null>(null);
 
   function toPayload(v: Values) {
@@ -63,16 +88,41 @@ function SuppliersPage() {
         title="Fournisseurs"
         subtitle={`${suppliers.length} contact(s) matériaux`}
         action={
-          <RecordDialog
-            title="Nouveau fournisseur"
-            fields={FIELDS}
-            trigger={
-              <Button>
-                <Plus className="size-4" /> Ajouter
-              </Button>
-            }
-            onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-          />
+          <div className="flex flex-wrap gap-2">
+            <ImportDialog
+              title="Importer des fournisseurs"
+              description="Téléversez un fichier CSV ou Excel pour ajouter plusieurs fournisseurs d'un coup."
+              columns={IMPORT_COLUMNS}
+              onImport={async (rows) => {
+                const payload = rows.map((r) => ({
+                  name: r["name"]?.trim() || "Fournisseur",
+                  activity: orNull(r["activity"]),
+                  products: orNull(r["products"]),
+                  phone: orNull(r["phone"]),
+                  whatsapp: orNull(r["whatsapp"]),
+                  email: orNull(r["email"]),
+                  city: orNull(r["city"]),
+                  commune: orNull(r["commune"]),
+                }));
+                await importRows.mutateAsync(payload);
+              }}
+              trigger={
+                <Button variant="outline">
+                  <Upload className="size-4" /> Importer
+                </Button>
+              }
+            />
+            <RecordDialog
+              title="Nouveau fournisseur"
+              fields={FIELDS}
+              trigger={
+                <Button>
+                  <Plus className="size-4" /> Ajouter
+                </Button>
+              }
+              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+            />
+          </div>
         }
       />
 

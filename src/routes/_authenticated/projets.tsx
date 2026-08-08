@@ -126,8 +126,6 @@ function ProjectsPage() {
   const remove = useDeleteRow("projects");
   const [editing, setEditing] = useState<Project | null>(null);
 
-
-
   return (
     <>
       <PageHeader
@@ -135,18 +133,18 @@ function ProjectsPage() {
         subtitle="Tous vos chantiers de construction"
         action={
           canEdit ? (
-          <RecordDialog
-            title="Nouveau projet"
-            description="Renseignez les informations du chantier."
-            fields={FIELDS}
-            initial={{ status: "en_cours", levels: "1" }}
-            trigger={
-              <Button>
-                <Plus className="size-4" /> Nouveau projet
-              </Button>
-            }
-            onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-          />
+            <RecordDialog
+              title="Nouveau projet"
+              description="Renseignez les informations du chantier."
+              fields={FIELDS}
+              initial={{ status: "en_cours", levels: "1" }}
+              trigger={
+                <Button>
+                  <Plus className="size-4" /> Nouveau projet
+                </Button>
+              }
+              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+            />
           ) : undefined
         }
       />
@@ -201,8 +199,6 @@ function ProjectsPage() {
 
               <ChecklistProgress project={p} />
 
-
-
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -242,9 +238,7 @@ function ProjectsPage() {
           title={`Modifier ${editing.name}`}
           fields={FIELDS}
           initial={toValues(editing)}
-          onSubmit={async (v) =>
-            save.mutateAsync({ id: editing.id, values: toPayload(v) })
-          }
+          onSubmit={async (v) => save.mutateAsync({ id: editing.id, values: toPayload(v) })}
         />
       )}
     </>

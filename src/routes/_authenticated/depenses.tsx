@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Pencil, Search } from "lucide-react";
+import { Plus, Trash2, Pencil, Search, Upload } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
+import { ImportDialog, type ImportColumn } from "@/components/import-csv";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
   useCompanies,
   useDeleteRow,
   useExpenses,
+  useImportRows,
   useSaveRow,
   useSuppliers,
   type Expense,
@@ -97,6 +99,49 @@ function ExpensesPage() {
   const supName = useMemo(() => new Map(suppliers.map((s) => [s.id, s.name])), [suppliers]);
   const compName = useMemo(() => new Map(companies.map((c) => [c.id, c.name])), [companies]);
 
+  const importRows = useImportRows("expenses");
+
+  const IMPORT_COLUMNS: ImportColumn[] = [
+    {
+      key: "label",
+      label: "Libellé",
+      aliases: ["libellé", "libelle", "label", "designation", "désignation", "intitule"],
+    },
+    {
+      key: "amount",
+      label: "Montant",
+      aliases: ["montant", "amount", "montant fcfa", "montant(fcfa)"],
+    },
+    {
+      key: "expense_date",
+      label: "Date",
+      aliases: ["date", "date depense", "date de dépense", "expense date"],
+    },
+    {
+      key: "category",
+      label: "Catégorie",
+      aliases: ["categorie", "catégorie", "category", "poste"],
+    },
+    {
+      key: "method",
+      label: "Moyen",
+      aliases: ["moyen", "moyen de paiement", "methode", "méthode", "method"],
+    },
+    { key: "supplier", label: "Fournisseur", aliases: ["fournisseur", "supplier", "vendeur"] },
+    {
+      key: "reference",
+      label: "Référence",
+      aliases: ["reference", "référence", "facture", "n° facture", "n facture", "invoice"],
+    },
+    { key: "quantity", label: "Quantité", aliases: ["quantite", "quantité", "quantity"] },
+    {
+      key: "unit_price",
+      label: "Prix unitaire",
+      aliases: ["prix unitaire", "unit price", "prix unit"],
+    },
+    { key: "notes", label: "Notes", aliases: ["notes", "commentaire", "observations"] },
+  ];
+
   const filtered = expenses.filter((e) => {
     const okCat = catFilter === "all" || e.category_id === catFilter;
     const q = search.trim().toLowerCase();
@@ -151,21 +196,59 @@ function ExpensesPage() {
         title="Dépenses"
         subtitle={`${filtered.length} dépense(s) · ${fcfa(total)}`}
         action={
-          <RecordDialog
-            title="Nouvelle dépense"
-            description="Chaque sortie d'argent du chantier."
-            fields={fields}
-            initial={{
-              method: "especes",
-              expense_date: new Date().toISOString().slice(0, 10),
-            }}
-            trigger={
-              <Button data-tour="expense-new">
-                <Plus className="size-4" /> Ajouter une dépense
-              </Button>
-            }
-            onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-          />
+          <div className="flex flex-wrap gap-2">
+            <ImportDialog
+              title="Importer des factures / dépenses"
+              description="Téléversez un fichier CSV ou Excel de dépenses pour ce chantier."
+              columns={IMPORT_COLUMNS}
+              onImport={async (rows) => {
+                const catByName = new Map(categories.map((c) => [c.name.toLowerCase(), c.id]));
+                const supByName = new Map(suppliers.map((s) => [s.name.toLowerCase(), s.id]));
+                const methodByName = new Map(
+                  PAYMENT_METHODS.map((m) => [m.label.toLowerCase(), m.value]),
+                );
+                const payload = rows.map((r) => ({
+                  project_id: projectId,
+                  label: r["label"]?.trim() || "Dépense importée",
+                  amount:
+                    Number(
+                      String(r["amount"] ?? "")
+                        .replace(/\s/g, "")
+                        .replace(",", "."),
+                    ) || 0,
+                  expense_date: r["expense_date"] || new Date().toISOString().slice(0, 10),
+                  category_id: catByName.get((r["category"] ?? "").toLowerCase().trim()) ?? null,
+                  method: methodByName.get((r["method"] ?? "").toLowerCase().trim()) ?? "especes",
+                  supplier_id: supByName.get((r["supplier"] ?? "").toLowerCase().trim()) ?? null,
+                  quantity: r["quantity"] ? toNumber(r["quantity"]) : null,
+                  unit_price: r["unit_price"] ? toNumber(r["unit_price"]) : null,
+                  reference: orNull(r["reference"]),
+                  notes: orNull(r["notes"]),
+                }));
+                await importRows.mutateAsync(payload);
+              }}
+              trigger={
+                <Button variant="outline">
+                  <Upload className="size-4" /> Importer
+                </Button>
+              }
+            />
+            <RecordDialog
+              title="Nouvelle dépense"
+              description="Chaque sortie d'argent du chantier."
+              fields={fields}
+              initial={{
+                method: "especes",
+                expense_date: new Date().toISOString().slice(0, 10),
+              }}
+              trigger={
+                <Button data-tour="expense-new">
+                  <Plus className="size-4" /> Ajouter une dépense
+                </Button>
+              }
+              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+            />
+          </div>
         }
       />
 

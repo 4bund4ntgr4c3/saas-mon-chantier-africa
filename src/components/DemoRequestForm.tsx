@@ -14,8 +14,9 @@ export function DemoRequestForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setValues((v) => ({ ...v, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setValues((v) => ({ ...v, [k]: e.target.value }));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,21 +45,46 @@ export function DemoRequestForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="dr-name">Nom complet *</Label>
-          <Input id="dr-name" value={values.full_name} onChange={set("full_name")} maxLength={100} placeholder="Koffi Adjovi" />
+          <Input
+            id="dr-name"
+            value={values.full_name}
+            onChange={set("full_name")}
+            maxLength={100}
+            placeholder="Koffi Adjovi"
+          />
           {errors["full_name"] && <p className="text-xs text-destructive">{errors["full_name"]}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="dr-company">Entreprise</Label>
-          <Input id="dr-company" value={values.company} onChange={set("company")} maxLength={120} placeholder="BTP Cotonou SARL" />
+          <Input
+            id="dr-company"
+            value={values.company}
+            onChange={set("company")}
+            maxLength={120}
+            placeholder="BTP Cotonou SARL"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="dr-email">Email *</Label>
-          <Input id="dr-email" type="email" value={values.email} onChange={set("email")} maxLength={255} placeholder="vous@entreprise.bj" />
+          <Input
+            id="dr-email"
+            type="email"
+            value={values.email}
+            onChange={set("email")}
+            maxLength={255}
+            placeholder="vous@entreprise.bj"
+          />
           {errors["email"] && <p className="text-xs text-destructive">{errors["email"]}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="dr-phone">Téléphone</Label>
-          <Input id="dr-phone" value={values.phone} onChange={set("phone")} maxLength={40} placeholder="+229 XX XX XX XX" />
+          <Input
+            id="dr-phone"
+            value={values.phone}
+            onChange={set("phone")}
+            maxLength={40}
+            placeholder="+229 XX XX XX XX"
+          />
         </div>
       </div>
       <div className="space-y-1.5">
@@ -79,7 +105,9 @@ export function DemoRequestForm() {
       >
         {loading ? "Envoi en cours…" : "Demander une démo"}
       </button>
-      <p className="text-xs text-muted-foreground">Réponse sous 24h ouvrées. Aucune carte bancaire requise.</p>
+      <p className="text-xs text-muted-foreground">
+        Réponse sous 24h ouvrées. Aucune carte bancaire requise.
+      </p>
     </form>
   );
 }

@@ -32,7 +32,15 @@ import {
   useSuppliers,
 } from "@/lib/data";
 import { useAccess } from "@/lib/roles";
-import { compactFcfa, fcfa, labelOf, monthKey, monthLabel, num, PAYMENT_METHODS } from "@/lib/format";
+import {
+  compactFcfa,
+  fcfa,
+  labelOf,
+  monthKey,
+  monthLabel,
+  num,
+  PAYMENT_METHODS,
+} from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/tableau-de-bord")({
   head: () => ({
@@ -102,10 +110,7 @@ function Dashboard() {
   const { data: suppliers = [] } = useSuppliers();
   const { data: companies = [] } = useCompanies();
 
-  const catName = useMemo(
-    () => new Map(categories.map((c) => [c.id, c.name])),
-    [categories],
-  );
+  const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
   const totalSpent = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const budget = Number(project?.budget ?? 0);
@@ -180,7 +185,6 @@ function Dashboard() {
       <StartupChecklist project={project} />
 
       <div data-tour="kpis" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-
         {canSeeBudget && <Kpi label="Budget global" value={fcfa(budget)} tone="accent" />}
         <Kpi label="Dépenses totales" value={fcfa(totalSpent)} tone="primary" />
         {canSeeBudget && (
@@ -199,15 +203,15 @@ function Dashboard() {
       </div>
 
       {canSeeBudget && (
-      <div className="panel mt-3 p-4">
-        <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Avancement financier</span>
-          <span className="num">
-            {compactFcfa(totalSpent)} / {compactFcfa(budget)} FCFA
-          </span>
+        <div className="panel mt-3 p-4">
+          <div className="mb-2 flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Avancement financier</span>
+            <span className="num">
+              {compactFcfa(totalSpent)} / {compactFcfa(budget)} FCFA
+            </span>
+          </div>
+          <Progress value={progress} />
         </div>
-        <Progress value={progress} />
-      </div>
       )}
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -231,14 +235,15 @@ function Dashboard() {
           </h2>
           <ul className="space-y-2">
             {alerts.map((a) => (
-              <li key={a.name} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <li
+                key={a.name}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
                 <span>{a.name}</span>
                 <span className="num text-muted-foreground">
                   {fcfa(a.spent)} / {fcfa(a.planned)}
                 </span>
-                <Badge variant={a.ratio > 100 ? "destructive" : "outline"}>
-                  {num(a.ratio)} %
-                </Badge>
+                <Badge variant={a.ratio > 100 ? "destructive" : "outline"}>{num(a.ratio)} %</Badge>
               </li>
             ))}
           </ul>
@@ -322,7 +327,13 @@ function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={byMethod} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85}>
+                <Pie
+                  data={byMethod}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={85}
+                >
                   {byMethod.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}

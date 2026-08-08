@@ -5,13 +5,7 @@ import { Button } from "@/components/ui/button";
 import { accountTypeLabel, useAccess, type Feature } from "@/lib/roles";
 
 /** Masque un module quand le type de compte n'y a pas accès. */
-export function FeatureGate({
-  feature,
-  children,
-}: {
-  feature: Feature;
-  children: ReactNode;
-}) {
+export function FeatureGate({ feature, children }: { feature: Feature; children: ReactNode }) {
   const { canView, isLoading, type } = useAccess(feature);
 
   if (isLoading) return null;

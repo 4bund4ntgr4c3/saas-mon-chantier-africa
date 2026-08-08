@@ -13,16 +13,20 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAlertesRouteImport } from './routes/_authenticated/alertes'
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
 import { Route as AuthenticatedDepensesRouteImport } from './routes/_authenticated/depenses'
 import { Route as AuthenticatedDevisRouteImport } from './routes/_authenticated/devis'
+import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedEntreprisesRouteImport } from './routes/_authenticated/entreprises'
 import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authenticated/fournisseurs'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authenticated/paiements'
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
 import { Route as AuthenticatedProjetsRouteImport } from './routes/_authenticated/projets'
+import { Route as AuthenticatedRapportsRouteImport } from './routes/_authenticated/rapports'
+import { Route as AuthenticatedRechercheRouteImport } from './routes/_authenticated/recherche'
 import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
 import { Route as AuthenticatedAdminDemandesDemoRouteImport } from './routes/_authenticated/admin.demandes-demo'
 
@@ -45,6 +49,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAlertesRoute = AuthenticatedAlertesRouteImport.update({
+  id: '/alertes',
+  path: '/alertes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -63,6 +72,11 @@ const AuthenticatedDepensesRoute = AuthenticatedDepensesRouteImport.update({
 const AuthenticatedDevisRoute = AuthenticatedDevisRouteImport.update({
   id: '/devis',
   path: '/devis',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEntreprisesRoute =
@@ -97,6 +111,16 @@ const AuthenticatedProjetsRoute = AuthenticatedProjetsRouteImport.update({
   path: '/projets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRapportsRoute = AuthenticatedRapportsRouteImport.update({
+  id: '/rapports',
+  path: '/rapports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRechercheRoute = AuthenticatedRechercheRouteImport.update({
+  id: '/recherche',
+  path: '/recherche',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTableauDeBordRoute =
   AuthenticatedTableauDeBordRouteImport.update({
     id: '/tableau-de-bord',
@@ -114,16 +138,20 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/alertes': typeof AuthenticatedAlertesRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/budget': typeof AuthenticatedBudgetRoute
   '/depenses': typeof AuthenticatedDepensesRoute
   '/devis': typeof AuthenticatedDevisRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
   '/entreprises': typeof AuthenticatedEntreprisesRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/parametres': typeof AuthenticatedParametresRoute
   '/projets': typeof AuthenticatedProjetsRoute
+  '/rapports': typeof AuthenticatedRapportsRoute
+  '/recherche': typeof AuthenticatedRechercheRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
@@ -131,16 +159,20 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/alertes': typeof AuthenticatedAlertesRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/budget': typeof AuthenticatedBudgetRoute
   '/depenses': typeof AuthenticatedDepensesRoute
   '/devis': typeof AuthenticatedDevisRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
   '/entreprises': typeof AuthenticatedEntreprisesRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/parametres': typeof AuthenticatedParametresRoute
   '/projets': typeof AuthenticatedProjetsRoute
+  '/rapports': typeof AuthenticatedRapportsRoute
+  '/recherche': typeof AuthenticatedRechercheRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
@@ -150,16 +182,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/alertes': typeof AuthenticatedAlertesRoute
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/budget': typeof AuthenticatedBudgetRoute
   '/_authenticated/depenses': typeof AuthenticatedDepensesRoute
   '/_authenticated/devis': typeof AuthenticatedDevisRoute
+  '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
   '/_authenticated/entreprises': typeof AuthenticatedEntreprisesRoute
   '/_authenticated/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/paiements': typeof AuthenticatedPaiementsRoute
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
   '/_authenticated/projets': typeof AuthenticatedProjetsRoute
+  '/_authenticated/rapports': typeof AuthenticatedRapportsRoute
+  '/_authenticated/recherche': typeof AuthenticatedRechercheRoute
   '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/_authenticated/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
@@ -169,16 +205,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/alertes'
     | '/audit'
     | '/budget'
     | '/depenses'
     | '/devis'
+    | '/documents'
     | '/entreprises'
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
     | '/parametres'
     | '/projets'
+    | '/rapports'
+    | '/recherche'
     | '/tableau-de-bord'
     | '/admin/demandes-demo'
   fileRoutesByTo: FileRoutesByTo
@@ -186,16 +226,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/alertes'
     | '/audit'
     | '/budget'
     | '/depenses'
     | '/devis'
+    | '/documents'
     | '/entreprises'
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
     | '/parametres'
     | '/projets'
+    | '/rapports'
+    | '/recherche'
     | '/tableau-de-bord'
     | '/admin/demandes-demo'
   id:
@@ -204,16 +248,20 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/alertes'
     | '/_authenticated/audit'
     | '/_authenticated/budget'
     | '/_authenticated/depenses'
     | '/_authenticated/devis'
+    | '/_authenticated/documents'
     | '/_authenticated/entreprises'
     | '/_authenticated/fournisseurs'
     | '/_authenticated/journal'
     | '/_authenticated/paiements'
     | '/_authenticated/parametres'
     | '/_authenticated/projets'
+    | '/_authenticated/rapports'
+    | '/_authenticated/recherche'
     | '/_authenticated/tableau-de-bord'
     | '/_authenticated/admin/demandes-demo'
   fileRoutesById: FileRoutesById
@@ -255,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/alertes': {
+      id: '/_authenticated/alertes'
+      path: '/alertes'
+      fullPath: '/alertes'
+      preLoaderRoute: typeof AuthenticatedAlertesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/audit': {
       id: '/_authenticated/audit'
       path: '/audit'
@@ -281,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/devis'
       fullPath: '/devis'
       preLoaderRoute: typeof AuthenticatedDevisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents': {
+      id: '/_authenticated/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AuthenticatedDocumentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/entreprises': {
@@ -325,6 +387,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rapports': {
+      id: '/_authenticated/rapports'
+      path: '/rapports'
+      fullPath: '/rapports'
+      preLoaderRoute: typeof AuthenticatedRapportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/recherche': {
+      id: '/_authenticated/recherche'
+      path: '/recherche'
+      fullPath: '/recherche'
+      preLoaderRoute: typeof AuthenticatedRechercheRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tableau-de-bord': {
       id: '/_authenticated/tableau-de-bord'
       path: '/tableau-de-bord'
@@ -343,31 +419,39 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAlertesRoute: typeof AuthenticatedAlertesRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
   AuthenticatedDepensesRoute: typeof AuthenticatedDepensesRoute
   AuthenticatedDevisRoute: typeof AuthenticatedDevisRoute
+  AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
   AuthenticatedEntreprisesRoute: typeof AuthenticatedEntreprisesRoute
   AuthenticatedFournisseursRoute: typeof AuthenticatedFournisseursRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedPaiementsRoute: typeof AuthenticatedPaiementsRoute
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
   AuthenticatedProjetsRoute: typeof AuthenticatedProjetsRoute
+  AuthenticatedRapportsRoute: typeof AuthenticatedRapportsRoute
+  AuthenticatedRechercheRoute: typeof AuthenticatedRechercheRoute
   AuthenticatedTableauDeBordRoute: typeof AuthenticatedTableauDeBordRoute
   AuthenticatedAdminDemandesDemoRoute: typeof AuthenticatedAdminDemandesDemoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAlertesRoute: AuthenticatedAlertesRoute,
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
   AuthenticatedDepensesRoute: AuthenticatedDepensesRoute,
   AuthenticatedDevisRoute: AuthenticatedDevisRoute,
+  AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
   AuthenticatedEntreprisesRoute: AuthenticatedEntreprisesRoute,
   AuthenticatedFournisseursRoute: AuthenticatedFournisseursRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedPaiementsRoute: AuthenticatedPaiementsRoute,
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
   AuthenticatedProjetsRoute: AuthenticatedProjetsRoute,
+  AuthenticatedRapportsRoute: AuthenticatedRapportsRoute,
+  AuthenticatedRechercheRoute: AuthenticatedRechercheRoute,
   AuthenticatedTableauDeBordRoute: AuthenticatedTableauDeBordRoute,
   AuthenticatedAdminDemandesDemoRoute: AuthenticatedAdminDemandesDemoRoute,
 }
@@ -384,3 +468,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

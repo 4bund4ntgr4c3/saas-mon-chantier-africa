@@ -215,8 +215,8 @@ function JournalPage() {
           <MessageSquare className="mb-3 size-8 text-primary" />
           <h2 className="font-display text-lg font-semibold">Aucune entrée pour le moment</h2>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Consignez chaque visite de chantier : avancement, photos, commentaires et
-            difficultés rencontrées.
+            Consignez chaque visite de chantier : avancement, photos, commentaires et difficultés
+            rencontrées.
           </p>
           {canEdit && (
             <Button className="mt-5" onClick={openNew}>
@@ -264,8 +264,7 @@ function JournalPage() {
                         variant="ghost"
                         className="text-destructive"
                         onClick={() => {
-                          if (confirm("Supprimer cette entrée du journal ?"))
-                            remove.mutate(log.id);
+                          if (confirm("Supprimer cette entrée du journal ?")) remove.mutate(log.id);
                         }}
                       >
                         <Trash2 className="size-4" />
@@ -322,9 +321,7 @@ function JournalPage() {
               />
             </div>
             <div>
-              <Label className="mb-1.5 block text-xs text-muted-foreground">
-                Avancement (%)
-              </Label>
+              <Label className="mb-1.5 block text-xs text-muted-foreground">Avancement (%)</Label>
               <Input
                 type="number"
                 min={0}
@@ -345,10 +342,7 @@ function JournalPage() {
             </div>
             <div>
               <Label className="mb-1.5 block text-xs text-muted-foreground">Phase / poste</Label>
-              <Select
-                value={form.category_id}
-                onValueChange={(v) => set("category_id", v)}
-              >
+              <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
@@ -451,13 +445,7 @@ function JournalPage() {
   );
 }
 
-function PhotoGrid({
-  paths,
-  onRemove,
-}: {
-  paths: string[];
-  onRemove?: (path: string) => void;
-}) {
+function PhotoGrid({ paths, onRemove }: { paths: string[]; onRemove?: (path: string) => void }) {
   const { data: urls = {} } = useSignedPhotos(paths);
   if (paths.length === 0) return null;
   return (

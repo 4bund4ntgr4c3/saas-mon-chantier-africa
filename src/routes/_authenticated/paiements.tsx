@@ -1,15 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FeatureGate } from "@/components/feature-gate";
 import { useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
+import { ImportDialog, type ImportColumn } from "@/components/import-csv";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
 import {
   useCompanies,
   useDeleteRow,
+  useImportRows,
   usePayments,
   useSaveRow,
   useSuppliers,
@@ -53,6 +55,7 @@ function PaymentsPage() {
     () => [
       { name: "amount", label: "Montant (FCFA)", type: "number", required: true },
       { name: "payment_date", label: "Date du paiement", type: "date", required: true },
+      { name: "due_date", label: "Date d'échéance", type: "date" },
       {
         name: "kind",
         label: "Type de paiement",
@@ -83,6 +86,36 @@ function PaymentsPage() {
     [suppliers, companies],
   );
 
+  const importRows = useImportRows("payments");
+
+  const IMPORT_COLUMNS: ImportColumn[] = [
+    { key: "amount", label: "Montant", aliases: ["montant", "amount", "montant fcfa"] },
+    {
+      key: "payment_date",
+      label: "Date de paiement",
+      aliases: ["date", "date de paiement", "payment date"],
+    },
+    {
+      key: "due_date",
+      label: "Échéance",
+      aliases: ["echeance", "échéance", "due date", "date limite"],
+    },
+    { key: "kind", label: "Type", aliases: ["type", "type de paiement", "kind"] },
+    {
+      key: "method",
+      label: "Moyen",
+      aliases: ["moyen", "moyen de paiement", "methode", "méthode", "method"],
+    },
+    { key: "supplier", label: "Fournisseur", aliases: ["fournisseur", "supplier"] },
+    {
+      key: "company",
+      label: "Entreprise",
+      aliases: ["entreprise", "company", "societe", "société"],
+    },
+    { key: "reference", label: "Référence", aliases: ["reference", "référence", "transaction"] },
+    { key: "notes", label: "Notes", aliases: ["notes", "commentaire"] },
+  ];
+
   const supName = useMemo(() => new Map(suppliers.map((s) => [s.id, s.name])), [suppliers]);
   const compName = useMemo(() => new Map(companies.map((c) => [c.id, c.name])), [companies]);
 
@@ -92,6 +125,7 @@ function PaymentsPage() {
       project_id: projectId,
       amount: toNumber(g("amount")) ?? 0,
       payment_date: g("payment_date") || new Date().toISOString().slice(0, 10),
+      due_date: orNull(g("due_date")),
       kind: g("kind") || "comptant",
       method: g("method") || "especes",
       supplier_id: orNull(g("supplier_id")),
@@ -111,21 +145,61 @@ function PaymentsPage() {
         title="Paiements"
         subtitle={`${payments.length} versement(s) · ${fcfa(total)}`}
         action={
-          <RecordDialog
-            title="Nouveau paiement"
-            fields={fields}
-            initial={{
-              kind: "comptant",
-              method: "especes",
-              payment_date: new Date().toISOString().slice(0, 10),
-            }}
-            trigger={
-              <Button data-tour="payment-new">
-                <Plus className="size-4" /> Ajouter un paiement
-              </Button>
-            }
-            onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-          />
+          <div className="flex flex-wrap gap-2">
+            <ImportDialog
+              title="Importer des paiements"
+              description="Téléversez un fichier CSV ou Excel de paiements pour ce chantier."
+              columns={IMPORT_COLUMNS}
+              onImport={async (rows) => {
+                const supByName = new Map(suppliers.map((s) => [s.name.toLowerCase(), s.id]));
+                const compByName = new Map(companies.map((c) => [c.name.toLowerCase(), c.id]));
+                const kindByName = new Map(
+                  PAYMENT_TYPES.map((t) => [t.label.toLowerCase(), t.value]),
+                );
+                const methodByName = new Map(
+                  PAYMENT_METHODS.map((m) => [m.label.toLowerCase(), m.value]),
+                );
+                const payload = rows.map((r) => ({
+                  project_id: projectId,
+                  amount:
+                    Number(
+                      String(r["amount"] ?? "")
+                        .replace(/\s/g, "")
+                        .replace(",", "."),
+                    ) || 0,
+                  payment_date: r["payment_date"] || new Date().toISOString().slice(0, 10),
+                  due_date: orNull(r["due_date"]),
+                  kind: kindByName.get((r["kind"] ?? "").toLowerCase().trim()) ?? "comptant",
+                  method: methodByName.get((r["method"] ?? "").toLowerCase().trim()) ?? "especes",
+                  supplier_id: supByName.get((r["supplier"] ?? "").toLowerCase().trim()) ?? null,
+                  company_id: compByName.get((r["company"] ?? "").toLowerCase().trim()) ?? null,
+                  reference: orNull(r["reference"]),
+                  notes: orNull(r["notes"]),
+                }));
+                await importRows.mutateAsync(payload);
+              }}
+              trigger={
+                <Button variant="outline">
+                  <Upload className="size-4" /> Importer
+                </Button>
+              }
+            />
+            <RecordDialog
+              title="Nouveau paiement"
+              fields={fields}
+              initial={{
+                kind: "comptant",
+                method: "especes",
+                payment_date: new Date().toISOString().slice(0, 10),
+              }}
+              trigger={
+                <Button data-tour="payment-new">
+                  <Plus className="size-4" /> Ajouter un paiement
+                </Button>
+              }
+              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+            />
+          </div>
         }
       />
 
@@ -137,6 +211,7 @@ function PaymentsPage() {
               <th className="px-4 py-3">Bénéficiaire</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Moyen</th>
+              <th className="px-4 py-3">Échéance</th>
               <th className="px-4 py-3">Référence</th>
               <th className="px-4 py-3 text-right">Montant</th>
               <th className="px-4 py-3" />
@@ -145,7 +220,7 @@ function PaymentsPage() {
           <tbody className="divide-y divide-border">
             {payments.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
                   Aucun paiement enregistré.
                 </td>
               </tr>
@@ -165,6 +240,17 @@ function PaymentsPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {labelOf(PAYMENT_METHODS, p.method)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {p.due_date ? (
+                      p.due_date < new Date().toISOString().slice(0, 10) ? (
+                        <Badge variant="destructive">En retard · {frDate(p.due_date)}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">{frDate(p.due_date)}</span>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.reference ?? "—"}</td>
                   <td className="num whitespace-nowrap px-4 py-3 text-right text-primary">
@@ -203,6 +289,7 @@ function PaymentsPage() {
           initial={{
             amount: String(editing.amount),
             payment_date: editing.payment_date,
+            due_date: editing.due_date ?? "",
             kind: editing.kind,
             method: editing.method,
             supplier_id: editing.supplier_id ?? "",

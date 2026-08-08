@@ -149,8 +149,7 @@ function CompaniesPage() {
             phone: editing.phone ?? "",
             email: editing.email ?? "",
             contract_ref: editing.contract_ref ?? "",
-            contract_amount:
-              editing.contract_amount != null ? String(editing.contract_amount) : "",
+            contract_amount: editing.contract_amount != null ? String(editing.contract_amount) : "",
           }}
           onSubmit={async (v) => save.mutateAsync({ id: editing.id, values: toPayload(v) })}
         />

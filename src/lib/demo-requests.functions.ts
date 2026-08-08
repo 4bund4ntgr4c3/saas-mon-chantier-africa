@@ -23,5 +23,20 @@ export const submitDemoRequest = createServerFn({ method: "POST" })
       message: data.message || null,
     });
     if (error) throw new Error("Enregistrement impossible");
+
+    // Email de confirmation (edge function). Ne bloque jamais la soumission.
+    try {
+      await supabaseAdmin.functions.invoke("send-demo-confirmation", {
+        body: {
+          email: data.email,
+          full_name: data.full_name,
+          company: data.company || null,
+          message: data.message || null,
+        },
+      });
+    } catch (e) {
+      console.error("[demo-request] Email de confirmation non envoyé", e);
+    }
+
     return { ok: true };
   });

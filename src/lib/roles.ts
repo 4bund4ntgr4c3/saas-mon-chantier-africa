@@ -34,12 +34,16 @@ export type Feature =
   | "tableau-de-bord"
   | "projets"
   | "journal"
+  | "documents"
   | "budget"
   | "depenses"
   | "devis"
   | "paiements"
   | "fournisseurs"
   | "entreprises"
+  | "rapports"
+  | "recherche"
+  | "alertes"
   | "parametres"
   | "audit";
 
@@ -51,12 +55,16 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     "tableau-de-bord": "full",
     projets: "full",
     journal: "read",
+    documents: "full",
     budget: "full",
     depenses: "full",
     devis: "read",
     paiements: "full",
     fournisseurs: "full",
     entreprises: "full",
+    rapports: "full",
+    recherche: "full",
+    alertes: "full",
     parametres: "full",
     audit: "full",
   },
@@ -64,12 +72,16 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     "tableau-de-bord": "full",
     projets: "full",
     journal: "full",
+    documents: "full",
     budget: "full",
     depenses: "full",
     devis: "full",
     paiements: "full",
     fournisseurs: "full",
     entreprises: "full",
+    rapports: "full",
+    recherche: "full",
+    alertes: "full",
     parametres: "full",
     audit: "full",
   },
@@ -77,12 +89,16 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     "tableau-de-bord": "full",
     projets: "read",
     journal: "full",
+    documents: "read",
     budget: "none",
     depenses: "full",
     devis: "full",
     paiements: "none",
     fournisseurs: "full",
     entreprises: "none",
+    rapports: "none",
+    recherche: "read",
+    alertes: "none",
     parametres: "full",
     audit: "read",
   },

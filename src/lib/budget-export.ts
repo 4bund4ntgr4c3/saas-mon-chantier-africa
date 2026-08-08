@@ -72,7 +72,9 @@ export async function exportBudgetPdf(data: BudgetExportData) {
   for (const r of rows) {
     if (r.phase !== phase) {
       phase = r.phase;
-      body.push([{ content: phase.toUpperCase(), colSpan: 5, styles: { fontStyle: "bold" } } as never]);
+      body.push([
+        { content: phase.toUpperCase(), colSpan: 5, styles: { fontStyle: "bold" } } as never,
+      ]);
     }
     const ecart = r.planned - r.spent;
     body.push([
@@ -84,13 +86,7 @@ export async function exportBudgetPdf(data: BudgetExportData) {
     ]);
   }
   if (data.unassigned > 0) {
-    body.push([
-      "Dépenses sans poste",
-      fcfa(0),
-      fcfa(data.unassigned),
-      fcfa(-data.unassigned),
-      "—",
-    ]);
+    body.push(["Dépenses sans poste", fcfa(0), fcfa(data.unassigned), fcfa(-data.unassigned), "—"]);
   }
 
   autoTable(doc, {

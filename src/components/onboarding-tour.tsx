@@ -226,7 +226,8 @@ export function OnboardingTour() {
               </Button>
             )}
             <Button size="sm" onClick={() => go(step + 1)}>
-              {current.cta} {last ? <Check className="size-4" /> : <ArrowRight className="size-4" />}
+              {current.cta}{" "}
+              {last ? <Check className="size-4" /> : <ArrowRight className="size-4" />}
             </Button>
           </div>
         </div>

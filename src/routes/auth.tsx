@@ -127,8 +127,7 @@ function AuthPage() {
         {pendingConfirm ? (
           <div className="rounded-md border border-border bg-secondary/40 p-4 text-sm">
             Vérifiez votre boîte mail : un lien de confirmation vous a été envoyé à{" "}
-            <span className="text-primary">{email}</span>. Cliquez dessus pour activer votre
-            compte.
+            <span className="text-primary">{email}</span>. Cliquez dessus pour activer votre compte.
           </div>
         ) : (
           <Tabs defaultValue="signin">
@@ -182,16 +181,10 @@ function AuthPage() {
                   <Label htmlFor="name" className="mb-1.5 block text-xs text-muted-foreground">
                     Nom complet
                   </Label>
-                  <Input
-                    id="name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
+                  <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 </div>
                 <div>
-                  <Label className="mb-1.5 block text-xs text-muted-foreground">
-                    Je suis…
-                  </Label>
+                  <Label className="mb-1.5 block text-xs text-muted-foreground">Je suis…</Label>
                   <Select
                     value={accountType}
                     onValueChange={(v) => setAccountType(v as AccountType)}

@@ -66,8 +66,7 @@ export function RecordDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const set = (name: string, value: string) =>
-    setValues((prev) => ({ ...prev, [name]: value }));
+  const set = (name: string, value: string) => setValues((prev) => ({ ...prev, [name]: value }));
 
   return (
     <Dialog open={isOpen} onOpenChange={setOpen}>
@@ -100,10 +99,7 @@ export function RecordDialog({
                 {field.required && <span className="text-primary"> *</span>}
               </Label>
               {field.type === "select" ? (
-                <Select
-                  value={values[field.name] ?? ""}
-                  onValueChange={(v) => set(field.name, v)}
-                >
+                <Select value={values[field.name] ?? ""} onValueChange={(v) => set(field.name, v)}>
                   <SelectTrigger id={field.name}>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
@@ -126,7 +122,9 @@ export function RecordDialog({
               ) : (
                 <Input
                   id={field.name}
-                  type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+                  type={
+                    field.type === "number" ? "number" : field.type === "date" ? "date" : "text"
+                  }
                   step={field.type === "number" ? "any" : undefined}
                   required={field.required ?? false}
                   value={values[field.name] ?? ""}

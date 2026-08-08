@@ -4,11 +4,7 @@ import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCurrentProject } from "@/context/project-context";
 import { useAuditLogs, type AuditLog } from "@/lib/data";
@@ -75,10 +71,7 @@ export function NotificationsBell() {
   const bootstrapped = useRef(false);
 
   const alerts = useMemo(() => logs.filter(isSensitive).slice(0, 30), [logs]);
-  const unread = useMemo(
-    () => alerts.filter((l) => l.created_at > lastSeen),
-    [alerts, lastSeen],
-  );
+  const unread = useMemo(() => alerts.filter((l) => l.created_at > lastSeen), [alerts, lastSeen]);
 
   // Notification in-app (toast) pour chaque nouvelle action sensible.
   useEffect(() => {

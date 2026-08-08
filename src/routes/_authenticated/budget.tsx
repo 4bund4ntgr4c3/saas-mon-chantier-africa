@@ -43,10 +43,7 @@ function BudgetPage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
 
-  const lineByCategory = useMemo(
-    () => new Map(lines.map((l) => [l.category_id, l])),
-    [lines],
-  );
+  const lineByCategory = useMemo(() => new Map(lines.map((l) => [l.category_id, l])), [lines]);
 
   const spentByCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -149,7 +146,6 @@ function BudgetPage() {
         }
       />
 
-
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <SummaryCard label="Budget planifié par poste" value={fcfa(planned)} />
         <SummaryCard label="Dépenses réelles" value={fcfa(spent)} />
@@ -162,8 +158,8 @@ function BudgetPage() {
 
       {unassigned > 0 && (
         <p className="mb-5 rounded-md border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
-          {fcfa(unassigned)} de dépenses ne sont rattachées à aucun poste — ajoutez une catégorie
-          à ces dépenses pour un suivi complet.
+          {fcfa(unassigned)} de dépenses ne sont rattachées à aucun poste — ajoutez une catégorie à
+          ces dépenses pour un suivi complet.
         </p>
       )}
 
@@ -207,9 +203,7 @@ function BudgetPage() {
                         inputMode="decimal"
                         placeholder="Montant prévu"
                         value={draft ?? (plannedAmount ? String(plannedAmount) : "")}
-                        onChange={(e) =>
-                          setDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))
-                        }
+                        onChange={(e) => setDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))}
                       />
                       <Button
                         size="icon"

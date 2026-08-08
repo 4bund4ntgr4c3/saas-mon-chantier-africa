@@ -87,7 +87,11 @@ function AdminDemoRequestsPage() {
   }, [requests]);
 
   if (checkingRole) {
-    return <div className="panel p-10 text-center text-sm text-muted-foreground">Vérification des droits…</div>;
+    return (
+      <div className="panel p-10 text-center text-sm text-muted-foreground">
+        Vérification des droits…
+      </div>
+    );
   }
 
   if (!isAdmin) {
@@ -138,7 +142,9 @@ function AdminDemoRequestsPage() {
               key={request.id}
               request={request}
               onStatusChange={(status) => update.mutate({ id: request.id, values: { status } })}
-              onNotesSave={(admin_notes) => update.mutate({ id: request.id, values: { admin_notes } })}
+              onNotesSave={(admin_notes) =>
+                update.mutate({ id: request.id, values: { admin_notes } })
+              }
               onDelete={() => remove.mutate(request.id)}
             />
           ))}
@@ -175,7 +181,10 @@ function RequestCard({
           <Badge variant="outline" className={STATUS_STYLE[request.status]}>
             {STATUSES.find((s) => s.value === request.status)?.label ?? request.status}
           </Badge>
-          <Select value={request.status} onValueChange={(v) => onStatusChange(v as DemoRequestStatus)}>
+          <Select
+            value={request.status}
+            onValueChange={(v) => onStatusChange(v as DemoRequestStatus)}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue />
             </SelectTrigger>
@@ -210,11 +219,17 @@ function RequestCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-4 text-sm">
-        <a className="flex items-center gap-2 text-primary hover:underline" href={`mailto:${request.email}`}>
+        <a
+          className="flex items-center gap-2 text-primary hover:underline"
+          href={`mailto:${request.email}`}
+        >
           <Mail className="size-4" /> {request.email}
         </a>
         {request.phone && (
-          <a className="flex items-center gap-2 text-primary hover:underline" href={`tel:${request.phone}`}>
+          <a
+            className="flex items-center gap-2 text-primary hover:underline"
+            href={`tel:${request.phone}`}
+          >
             <Phone className="size-4" /> {request.phone}
           </a>
         )}

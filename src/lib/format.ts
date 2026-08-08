@@ -67,6 +67,25 @@ export const PROJECT_STATUSES = [
   { value: "termine", label: "Terminé" },
 ] as const;
 
+export const DOCUMENT_CATEGORIES = [
+  { value: "plan", label: "Plans" },
+  { value: "permis_construire", label: "Permis de construire" },
+  { value: "acte_vente", label: "Acte de vente" },
+  { value: "facture", label: "Factures" },
+  { value: "contrat", label: "Contrats" },
+  { value: "garantie", label: "Garanties" },
+  { value: "photo_chantier", label: "Photos du chantier" },
+  { value: "autre", label: "Autres" },
+] as const;
+
+export function formatBytes(bytes: number | null | undefined) {
+  const n = Number(bytes ?? 0);
+  if (n <= 0) return "—";
+  if (n < 1024) return `${n} o`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} Ko`;
+  return `${(n / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
 export function labelOf(
   list: readonly { value: string; label: string }[],
   value: string | null | undefined,

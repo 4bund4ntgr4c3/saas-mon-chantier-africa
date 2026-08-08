@@ -76,7 +76,8 @@ function AuditPage() {
   const filtered = useMemo(
     () =>
       logs.filter(
-        (l) => (entity === "all" || l.entity === entity) && (action === "all" || l.action === action),
+        (l) =>
+          (entity === "all" || l.entity === entity) && (action === "all" || l.action === action),
       ),
     [logs, entity, action],
   );
@@ -123,8 +124,8 @@ function AuditPage() {
       <p className="mb-5 flex items-start gap-2 rounded-md border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-4 shrink-0" />
         Chaque changement de budget, chaque paiement créé, modifié ou supprimé et chaque suppression
-        d'élément est enregistré automatiquement. Ce journal est en lecture seule et ne peut pas être
-        effacé.
+        d'élément est enregistré automatiquement. Ce journal est en lecture seule et ne peut pas
+        être effacé.
       </p>
 
       <div className="panel overflow-x-auto">
@@ -159,9 +160,7 @@ function AuditPage() {
                     {dateTime(l.created_at)}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge
-                      variant={l.action === "suppression" ? "destructive" : "outline"}
-                    >
+                    <Badge variant={l.action === "suppression" ? "destructive" : "outline"}>
                       {ACTION_LABEL[l.action] ?? l.action}
                     </Badge>
                   </td>

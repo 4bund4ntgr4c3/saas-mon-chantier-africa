@@ -117,20 +117,20 @@ function QuotesPage() {
         subtitle={`${quotes.length} devis · ${fcfa(total)} cumulés`}
         action={
           canEdit ? (
-          <RecordDialog
-            title="Nouveau devis"
-            fields={fields}
-            initial={{
-              status: "en_attente",
-              quote_date: new Date().toISOString().slice(0, 10),
-            }}
-            trigger={
-              <Button>
-                <Plus className="size-4" /> Ajouter un devis
-              </Button>
-            }
-            onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-          />
+            <RecordDialog
+              title="Nouveau devis"
+              fields={fields}
+              initial={{
+                status: "en_attente",
+                quote_date: new Date().toISOString().slice(0, 10),
+              }}
+              trigger={
+                <Button>
+                  <Plus className="size-4" /> Ajouter un devis
+                </Button>
+              }
+              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+            />
           ) : undefined
         }
       />

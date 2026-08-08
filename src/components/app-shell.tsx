@@ -1,13 +1,17 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  BarChart3,
+  BellRing,
   Building2,
   FileText,
+  FolderOpen,
   Gauge,
   HardHat,
   Hammer,
   LogOut,
   NotebookPen,
   PiggyBank,
+  Search,
   ShieldCheck,
   Settings,
   Receipt,
@@ -38,19 +42,21 @@ const NAV = [
   { to: "/tableau-de-bord", label: "Tableau de bord", icon: Gauge, feature: "tableau-de-bord" },
   { to: "/projets", label: "Projets", icon: HardHat, feature: "projets" },
   { to: "/journal", label: "Journal de chantier", icon: NotebookPen, feature: "journal" },
+  { to: "/documents", label: "Documents", icon: FolderOpen, feature: "documents" },
   { to: "/budget", label: "Budget", icon: PiggyBank, feature: "budget" },
   { to: "/depenses", label: "Dépenses", icon: Receipt, feature: "depenses" },
   { to: "/devis", label: "Devis", icon: FileText, feature: "devis" },
   { to: "/paiements", label: "Paiements", icon: Wallet, feature: "paiements" },
   { to: "/fournisseurs", label: "Fournisseurs", icon: Store, feature: "fournisseurs" },
   { to: "/entreprises", label: "Entreprises", icon: Building2, feature: "entreprises" },
+  { to: "/rapports", label: "Rapports", icon: BarChart3, feature: "rapports" },
+  { to: "/recherche", label: "Recherche", icon: Search, feature: "recherche" },
+  { to: "/alertes", label: "Alertes", icon: BellRing, feature: "alertes" },
   { to: "/audit", label: "Journal d'audit", icon: ShieldCheck, feature: "audit" },
   { to: "/parametres", label: "Paramètres", icon: Settings, feature: "parametres" },
 ] as const satisfies readonly { to: string; label: string; icon: typeof Gauge; feature: Feature }[];
 
-const ADMIN_NAV = [
-  { to: "/admin/demandes-demo", label: "Demandes de démo", icon: Inbox },
-] as const;
+const ADMIN_NAV = [{ to: "/admin/demandes-demo", label: "Demandes de démo", icon: Inbox }] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { projects, projectId, setProjectId } = useCurrentProject();
@@ -144,12 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Button asChild size="sm" variant="secondary">
                 <Link to="/projets">Gérer les projets</Link>
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="lg:hidden"
-                onClick={signOut}
-              >
+              <Button size="sm" variant="ghost" className="lg:hidden" onClick={signOut}>
                 <LogOut className="size-4" />
               </Button>
             </div>
@@ -205,8 +206,7 @@ export function EmptyProjectNotice() {
       <HardHat className="mb-3 size-8 text-primary" />
       <h2 className="font-display text-lg font-semibold">Aucun chantier sélectionné</h2>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        Créez d'abord un projet de construction pour commencer à suivre le budget et les
-        dépenses.
+        Créez d'abord un projet de construction pour commencer à suivre le budget et les dépenses.
       </p>
       <Button asChild className="mt-5">
         <Link to="/projets">Créer un projet</Link>

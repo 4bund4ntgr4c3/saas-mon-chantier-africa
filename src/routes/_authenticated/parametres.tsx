@@ -15,15 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ACCOUNT_TYPES, accessFor, useAccountType, type AccountType, type Feature } from "@/lib/roles";
-import { supabase } from "@/integrations/supabase/client";
 import {
-  useCategories,
-  useDeleteRow,
-  useProfile,
-  useSaveRow,
-  type Category,
-} from "@/lib/data";
+  ACCOUNT_TYPES,
+  accessFor,
+  useAccountType,
+  type AccountType,
+  type Feature,
+} from "@/lib/roles";
+import { supabase } from "@/integrations/supabase/client";
+import { useCategories, useDeleteRow, useProfile, useSaveRow, type Category } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/parametres")({
   head: () => ({
@@ -194,10 +194,7 @@ function SettingsPage() {
             </div>
             <div>
               <Label className="mb-1.5 block text-xs text-muted-foreground">Type de compte</Label>
-              <Select
-                value={selectedType}
-                onValueChange={(v) => setPendingType(v as AccountType)}
-              >
+              <Select value={selectedType} onValueChange={(v) => setPendingType(v as AccountType)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

@@ -79,10 +79,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "BâtiBénin — Suivi de chantier en FCFA" },
-      { name: "description", content: "La plateforme de pilotage technique et financier pour les entrepreneurs d'Afrique de l'Ouest. Gérez vos budgets, fournisseurs et dépenses en FCFA." },
+      {
+        name: "description",
+        content:
+          "La plateforme de pilotage technique et financier pour les entrepreneurs d'Afrique de l'Ouest. Gérez vos budgets, fournisseurs et dépenses en FCFA.",
+      },
       { name: "author", content: "BâtiBénin" },
       { property: "og:title", content: "BâtiBénin — Suivi de chantier en FCFA" },
-      { property: "og:description", content: "La plateforme de pilotage technique et financier pour les entrepreneurs d'Afrique de l'Ouest." },
+      {
+        property: "og:description",
+        content:
+          "La plateforme de pilotage technique et financier pour les entrepreneurs d'Afrique de l'Ouest.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@batibenin" },
