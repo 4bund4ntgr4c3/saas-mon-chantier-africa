@@ -262,6 +262,8 @@ export function useAuditLogs(projectId: string | null) {
       if (projectId) query = query.eq("project_id", projectId);
       return unwrap<AuditLog[]>(query);
     },
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 }
 
