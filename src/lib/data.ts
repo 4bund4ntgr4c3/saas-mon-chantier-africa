@@ -283,6 +283,7 @@ export function useSaveRow(table: TableName, successMessage = "Enregistré") {
     },
     onSuccess: () => {
       RELATED[table].forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
+      qc.invalidateQueries({ queryKey: ["audit_logs"] });
       toast.success(successMessage);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -302,6 +303,7 @@ export function useDeleteRow(table: TableName) {
     },
     onSuccess: () => {
       RELATED[table].forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
+      qc.invalidateQueries({ queryKey: ["audit_logs"] });
       toast.success("Supprimé");
     },
     onError: (e: Error) => toast.error(e.message),
