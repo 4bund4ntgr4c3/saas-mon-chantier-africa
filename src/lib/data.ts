@@ -685,3 +685,105 @@ export function useDeleteDemoRequest() {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+/* ---------- Notifications e-mail ---------- */
+
+export type NotificationPreferences = Tables["notification_preferences"]["Row"];
+export type NotificationPreferencesUpdate = Tables["notification_preferences"]["Update"];
+
+const DEFAULT_NOTIFICATION_PREFS: Omit<Tables["notification_preferences"]["Insert"], "user_id"> = {
+  email: null,
+  alerts_enabled: true,
+  alert_due_payments: true,
+  alert_late_payments: true,
+  alert_budget: true,
+  alert_documents: true,
+  alert_projects: true,
+  weekly_digest: true,
+};
+
+export function useNotificationPreferences() {
+  return useQuery({
+    queryKey: ["notification_preferences"],
+    queryFn: async () => {
+      if (isGuestMode()) return null;
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return null;
+      const { data, error } = await supabase
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (data) return data as NotificationPreferences;
+      const { data: inserted, error: iErr } = await supabase
+        .from("notification_preferences")
+        .insert({
+          ...DEFAULT_NOTIFICATION_PREFS,
+          user_id: auth.user.id,
+          email: auth.user.email ?? null,
+        })
+        .select()
+        .single();
+      if (iErr) throw new Error(iErr.message);
+      return inserted as NotificationPreferences;
+    },
+  });
+}
+
+export function useUpdateNotificationPreferences() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      values,
+    }: {
+      userId: string;
+      values: NotificationPreferencesUpdate;
+    }) => {
+      const { error } = await supabase
+        .from("notification_preferences")
+        .upsert({ user_id: userId, ...values }, { onConflict: "user_id" });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notification_preferences"] });
+      toast.success("Préférences de notifications enregistrées");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+type SendEmailResult = {
+  ok: boolean;
+  sent?: boolean;
+  skipped?: boolean;
+  reason?: string;
+};
+
+export function useSendNotificationEmail() {
+  return useMutation({
+    mutationFn: async (mode: "now" | "test") => {
+      if (isGuestMode()) throw new Error("Connectez-vous pour recevoir les notifications");
+      const { data, error } = await supabase.functions.invoke("email-notifications", {
+        body: { mode, force: true },
+      });
+      if (error) throw new Error(error.message);
+      return data as SendEmailResult;
+    },
+    onSuccess: (res) => {
+      if (res.skipped) {
+        toast.info(
+          res.reason === "no_resend_key"
+            ? "La clé d'envoi (Resend) n'est pas configurée côté serveur"
+            : res.reason === "no_alerts"
+              ? "Aucune alerte en cours pour l'instant"
+              : "Aucun e-mail envoyé",
+        );
+      } else {
+        toast.success("E-mail envoyé");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}

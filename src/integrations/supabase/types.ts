@@ -268,6 +268,78 @@ export type Database = {
         };
         Relationships: [];
       };
+      email_log: {
+        Row: {
+          details: Json | null;
+          id: string;
+          items: number;
+          kind: string;
+          sent_at: string;
+          user_id: string;
+        };
+        Insert: {
+          details?: Json | null;
+          id?: string;
+          items?: number;
+          kind: string;
+          sent_at?: string;
+          user_id: string;
+        };
+        Update: {
+          details?: Record<string, unknown> | null;
+          id?: string;
+          items?: number;
+          kind?: string;
+          sent_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      notification_preferences: {
+        Row: {
+          alert_budget: boolean;
+          alert_documents: boolean;
+          alert_due_payments: boolean;
+          alert_late_payments: boolean;
+          alert_projects: boolean;
+          alerts_enabled: boolean;
+          created_at: string;
+          email: string | null;
+          last_digest_at: string | null;
+          updated_at: string;
+          user_id: string;
+          weekly_digest: boolean;
+        };
+        Insert: {
+          alert_budget?: boolean;
+          alert_documents?: boolean;
+          alert_due_payments?: boolean;
+          alert_late_payments?: boolean;
+          alert_projects?: boolean;
+          alerts_enabled?: boolean;
+          created_at?: string;
+          email?: string | null;
+          last_digest_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+          weekly_digest?: boolean;
+        };
+        Update: {
+          alert_budget?: boolean;
+          alert_documents?: boolean;
+          alert_due_payments?: boolean;
+          alert_late_payments?: boolean;
+          alert_projects?: boolean;
+          alerts_enabled?: boolean;
+          created_at?: string;
+          email?: string | null;
+          last_digest_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          weekly_digest?: boolean;
+        };
+        Relationships: [];
+      };
       expenses: {
         Row: {
           amount: number;

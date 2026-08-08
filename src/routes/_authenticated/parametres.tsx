@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Mail, Pencil, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
 import { RecordDialog, toNumber, type Field, type Values } from "@/components/record-form";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -23,7 +24,16 @@ import {
   type Feature,
 } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, useDeleteRow, useProfile, useSaveRow, type Category } from "@/lib/data";
+import {
+  useCategories,
+  useDeleteRow,
+  useNotificationPreferences,
+  useProfile,
+  useSaveRow,
+  useSendNotificationEmail,
+  useUpdateNotificationPreferences,
+  type Category,
+} from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/parametres")({
   head: () => ({
@@ -77,12 +87,72 @@ const FEATURE_LABELS: [Feature, string][] = [
   ["entreprises", "Entreprises"],
 ];
 
+type PrefKey =
+  | "alerts_enabled"
+  | "alert_due_payments"
+  | "alert_late_payments"
+  | "alert_budget"
+  | "alert_documents"
+  | "alert_projects"
+  | "weekly_digest";
+
+const NOTIFICATION_TOGGLES: { key: PrefKey; label: string; hint: string }[] = [
+  {
+    key: "alerts_enabled",
+    label: "Activer les alertes e-mail",
+    hint: "Si désactivé, aucun e-mail ne vous est envoyé.",
+  },
+  {
+    key: "alert_due_payments",
+    label: "Paiements à échéance",
+    hint: "Rappels pour les échéances dans les 7 prochains jours.",
+  },
+  {
+    key: "alert_late_payments",
+    label: "Paiements en retard",
+    hint: "Échéances dépassées non réglées.",
+  },
+  {
+    key: "alert_budget",
+    label: "Postes de budget dépassés",
+    hint: "Plus de 80 % du prévu dépensé sur un poste.",
+  },
+  {
+    key: "alert_documents",
+    label: "Pièces réglementaires manquantes",
+    hint: "Plans, permis de construire, acte de vente, contrat.",
+  },
+  {
+    key: "alert_projects",
+    label: "Chantiers hors délai",
+    hint: "Date de fin prévue dépassée.",
+  },
+  {
+    key: "weekly_digest",
+    label: "Récapitulatif hebdomadaire",
+    hint: "Résumé de vos points d'attention chaque début de semaine.",
+  },
+];
+
+const TOGGLE_DEFAULTS: Record<PrefKey, boolean> = {
+  alerts_enabled: true,
+  alert_due_payments: true,
+  alert_late_payments: true,
+  alert_budget: true,
+  alert_documents: true,
+  alert_projects: true,
+  weekly_digest: true,
+};
+
 function SettingsPage() {
   const { data: profile } = useProfile();
   const saveProfile = useSaveRow("profiles", "Profil mis à jour");
   const { data: categories = [] } = useCategories();
   const saveCategory = useSaveRow("categories", "Poste enregistré");
   const removeCategory = useDeleteRow("categories");
+  const { data: prefs } = useNotificationPreferences();
+  const savePrefs = useUpdateNotificationPreferences();
+  const sendEmail = useSendNotificationEmail();
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -91,12 +161,42 @@ function SettingsPage() {
   const { type: accountType } = useAccountType();
   const [pendingType, setPendingType] = useState<AccountType | null>(null);
   const selectedType = pendingType ?? accountType;
+  const [prefEmail, setPrefEmail] = useState("");
+  const [toggles, setToggles] = useState<Record<PrefKey, boolean>>(TOGGLE_DEFAULTS);
 
   useEffect(() => {
     if (!profile) return;
     setFullName(profile.full_name ?? "");
     setPhone(profile.phone ?? "");
   }, [profile]);
+
+  useEffect(() => {
+    if (!prefs) return;
+    setPrefEmail(prefs.email ?? profile?.email ?? "");
+    setToggles((t) => ({
+      ...t,
+      alerts_enabled: prefs.alerts_enabled,
+      alert_due_payments: prefs.alert_due_payments,
+      alert_late_payments: prefs.alert_late_payments,
+      alert_budget: prefs.alert_budget,
+      alert_documents: prefs.alert_documents,
+      alert_projects: prefs.alert_projects,
+      weekly_digest: prefs.weekly_digest,
+    }));
+  }, [prefs, profile]);
+
+  function setToggle(key: PrefKey, value: boolean) {
+    setToggles((t) => ({ ...t, [key]: value }));
+  }
+
+  async function submitPrefs(e: React.FormEvent) {
+    e.preventDefault();
+    if (!prefs?.user_id) return;
+    await savePrefs.mutateAsync({
+      userId: prefs.user_id,
+      values: { email: prefEmail.trim() || null, ...toggles },
+    });
+  }
 
   const fields: Field[] = useMemo(
     () => [
@@ -255,6 +355,87 @@ function SettingsPage() {
           </form>
         </section>
       </div>
+
+      <section className="mt-8">
+        <h2 className="mb-3 font-display text-base font-semibold">Notifications e-mail</h2>
+        {prefs === undefined ? (
+          <div className="panel p-5 text-sm text-muted-foreground">Chargement…</div>
+        ) : prefs === null ? (
+          <div className="panel p-5 text-sm text-muted-foreground">
+            Connectez-vous à votre compte pour recevoir les e-mails d'alerte et le récapitulatif
+            hebdomadaire.
+          </div>
+        ) : (
+          <form onSubmit={submitPrefs} className="panel space-y-4 p-5">
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">À quelle adresse recevoir vos alertes ?</p>
+                  <p className="text-xs text-muted-foreground">
+                    Un e-mail quotidien en cas d'alerte (échéances, retards, dépassements, pièces
+                    manquantes, délais) et un récapitulatif hebdomadaire.
+                  </p>
+                </div>
+                <Mail className="size-4 shrink-0 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="pref_email" className="mb-1.5 block text-xs text-muted-foreground">
+                Adresse e-mail
+              </Label>
+              <Input
+                id="pref_email"
+                type="email"
+                value={prefEmail}
+                placeholder={profile?.email ?? "vous@exemple.com"}
+                onChange={(e) => setPrefEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="divide-y divide-border rounded-lg border border-border">
+              {NOTIFICATION_TOGGLES.map(({ key, label, hint }) => (
+                <div key={key} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">{label}</p>
+                    <p className="text-xs text-muted-foreground">{hint}</p>
+                  </div>
+                  <Switch
+                    disabled={key !== "alerts_enabled" && !toggles.alerts_enabled}
+                    checked={toggles[key]}
+                    onCheckedChange={(v) => setToggle(key, v)}
+                    aria-label={label}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="submit" disabled={savePrefs.isPending}>
+                {savePrefs.isPending ? "Enregistrement…" : "Enregistrer"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={sendEmail.isPending || !toggles.alerts_enabled}
+                onClick={() => sendEmail.mutate("test")}
+              >
+                <Mail className="mr-1.5 size-4" />
+                E-mail de test
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={sendEmail.isPending || !toggles.alerts_enabled}
+                onClick={() => sendEmail.mutate("now")}
+              >
+                <Send className="mr-1.5 size-4" />
+                Envoyer les alertes maintenant
+              </Button>
+            </div>
+          </form>
+        )}
+      </section>
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">

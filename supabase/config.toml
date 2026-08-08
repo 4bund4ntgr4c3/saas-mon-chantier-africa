@@ -1,1 +1,7 @@
 project_id = "zyiujrofyziewlpildyd"
+
+[functions.email-notifications]
+verify_jwt = false
+
+[functions.email-notifications.cron]
+schedule = "0 8 * * *"
