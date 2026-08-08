@@ -7,6 +7,8 @@ export const demoRequestSchema = z.object({
   email: z.string().trim().email("Email invalide").max(255),
   phone: z.string().trim().max(40).optional().or(z.literal("")),
   message: z.string().trim().max(1000).optional().or(z.literal("")),
+  attachment_path: z.string().trim().max(500).optional().or(z.literal("")),
+  attachment_name: z.string().trim().max(255).optional().or(z.literal("")),
 });
 
 export type DemoRequestInput = z.infer<typeof demoRequestSchema>;
@@ -21,6 +23,8 @@ export const submitDemoRequest = createServerFn({ method: "POST" })
       email: data.email,
       phone: data.phone || null,
       message: data.message || null,
+      attachment_path: data.attachment_path || null,
+      attachment_name: data.attachment_name || null,
     });
     if (error) throw new Error("Enregistrement impossible");
 

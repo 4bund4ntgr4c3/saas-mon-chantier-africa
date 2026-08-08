@@ -1,16 +1,28 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Trash2, Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Copy, Plus, Search, Trash2, Pencil } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
 import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Values } from "@/components/record-form";
-import { checklistProgress, CHECKLIST_STEPS_COUNT } from "@/components/startup-checklist";
+import {
+  checklistMissingSteps,
+  checklistProgress,
+  CHECKLIST_STEPS_COUNT,
+} from "@/components/startup-checklist";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
-import { useDeleteRow, useSaveRow, type Project } from "@/lib/data";
+import { useDeleteRow, useDuplicateProject, useSaveRow, type Project } from "@/lib/data";
 import { fcfa, frDate, labelOf, num, PROJECT_STATUSES } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/projets")({
@@ -94,12 +106,16 @@ function toPayload(v: Values) {
 }
 
 function ChecklistProgress({ project }: { project: Project }) {
+  const navigate = useNavigate();
+  const { setProjectId } = useCurrentProject();
   const [progress, setProgress] = useState<{ done: number; total: number; percent: number } | null>(
     null,
   );
+  const [missing, setMissing] = useState<string[]>([]);
 
   useEffect(() => {
     setProgress(checklistProgress(project));
+    setMissing(checklistMissingSteps(project));
   }, [project]);
 
   const done = progress?.done ?? 0;
@@ -115,6 +131,24 @@ function ChecklistProgress({ project }: { project: Project }) {
         </span>
       </div>
       <Progress value={percent} className="mt-1.5 h-1.5" />
+      {!complete && missing.length > 0 && (
+        <p className="mt-2 line-clamp-2 text-[11px] text-muted-foreground">
+          Reste : {missing.join(", ")}
+        </p>
+      )}
+      {!complete && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-2 w-full"
+          onClick={() => {
+            setProjectId(project.id);
+            navigate({ to: "/tableau-de-bord" });
+          }}
+        >
+          Continuer la checklist
+        </Button>
+      )}
     </div>
   );
 }
@@ -124,7 +158,28 @@ function ProjectsPage() {
   const { projects, projectId, setProjectId } = useCurrentProject();
   const save = useSaveRow("projects", "Projet enregistré");
   const remove = useDeleteRow("projects");
+  const duplicate = useDuplicateProject();
   const [editing, setEditing] = useState<Project | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("tous");
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "name" | "budget">("recent");
+
+  const visible = useMemo(() => {
+    const list = projects.filter((p) => {
+      if (statusFilter !== "tous" && p.status !== statusFilter) return false;
+      if (query.trim()) {
+        const q = query.trim().toLowerCase();
+        const hay = [p.name, p.city, p.commune, p.quartier].filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    return [...list].sort((a, b) => {
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      if (sortBy === "budget") return Number(b.budget ?? 0) - Number(a.budget ?? 0);
+      return String(b.created_at).localeCompare(String(a.created_at));
+    });
+  }, [projects, statusFilter, query, sortBy]);
 
   return (
     <>
@@ -151,13 +206,50 @@ function ProjectsPage() {
 
       <ReadOnlyNotice feature="projets" />
 
-      {projects.length === 0 ? (
+      <div className="panel mb-4 flex flex-wrap items-center gap-3 p-3">
+        <div className="relative min-w-48 flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Rechercher un chantier…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[170px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="tous">Tous les statuts</SelectItem>
+            {PROJECT_STATUSES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "recent" | "name" | "budget")}>
+          <SelectTrigger className="w-[170px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Plus récents</SelectItem>
+            <SelectItem value="name">Nom (A → Z)</SelectItem>
+            <SelectItem value="budget">Budget décroissant</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {visible.length === 0 ? (
         <div className="panel p-10 text-center text-sm text-muted-foreground">
-          Aucun projet. Créez votre premier chantier pour démarrer le suivi.
+          {projects.length === 0
+            ? "Aucun projet. Créez votre premier chantier pour démarrer le suivi."
+            : "Aucun chantier ne correspond aux filtres."}
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {projects.map((p) => (
+          {visible.map((p) => (
             <article key={p.id} className="panel flex flex-col p-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -209,6 +301,9 @@ function ProjectsPage() {
                 </Button>
                 {canEdit && (
                   <>
+                    <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(p.id)}>
+                      <Copy className="size-4" />
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditing(p)}>
                       <Pencil className="size-4" />
                     </Button>

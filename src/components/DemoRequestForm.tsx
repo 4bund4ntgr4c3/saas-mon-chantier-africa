@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 import { submitDemoRequest, demoRequestSchema } from "@/lib/demo-requests.functions";
 
 const empty = { full_name: "", company: "", email: "", phone: "", message: "" };
@@ -13,6 +14,8 @@ export function DemoRequestForm() {
   const [values, setValues] = useState(empty);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const set =
     (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -30,8 +33,26 @@ export function DemoRequestForm() {
     setErrors({});
     setLoading(true);
     try {
-      await submit({ data: parsed.data });
+      let attachment_path = "";
+      let attachment_name = "";
+      if (file) {
+        const path = `requests/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error: upError } = await supabase.storage
+          .from("demo-attachments")
+          .upload(path, file, {
+            contentType: file.type,
+            upsert: false,
+          });
+        if (upError) throw new Error("Pièce jointe non enregistrée");
+        attachment_path = path;
+        attachment_name = file.name;
+      }
+      await submit({
+        data: { ...parsed.data, attachment_path, attachment_name },
+      });
       setValues(empty);
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = "";
       toast.success("Demande envoyée", { description: "Notre équipe vous recontacte sous 24h." });
     } catch {
       toast.error("Envoi impossible", { description: "Veuillez réessayer dans un instant." });
@@ -97,6 +118,20 @@ export function DemoRequestForm() {
           rows={3}
           placeholder="Nombre de chantiers, équipes, besoins spécifiques…"
         />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="dr-attachment">Plan / brief du projet (optionnel)</Label>
+        <Input
+          id="dr-attachment"
+          ref={fileRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="cursor-pointer"
+        />
+        <p className="text-xs text-muted-foreground">
+          PDF, Office, image ou archive — {file ? file.name : "aucun fichier joint"}.
+        </p>
       </div>
       <button
         type="submit"

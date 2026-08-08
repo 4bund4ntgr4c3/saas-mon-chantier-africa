@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -8,6 +8,8 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -15,12 +17,24 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { AlertTriangle, Building2, FileText, Receipt, Store, Wallet } from "lucide-react";
+import {
+  AlertTriangle,
+  Building2,
+  FileDown,
+  FileSpreadsheet,
+  FileText,
+  PiggyBank,
+  Receipt,
+  Store,
+  Wallet,
+} from "lucide-react";
+import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { StartupChecklist } from "@/components/startup-checklist";
 
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useCurrentProject } from "@/context/project-context";
 import {
   useBudgetLines,
@@ -109,8 +123,10 @@ function Dashboard() {
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
   const { data: companies = [] } = useCompanies();
+  const [exporting, setExporting] = useState<"pdf" | "excel" | "recap" | null>(null);
 
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+  const catPhase = useMemo(() => new Map(categories.map((c) => [c.id, c.phase])), [categories]);
 
   const totalSpent = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const budget = Number(project?.budget ?? 0);
@@ -167,6 +183,123 @@ function Dashboard() {
       .sort((a, b) => b.ratio - a.ratio);
   }, [budgetLines, expenses, catName]);
 
+  const budgetVsActual = useMemo(() => {
+    const spentByCat = new Map<string, number>();
+    expenses.forEach((e) => {
+      if (!e.category_id) return;
+      spentByCat.set(e.category_id, (spentByCat.get(e.category_id) ?? 0) + Number(e.amount));
+    });
+    return budgetLines
+      .map((line) => {
+        const planned = Number(line.planned_amount);
+        const spent = spentByCat.get(line.category_id) ?? 0;
+        return {
+          phase: catPhase.get(line.category_id) ?? "Poste",
+          name: catName.get(line.category_id) ?? "Poste",
+          planned,
+          spent,
+          restant: planned - spent,
+          ratio: planned > 0 ? Math.round((spent / planned) * 100) : 0,
+        };
+      })
+      .filter((l) => l.planned > 0 || l.spent > 0)
+      .sort((a, b) => b.spent - a.spent);
+  }, [budgetLines, expenses, catName, catPhase]);
+
+  const cashflow = useMemo(() => {
+    if (!project) return [];
+    const start = project.start_date ? new Date(project.start_date) : new Date();
+    const lastExpense = expenses.reduce<string | null>((acc, e) => {
+      if (e.expense_date && (!acc || e.expense_date > acc)) return e.expense_date;
+      return acc;
+    }, null);
+    const end = project.end_date ?? lastExpense ?? new Date().toISOString().slice(0, 10);
+    const endDate = new Date(end);
+    const months: string[] = [];
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const last = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+    while (cursor <= last) {
+      months.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    if (months.length === 0) return [];
+    const totalMonths = Math.max(months.length, 1);
+    const byMonth = new Map<string, number>();
+    expenses.forEach((e) => {
+      const key = monthKey(e.expense_date);
+      byMonth.set(key, (byMonth.get(key) ?? 0) + Number(e.amount));
+    });
+    let cumul = 0;
+    return months.map((key, i) => {
+      cumul += byMonth.get(key) ?? 0;
+      const elapsed = i + 1;
+      const planned = budget > 0 ? (budget * elapsed) / totalMonths : 0;
+      return { mois: monthLabel(key), prévu: Math.round(planned), réalisé: cumul };
+    });
+  }, [project, expenses, budget]);
+
+  const runExport = async (kind: "pdf" | "excel" | "recap") => {
+    if (!project) return;
+    setExporting(kind);
+    try {
+      if (kind === "recap") {
+        const { exportProjectSummaryPdf } = await import("@/lib/project-summary-export");
+        await exportProjectSummaryPdf({
+          project: {
+            name: project.name,
+            city: project.city,
+            commune: project.commune,
+            quartier: project.quartier,
+            address: project.address,
+            status: project.status,
+            start_date: project.start_date,
+            end_date: project.end_date,
+            budget: Number(project.budget ?? 0),
+            built_area: Number(project.built_area ?? 0),
+            land_area: Number(project.land_area ?? 0),
+            house_type: project.house_type,
+          },
+          spent: totalSpent,
+          paid: payments.reduce((s, p) => s + Number(p.amount), 0),
+          spentByCategory: byCategory.map((c) => ({ name: c.name, spent: c.value })),
+          suppliersCount: suppliers.length,
+          companiesCount: companies.length,
+          expensesCount: expenses.length,
+          paymentsCount: payments.length,
+          quotesCount: quotes.length,
+        });
+        toast.success("Fiche projet PDF téléchargée");
+        return;
+      }
+      const { exportBudgetExcel, exportBudgetPdf } = await import("@/lib/budget-export");
+      const payload = {
+        projectName: project.name,
+        projectBudget: budget,
+        unassigned: expenses
+          .filter((e) => !e.category_id)
+          .reduce((s, e) => s + Number(e.amount), 0),
+        rows: budgetLines.map((line) => ({
+          phase: catPhase.get(line.category_id) ?? "Poste",
+          category: catName.get(line.category_id) ?? "Poste",
+          planned: Number(line.planned_amount),
+          spent: (() => {
+            const cat = line.category_id;
+            return expenses
+              .filter((e) => e.category_id === cat)
+              .reduce((s, e) => s + Number(e.amount), 0);
+          })(),
+        })),
+      };
+      if (kind === "pdf") await exportBudgetPdf(payload);
+      else await exportBudgetExcel(payload);
+      toast.success(kind === "pdf" ? "Rapport PDF téléchargé" : "Rapport Excel téléchargé");
+    } catch {
+      toast.error("Export impossible. Réessayez.");
+    } finally {
+      setExporting(null);
+    }
+  };
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Chargement…</p>;
   if (!project) return <EmptyProjectNotice />;
 
@@ -176,9 +309,43 @@ function Dashboard() {
         title={project.name}
         subtitle={[project.quartier, project.commune, project.city].filter(Boolean).join(" · ")}
         action={
-          <Badge variant="outline" className="border-primary/40 text-primary">
-            {num(progress, 1)} % d'avancement financier
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="border-primary/40 text-primary">
+              {num(progress, 1)} % d'avancement financier
+            </Badge>
+            {canSeeBudget && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting !== null}
+                  onClick={() => runExport("recap")}
+                  title="Fiche récapitulative du chantier en PDF"
+                >
+                  <FileText className="mr-2 size-4" />
+                  {exporting === "recap" ? "Export…" : "Récap PDF"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting !== null}
+                  onClick={() => runExport("pdf")}
+                >
+                  <FileDown className="mr-2 size-4" />
+                  {exporting === "pdf" ? "Export…" : "Export PDF"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting !== null}
+                  onClick={() => runExport("excel")}
+                >
+                  <FileSpreadsheet className="mr-2 size-4" />
+                  {exporting === "excel" ? "Export…" : "Export Excel"}
+                </Button>
+              </>
+            )}
+          </div>
         }
       />
 
@@ -283,7 +450,9 @@ function Dashboard() {
         </div>
 
         <div className="panel p-4">
-          <h2 className="mb-4 font-display text-sm font-semibold">Évolution mensuelle</h2>
+          <h2 className="mb-4 font-display text-sm font-semibold">
+            Évolution mensuelle des dépenses
+          </h2>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={byMonth}>
               <defs>
@@ -318,6 +487,106 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {canSeeBudget && (
+        <div className="panel mt-3 p-4" data-tour="budget-vs-reel">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 font-display text-sm font-semibold">
+              <PiggyBank className="size-4 text-primary" /> Postes prévus vs réalisés
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {num(budgetVsActual.filter((l) => l.ratio > 100).length)} poste(s) en dépassement
+            </span>
+          </div>
+          {budgetVsActual.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucun poste budgétaire — générez le budget depuis la checklist ou la page Budget.
+            </p>
+          ) : (
+            <div className="divide-y divide-border">
+              {budgetVsActual.map((l) => (
+                <div key={l.name} className="flex flex-wrap items-center gap-3 py-2.5">
+                  <div className="min-w-32 flex-1">
+                    <p className="truncate text-sm font-medium">{l.name}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      {l.phase}
+                    </p>
+                  </div>
+                  <div className="flex min-w-40 flex-1 items-center gap-2">
+                    <Progress
+                      value={Math.min(100, l.ratio)}
+                      className={l.ratio > 100 ? "h-1.5 [&>div]:bg-destructive" : "h-1.5"}
+                    />
+                    <span
+                      className={
+                        l.ratio > 100
+                          ? "num w-16 text-right text-xs font-semibold text-destructive"
+                          : "num w-16 text-right text-xs text-muted-foreground"
+                      }
+                    >
+                      {num(l.ratio)} %
+                    </span>
+                  </div>
+                  <span
+                    className={`num w-32 text-right text-xs ${
+                      l.restant < 0 ? "text-destructive" : "text-muted-foreground"
+                    }`}
+                  >
+                    {l.restant < 0 ? "Dépassement" : "Reste"} · {compactFcfa(Math.abs(l.restant))}
+                  </span>
+                  <Badge
+                    variant={l.ratio > 100 ? "destructive" : "outline"}
+                    className="w-28 justify-center"
+                  >
+                    {compactFcfa(l.planned)} → {compactFcfa(l.spent)}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {canSeeBudget && budget > 0 && cashflow.length > 1 && (
+        <div className="panel mt-3 p-4" data-tour="cashflow">
+          <h2 className="mb-4 font-display text-sm font-semibold">
+            Cashflow prévu vs réalisé (cumulé)
+          </h2>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={cashflow}>
+              <CartesianGrid stroke="var(--color-border)" vertical={false} />
+              <XAxis dataKey="mois" stroke="var(--color-muted-foreground)" fontSize={11} />
+              <YAxis
+                tickFormatter={(v) => compactFcfa(v as number)}
+                stroke="var(--color-muted-foreground)"
+                fontSize={11}
+              />
+              <Tooltip
+                formatter={(v, name) => [fcfa(v as number), name === "prévu" ? "Prévu" : "Réalisé"]}
+                contentStyle={{
+                  background: "var(--color-popover)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 8,
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Line
+                type="monotone"
+                dataKey="prévu"
+                stroke="var(--color-chart-4)"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+              />
+              <Line
+                type="monotone"
+                dataKey="réalisé"
+                stroke="var(--color-chart-1)"
+                strokeWidth={2}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       <div className="mt-3 grid gap-3 lg:grid-cols-3">
         <div className="panel p-4 lg:col-span-1">

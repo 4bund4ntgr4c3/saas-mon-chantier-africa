@@ -40,11 +40,13 @@ export const Route = createFileRoute("/_authenticated/rapports")({
   ),
 });
 
-type ReportKind = "budget" | "mois" | "categorie" | "fournisseur" | "commune" | "entreprise";
+type ReportKind =
+  "budget" | "mois" | "mois_budget" | "categorie" | "fournisseur" | "commune" | "entreprise";
 
 const REPORT_OPTIONS: { value: ReportKind; label: string }[] = [
   { value: "budget", label: "Budget prévu vs réalisé" },
   { value: "mois", label: "Dépenses par mois" },
+  { value: "mois_budget", label: "Budget vs réalisé par mois" },
   { value: "categorie", label: "Dépenses par catégorie" },
   { value: "fournisseur", label: "Dépenses par fournisseur" },
   { value: "commune", label: "Dépenses par commune" },
@@ -136,6 +138,55 @@ function ReportsPage() {
       };
     }
 
+    if (kind === "mois_budget") {
+      const budgetTotal = Number(project.budget ?? 0);
+      const start = project.start_date ? new Date(project.start_date) : new Date();
+      const lastExpense = expenses.reduce<string | null>((acc, e) => {
+        if (e.expense_date && (!acc || e.expense_date > acc)) return e.expense_date;
+        return acc;
+      }, null);
+      const end = project.end_date ?? lastExpense ?? new Date().toISOString().slice(0, 10);
+      const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+      const last = new Date(new Date(end).getFullYear(), new Date(end).getMonth(), 1);
+      const months: string[] = [];
+      while (cursor <= last) {
+        months.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+      const totalMonths = Math.max(months.length, 1);
+      const byMonth = new Map<string, number>();
+      for (const e of expenses) {
+        const key = monthKey(e.expense_date);
+        byMonth.set(key, (byMonth.get(key) ?? 0) + Number(e.amount));
+      }
+      const rows = months.map((key, i) => {
+        const realised = byMonth.get(key) ?? 0;
+        const planned = budgetTotal > 0 ? (budgetTotal * (i + 1)) / totalMonths : 0;
+        return [
+          monthLabel(key),
+          Math.round(planned),
+          realised,
+          Math.round(planned) - realised,
+          planned > 0 ? `${Math.round((realised / planned) * 100)} %` : "—",
+        ];
+      });
+      const realisedTotal = expenses.reduce((s, e) => s + Number(e.amount), 0);
+      return {
+        title: "Rapport budgétaire — prévu vs réalisé par mois",
+        projectName: project.name,
+        columns: ["Mois", "Prévu cumulé (FCFA)", "Réalisé (FCFA)", "Écart (FCFA)", "Consommé (%)"],
+        rows,
+        total: [
+          "Total",
+          Math.round(budgetTotal),
+          realisedTotal,
+          Math.round(budgetTotal) - realisedTotal,
+          "",
+        ],
+        rightAlign: [1, 2, 3, 4],
+      };
+    }
+
     const aggregate =
       kind === "categorie"
         ? { label: "Catégorie", map: new Map<string, number>(), name: catName }
@@ -163,6 +214,7 @@ function ReportsPage() {
     const titles: Record<ReportKind, string> = {
       budget: "",
       mois: "",
+      mois_budget: "",
       categorie: "Rapport des dépenses par catégorie",
       fournisseur: "Rapport des dépenses par fournisseur",
       commune: "Rapport des dépenses par commune",

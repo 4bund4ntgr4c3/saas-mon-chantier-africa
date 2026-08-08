@@ -3,9 +3,12 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
+  BellRing,
   Check,
   FilePlus2,
   Gauge,
+  HardHat,
+  PiggyBank,
   Receipt,
   Sparkles,
   Wallet,
@@ -104,6 +107,48 @@ const STEPS: Step[] = [
     ],
     to: "/paiements",
     highlight: "payment-new",
+    cta: "Suivant",
+  },
+  {
+    icon: PiggyBank,
+    title: "Budget : prévu vs réalisé",
+    description:
+      "Chaque poste de budget affiche en direct ce qui était prévu, ce qui a été dépensé et le reste. Les dépassements passent en rouge et remontent aussi dans les alertes.",
+    bullets: [
+      "Le panneau « Postes prévus vs réalisés » du tableau de bord",
+      "Le graphique de cashflow compare le cumul prévu au cumul réalisé",
+      "Générez le budget d'un nouveau chantier en validant l'étape « Budget global » de la checklist",
+    ],
+    to: "/tableau-de-bord",
+    highlight: "budget-vs-reel",
+    cta: "Suivant",
+  },
+  {
+    icon: BellRing,
+    title: "Alertes et documents",
+    description:
+      "BâtiBénin surveille votre chantier pour vous : postes au-delà de 80 % du budget, paiements en retard, devis expirés, documents manquants et checklist inachevée.",
+    bullets: [
+      "La cloche en haut vous prévient dès qu'une alerte apparaît",
+      "Le calendrier des échéances liste vos factures, paiements et fins de chantier",
+      "Ajoutez plans, permis et contrats dans l'onglet Documents",
+    ],
+    to: "/alertes",
+    highlight: "alertes",
+    cta: "Créer mon chantier",
+  },
+  {
+    icon: HardHat,
+    title: "Votre propre chantier",
+    description:
+      "Le chantier de démonstration vous sert de modèle : dupliquez-le pour démarrer avec des données réelles, ou créez une nouvelle fiche et suivez la checklist de démarrage.",
+    bullets: [
+      "Bouton « Dupliquer » sur chaque carte de la liste des projets",
+      "La checklist guide vos premières saisies : infos, surfaces, dates, budget",
+      "Filtres, recherche et tri vous aident à retrouver vos chantiers",
+    ],
+    to: "/projets",
+    highlight: "projets",
     cta: "Terminer la visite",
   },
 ];

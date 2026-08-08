@@ -7,9 +7,23 @@ import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
-import { useBudgetLines, useCategories, useExpenses, useSaveRow } from "@/lib/data";
-import { fcfa } from "@/lib/format";
+import {
+  useBudgetLines,
+  useCategories,
+  useExpenses,
+  useProjects,
+  useSaveRow,
+  type Expense,
+} from "@/lib/data";
+import { fcfa, monthKey, monthLabel } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/budget")({
   head: () => ({
@@ -36,12 +50,37 @@ export const Route = createFileRoute("/_authenticated/budget")({
 
 function BudgetPage() {
   const { project, projectId } = useCurrentProject();
+  const { data: projects = [] } = useProjects();
   const { data: categories = [] } = useCategories();
   const { data: lines = [] } = useBudgetLines(projectId);
   const { data: expenses = [] } = useExpenses(projectId);
   const save = useSaveRow("budget_lines", "Budget mis à jour");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
+  const [exportProjectId, setExportProjectId] = useState<string>(projectId ?? "");
+  const [period, setPeriod] = useState<"all" | "month" | "range">("all");
+  const [month, setMonth] = useState<string>("");
+  const [from, setFrom] = useState<string>("");
+  const [to, setTo] = useState<string>("");
+
+  const { data: exportLines = [] } = useBudgetLines(exportProjectId || null);
+  const { data: exportExpenses = [] } = useExpenses(exportProjectId || null);
+
+  const filterPeriod = (rows: Expense[]) => {
+    if (period === "month" && month) {
+      return rows.filter((e) => monthKey(e.expense_date) === month);
+    }
+    if (period === "range" && from && to) {
+      return rows.filter((e) => e.expense_date && e.expense_date >= from && e.expense_date <= to);
+    }
+    return rows;
+  };
+
+  const months = useMemo(() => {
+    const keys = new Set<string>();
+    exportExpenses.forEach((e) => keys.add(monthKey(e.expense_date)));
+    return [...keys].sort().reverse();
+  }, [exportExpenses]);
 
   const lineByCategory = useMemo(() => new Map(lines.map((l) => [l.category_id, l])), [lines]);
 
@@ -96,16 +135,25 @@ function BudgetPage() {
     setExporting(kind);
     try {
       const { exportBudgetExcel, exportBudgetPdf } = await import("@/lib/budget-export");
+      const exportProject = projects.find((p) => p.id === exportProjectId) ?? project;
+      const filtered = filterPeriod(exportExpenses);
+      const spentMap = new Map<string, number>();
+      for (const e of filtered) {
+        if (!e.category_id) continue;
+        spentMap.set(e.category_id, (spentMap.get(e.category_id) ?? 0) + Number(e.amount));
+      }
       const payload = {
-        projectName: project.name,
-        projectBudget: Number(project.budget ?? 0),
-        unassigned,
+        projectName: exportProject.name,
+        projectBudget: Number(exportProject.budget ?? 0),
+        unassigned: filtered
+          .filter((e) => !e.category_id)
+          .reduce((s, e) => s + Number(e.amount), 0),
         rows: grouped.flatMap(([phase, cats]) =>
           cats.map((c) => ({
             phase,
             category: c.name,
-            planned: Number(lineByCategory.get(c.id)?.planned_amount ?? 0),
-            spent: spentByCategory.get(c.id) ?? 0,
+            planned: Number(exportLines.find((l) => l.category_id === c.id)?.planned_amount ?? 0),
+            spent: spentMap.get(c.id) ?? 0,
           })),
         ),
       };
@@ -145,6 +193,89 @@ function BudgetPage() {
           </div>
         }
       />
+
+      <div className="panel mb-6 flex flex-wrap items-end gap-3 p-4">
+        <div className="space-y-1.5">
+          <label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            Projet à exporter
+          </label>
+          <Select value={exportProjectId} onValueChange={setExportProjectId}>
+            <SelectTrigger className="w-[240px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            Période
+          </label>
+          <Select value={period} onValueChange={(v) => setPeriod(v as "all" | "month" | "range")}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toute la durée</SelectItem>
+              <SelectItem value="month">Un mois précis</SelectItem>
+              <SelectItem value="range">Plage de dates</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {period === "month" && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+              Mois
+            </label>
+            <Select value={month} onValueChange={setMonth}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Choisir" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {monthLabel(m)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {period === "range" && (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                Du
+              </label>
+              <Input
+                type="date"
+                className="w-[160px]"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                Au
+              </label>
+              <Input
+                type="date"
+                className="w-[160px]"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </div>
+          </>
+        )}
+        <p className="w-full text-xs text-muted-foreground md:w-auto md:flex-1 md:text-right">
+          Export sur « {projects.find((p) => p.id === exportProjectId)?.name ?? project.name} »
+        </p>
+      </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <SummaryCard label="Budget planifié par poste" value={fcfa(planned)} />

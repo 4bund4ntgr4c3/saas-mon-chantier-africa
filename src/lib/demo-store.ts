@@ -612,6 +612,91 @@ export function demoDelete(table: DemoTableName, id: string) {
   if (i >= 0) rows.splice(i, 1);
 }
 
+/** Répartition par défaut du budget d'un chantier (workflow Bénin, total 100 %). */
+export const DEFAULT_BUDGET_SPLIT: Array<{ slug: string; pct: number }> = [
+  { slug: "terrassement", pct: 3 },
+  { slug: "fondation", pct: 15 },
+  { slug: "elevation-murs", pct: 20 },
+  { slug: "dalle-plancher", pct: 13 },
+  { slug: "charpente-toiture", pct: 12 },
+  { slug: "electricite", pct: 6 },
+  { slug: "plomberie", pct: 5 },
+  { slug: "carrelage", pct: 8 },
+  { slug: "peinture", pct: 5 },
+  { slug: "main-doeuvre", pct: 13 },
+];
+
+/** Crée les postes de budget d'un projet à partir de son enveloppe globale (mode invité). */
+export function demoSeedBudgetLines(projectId: string, budget: number) {
+  const cats = db["categories"] as DemoRow[];
+  const existing = (db["budget_lines"] as DemoRow[]).filter((l) => l["project_id"] === projectId);
+  if (existing.length > 0) return;
+  const lines: (DemoRow | null)[] = DEFAULT_BUDGET_SPLIT.map(({ slug, pct }) => {
+    const cat = cats.find((c) => c["slug"] === slug);
+    if (!cat) return null;
+    return {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: projectId,
+      category_id: cat.id,
+      planned_amount: Math.round((budget * pct) / 100),
+    };
+  });
+  const rows = lines.filter((l): l is DemoRow => l !== null);
+  if (rows.length > 0) (db["budget_lines"] as DemoRow[]).push(...rows);
+}
+
+/** Duplique un projet et toutes ses données liées (mode invité). Renvoie le nouvel id. */
+export function demoDuplicateProject(projectId: string): string {
+  const project = (db["projects"] as DemoRow[]).find((p) => p["id"] === projectId);
+  if (!project) throw new Error("Projet introuvable");
+  const newId = uid();
+  const idMap = new Map<string, string>();
+  const copy = (table: DemoTableName, source: DemoRow) => {
+    const dest: DemoRow = { ...source };
+    dest.id = uid();
+    dest["created_at"] = new Date().toISOString();
+    dest["updated_at"] = new Date().toISOString();
+    idMap.set(source.id, dest.id);
+    (db[table] as DemoRow[]).push(dest);
+    return dest;
+  };
+
+  const newProject = copy("projects", project);
+  newProject.id = newId;
+  newProject["name"] = `${project["name"]} — copie`;
+  newProject["status"] = "planifie";
+
+  (db["budget_lines"] as DemoRow[])
+    .filter((l) => l["project_id"] === projectId)
+    .forEach((l) => copy("budget_lines", l));
+
+  (db["expenses"] as DemoRow[])
+    .filter((e) => e["project_id"] === projectId)
+    .forEach((e) => copy("expenses", e));
+
+  (db["payments"] as DemoRow[])
+    .filter((p) => p["project_id"] === projectId)
+    .forEach((p) => {
+      const dest = copy("payments", p);
+      if (p["expense_id"]) dest["expense_id"] = idMap.get(p["expense_id"]) ?? p["expense_id"];
+    });
+
+  (db["quotes"] as DemoRow[])
+    .filter((q) => q["project_id"] === projectId)
+    .forEach((q) => copy("quotes", q));
+
+  (db["site_logs"] as DemoRow[])
+    .filter((s) => s["project_id"] === projectId)
+    .forEach((s) => copy("site_logs", s));
+
+  (db["documents"] as DemoRow[])
+    .filter((d) => d["project_id"] === projectId)
+    .forEach((d) => copy("documents", d));
+
+  return newId;
+}
+
 export function resetDemoData() {
   db = seed();
 }

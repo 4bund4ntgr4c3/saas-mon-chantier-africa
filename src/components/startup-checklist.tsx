@@ -3,7 +3,7 @@ import { Check, ChevronDown, CircleDashed, PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
-import { useSaveRow, type Project } from "@/lib/data";
+import { useGenerateProjectBudget, useSaveRow, type Project } from "@/lib/data";
 import { PROJECT_STATUSES } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -110,19 +110,31 @@ const storageKey = (projectId: string) => `batibenin.checklist.${projectId}`;
 export const CHECKLIST_STEPS_COUNT = STEPS.length;
 
 export function checklistProgress(project: Project) {
-  let validated: string[] = [];
-  try {
-    const raw = typeof window !== "undefined" ? localStorage.getItem(storageKey(project.id)) : null;
-    validated = raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    validated = [];
-  }
+  const validated = checklistValidated(project);
   const done = STEPS.filter((s) => s.isFilled(project) && validated.includes(s.id)).length;
   return { done, total: STEPS.length, percent: Math.round((done / STEPS.length) * 100) };
 }
 
+export function checklistValidated(project: Project): string[] {
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem(storageKey(project.id)) : null;
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Étapes restantes de la checklist (titres) — pour alertes et liste des projets. */
+export function checklistMissingSteps(project: Project): string[] {
+  const validated = checklistValidated(project);
+  return STEPS.filter((s) => !(s.isFilled(project) && validated.includes(s.id))).map(
+    (s) => s.title,
+  );
+}
+
 export function StartupChecklist({ project }: { project: Project }) {
   const save = useSaveRow("projects", "Étape enregistrée");
+  const generateBudget = useGenerateProjectBudget();
   const [validated, setValidated] = useState<string[]>([]);
   const [editing, setEditing] = useState<Step | null>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -142,6 +154,13 @@ export function StartupChecklist({ project }: { project: Project }) {
       localStorage.setItem(storageKey(project.id), JSON.stringify(next));
     } catch {
       /* stockage indisponible */
+    }
+  };
+
+  const handleValidate = (step: Step) => {
+    persist([...validated, step.id]);
+    if (step.id === "budget") {
+      generateBudget.mutate({ projectId: project.id, budget: Number(project.budget ?? 0) });
     }
   };
 
@@ -216,7 +235,7 @@ export function StartupChecklist({ project }: { project: Project }) {
                     size="sm"
                     disabled={!filled}
                     title={filled ? undefined : "Renseignez d'abord les informations requises"}
-                    onClick={() => persist([...validated, step.id])}
+                    onClick={() => handleValidate(step)}
                   >
                     {filled ? "Valider" : <CircleDashed className="size-4" />}
                     {filled ? null : " Incomplet"}

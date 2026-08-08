@@ -5,15 +5,25 @@ import {
   AlertTriangle,
   CalendarX2,
   CheckCircle2,
+  ClipboardCheck,
   Clock4,
   FileWarning,
+  Files,
   PiggyBank,
   Wallet,
 } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
-import { useBudgetLines, useCategories, useExpenses, usePayments, useQuotes } from "@/lib/data";
+import { checklistMissingSteps } from "@/components/startup-checklist";
+import {
+  useBudgetLines,
+  useCategories,
+  useDocuments,
+  useExpenses,
+  usePayments,
+  useQuotes,
+} from "@/lib/data";
 import { fcfa, frDate, labelOf, num, PAYMENT_METHODS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/alertes")({
@@ -41,7 +51,7 @@ export const Route = createFileRoute("/_authenticated/alertes")({
 
 type AlertItem = {
   id: string;
-  kind: "budget" | "paiement" | "devis" | "projet";
+  kind: "budget" | "paiement" | "devis" | "projet" | "document" | "checklist";
   title: string;
   detail: string;
   severity: "danger" | "warning";
@@ -58,6 +68,7 @@ function AlertsPage() {
   const { data: categories = [] } = useCategories();
   const { data: payments = [] } = usePayments(projectId);
   const { data: quotes = [] } = useQuotes(projectId);
+  const { data: documents = [] } = useDocuments(projectId);
 
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -137,8 +148,44 @@ function AlertsPage() {
       });
     }
 
+    // Documents réglementaires manquants (plans, permis, acte de vente…).
+    if (project) {
+      const required = ["plan", "permis_construire", "acte_vente", "contrat"] as const;
+      const present = new Set(documents.map((d) => d.category));
+      const missing = required.filter((c) => !present.has(c));
+      if (missing.length > 0) {
+        const labels: Record<string, string> = {
+          plan: "le plan du projet",
+          permis_construire: "le permis de construire",
+          acte_vente: "l'acte de vente",
+          contrat: "le contrat de construction",
+        };
+        out.push({
+          id: "documents-manquants",
+          kind: "document",
+          title: `${missing.length} pièce(s) réglementaire(s) manquante(s)`,
+          detail: `Ajoutez ${missing.map((m) => labels[m] ?? m).join(", ")} dans l'onglet Documents.`,
+          severity: "warning",
+        });
+      }
+    }
+
+    // Checklist de démarrage incomplète.
+    if (project) {
+      const missingSteps = checklistMissingSteps(project);
+      if (missingSteps.length > 0) {
+        out.push({
+          id: "checklist-incomplete",
+          kind: "checklist",
+          title: "Checklist de démarrage incomplète",
+          detail: `Étapes restantes : ${missingSteps.join(", ")}.`,
+          severity: "warning",
+        });
+      }
+    }
+
     return out.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "danger" ? -1 : 1));
-  }, [expenses, budgetLines, payments, quotes, project, today, catName]);
+  }, [expenses, budgetLines, payments, quotes, documents, project, today, catName]);
 
   if (!project) return <EmptyProjectNotice />;
 
@@ -150,6 +197,8 @@ function AlertsPage() {
     paiement: Wallet,
     devis: FileWarning,
     projet: CalendarX2,
+    document: Files,
+    checklist: ClipboardCheck,
   } as const;
 
   return (
@@ -185,7 +234,8 @@ function AlertsPage() {
           <CheckCircle2 className="mb-3 size-9 text-emerald-500" />
           <h2 className="font-display text-lg font-semibold">Tout est sous contrôle</h2>
           <p className="mt-1 max-w-md text-sm text-muted-foreground">
-            Aucun poste au-delà de 80 % du budget, aucun paiement en retard, aucun devis expiré.
+            Aucun poste au-delà de 80 % du budget, aucun paiement en retard, aucun devis expiré,
+            toutes les pièces et étapes de la checklist sont en ordre.
           </p>
         </div>
       ) : (

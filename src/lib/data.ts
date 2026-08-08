@@ -2,7 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { isGuestMode } from "@/lib/guest-mode";
-import { demoDelete, demoInsert, demoRows, demoUpdate, type DemoTableName } from "@/lib/demo-store";
+import {
+  DEFAULT_BUDGET_SPLIT,
+  demoDelete,
+  demoDuplicateProject,
+  demoInsert,
+  demoRows,
+  demoSeedBudgetLines,
+  demoUpdate,
+  type DemoTableName,
+} from "@/lib/demo-store";
 import type { Database } from "@/integrations/supabase/types";
 
 type Tables = Database["public"]["Tables"];
@@ -469,6 +478,138 @@ export function useImportRows(table: TableName) {
     onSuccess: (_, rows) => {
       RELATED[table].forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
       toast.success(`${rows.length} ligne(s) importée(s)`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Duplication & budget automatique ---------- */
+
+/** Duplique un projet (infos + postes + dépenses + paiements + devis + journal + documents). */
+export function useDuplicateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      if (isGuestMode()) return demoDuplicateProject(projectId);
+      const tables: TableName[] = [
+        "projects",
+        "budget_lines",
+        "expenses",
+        "payments",
+        "quotes",
+        "site_logs",
+        "documents",
+      ];
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+      const byTable = async (t: TableName) => {
+        const col = t === "projects" ? "id" : "project_id";
+        const { data, error } = await client.from(t).select("*").eq(col, projectId);
+        if (error) throw new Error(error.message);
+        return (data ?? []) as Record<string, unknown>[];
+      };
+      const projects = await byTable("projects");
+      const source = projects.find((p) => p["id"] === projectId);
+      if (!source) throw new Error("Projet introuvable");
+
+      const newId = crypto.randomUUID();
+      const idMap = new Map<string, string>();
+      const clone = <T extends Record<string, unknown>>(row: T, table: TableName) => {
+        const copy = { ...row } as Record<string, unknown>;
+        const oldId = copy["id"] as string;
+        copy["id"] = crypto.randomUUID();
+        copy["created_at"] = new Date().toISOString();
+        copy["updated_at"] = new Date().toISOString();
+        idMap.set(oldId, copy["id"] as string);
+        if (table === "projects") {
+          copy["name"] = `${copy["name"]} — copie`;
+          copy["status"] = "planifie";
+        }
+        return copy;
+      };
+
+      const insert = async (t: TableName, rows: Record<string, unknown>[]) => {
+        if (rows.length === 0) return;
+        const { error } = await client.from(t).insert(rows);
+        if (error) throw new Error(error.message);
+      };
+
+      const newProject = clone(source, "projects");
+      newProject["id"] = newId;
+      newProject["project_id"] = newId;
+      await insert("projects", [newProject]);
+
+      for (const t of ["budget_lines", "expenses", "quotes", "site_logs", "documents"] as const) {
+        const rows = await byTable(t);
+        await insert(
+          t,
+          rows.map((r) => clone(r, t)),
+        );
+      }
+
+      const payments = await byTable("payments");
+      await insert(
+        "payments",
+        payments.map((p) => {
+          const c = clone(p, "payments");
+          if (c["expense_id"])
+            c["expense_id"] = idMap.get(c["expense_id"] as string) ?? c["expense_id"];
+          return c;
+        }),
+      );
+
+      return newId;
+    },
+    onSuccess: () => {
+      RELATED["projects"].forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
+      qc.invalidateQueries({ queryKey: ["audit_logs"] });
+      toast.success("Projet dupliqué");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Crée les postes de budget d'un projet depuis l'enveloppe globale (répartition Bénin). */
+export function useGenerateProjectBudget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, budget }: { projectId: string; budget: number }) => {
+      if (budget <= 0) throw new Error("Renseignez d'abord un budget global");
+      if (isGuestMode()) {
+        demoSeedBudgetLines(projectId, budget);
+        return;
+      }
+      const { data: categories } = await supabase.from("categories").select("id, slug");
+      if (categories && categories.length > 0) {
+        const existing = await supabase
+          .from("budget_lines")
+          .select("id")
+          .eq("project_id", projectId);
+        if (existing.error) throw new Error(existing.error.message);
+        if ((existing.data ?? []).length > 0) return;
+        const rows = DEFAULT_BUDGET_SPLIT.map(({ slug, pct }) => {
+          const cat = categories.find((c) => c.slug === slug);
+          if (!cat) return null;
+          return {
+            project_id: projectId,
+            category_id: cat.id,
+            planned_amount: Math.round((budget * pct) / 100),
+          };
+        }).filter(
+          (r): r is { project_id: string; category_id: string; planned_amount: number } => !!r,
+        );
+        if (rows.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error } = await (supabase.from("budget_lines") as any).insert(rows);
+          if (error) throw new Error(error.message);
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budget_lines"] });
+      toast.success("Postes de budget générés depuis l'enveloppe globale");
     },
     onError: (e: Error) => toast.error(e.message),
   });

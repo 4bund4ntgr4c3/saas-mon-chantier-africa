@@ -223,9 +223,12 @@ export type Database = {
       demo_requests: {
         Row: {
           admin_notes: string | null;
+          attachment_name: string | null;
+          attachment_path: string | null;
           company: string | null;
           created_at: string;
           email: string;
+          follow_up_date: string | null;
           full_name: string;
           id: string;
           message: string | null;
@@ -235,9 +238,12 @@ export type Database = {
         };
         Insert: {
           admin_notes?: string | null;
+          attachment_name?: string | null;
+          attachment_path?: string | null;
           company?: string | null;
           created_at?: string;
           email: string;
+          follow_up_date?: string | null;
           full_name: string;
           id?: string;
           message?: string | null;
@@ -247,9 +253,12 @@ export type Database = {
         };
         Update: {
           admin_notes?: string | null;
+          attachment_name?: string | null;
+          attachment_path?: string | null;
           company?: string | null;
           created_at?: string;
           email?: string;
+          follow_up_date?: string | null;
           full_name?: string;
           id?: string;
           message?: string | null;
@@ -749,7 +758,7 @@ export type Database = {
     Enums: {
       account_type: "particulier" | "maitre_oeuvre" | "entreprise";
       app_role: "admin" | "user";
-      demo_request_status: "nouveau" | "contacte" | "planifie" | "traite" | "archive";
+      demo_request_status: "nouvelle" | "contactee" | "convertie" | "refusee";
       document_category:
         | "plan"
         | "permis_construire"
@@ -886,7 +895,7 @@ export const Constants = {
     Enums: {
       account_type: ["particulier", "maitre_oeuvre", "entreprise"],
       app_role: ["admin", "user"],
-      demo_request_status: ["nouveau", "contacte", "planifie", "traite", "archive"],
+      demo_request_status: ["nouvelle", "contactee", "convertie", "refusee"],
       document_category: [
         "plan",
         "permis_construire",

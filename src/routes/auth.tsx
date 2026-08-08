@@ -104,6 +104,23 @@ function AuthPage() {
     navigate({ to: "/tableau-de-bord" });
   }
 
+  /** Connexion en 1 clic au compte de démonstration (provisionné côté Supabase). */
+  async function demoSignIn() {
+    setEmail("demo@batibenin.bj");
+    setPassword("Demo@1234");
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: "demo@batibenin.bj",
+      password: "Demo@1234",
+    });
+    setLoading(false);
+    if (error)
+      toast.error("Le compte de démo n'est pas encore configuré sur ce serveur.", {
+        description:
+          "Utilisez « Explorer la démo sans compte » pour essayer BâtiBénin tout de suite.",
+      });
+  }
+
   async function google() {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
@@ -242,6 +259,9 @@ function AuthPage() {
         </div>
         <Button variant="secondary" className="w-full" onClick={google}>
           Continuer avec Google
+        </Button>
+        <Button variant="outline" className="mt-3 w-full" onClick={demoSignIn} disabled={loading}>
+          Compte démo — connexion en 1 clic
         </Button>
         <Button variant="outline" className="mt-3 w-full" onClick={tryDemo}>
           Explorer la démo sans compte

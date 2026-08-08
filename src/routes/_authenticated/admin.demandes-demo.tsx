@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Mail, Phone, ShieldAlert, Trash2 } from "lucide-react";
+import { CalendarClock, FileText, Mail, Phone, ShieldAlert, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -24,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { frDate } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useDeleteDemoRequest,
   useDemoRequests,
@@ -53,20 +55,22 @@ export const Route = createFileRoute("/_authenticated/admin/demandes-demo")({
 });
 
 const STATUSES: { value: DemoRequestStatus; label: string }[] = [
-  { value: "nouveau", label: "Nouveau" },
-  { value: "contacte", label: "Contacté" },
-  { value: "planifie", label: "Démo planifiée" },
-  { value: "traite", label: "Traité" },
-  { value: "archive", label: "Archivé" },
+  { value: "nouvelle", label: "Nouvelle" },
+  { value: "contactee", label: "Contactée" },
+  { value: "convertie", label: "Convertie" },
+  { value: "refusee", label: "Refusée" },
 ];
 
 const STATUS_STYLE: Record<DemoRequestStatus, string> = {
-  nouveau: "border-primary/40 bg-primary/10 text-primary",
-  contacte: "border-accent/40 bg-accent/10 text-accent-foreground",
-  planifie: "border-border bg-secondary text-foreground",
-  traite: "border-border bg-secondary text-muted-foreground",
-  archive: "border-border bg-muted text-muted-foreground",
+  nouvelle: "border-primary/40 bg-primary/10 text-primary",
+  contactee: "border-accent/40 bg-accent/10 text-accent-foreground",
+  convertie: "border-emerald-500/40 bg-emerald-500/10 text-emerald-600",
+  refusee: "border-border bg-muted text-muted-foreground",
 };
+
+function attachmentUrl(path: string) {
+  return supabase.storage.from("demo-attachments").getPublicUrl(path).data.publicUrl;
+}
 
 function AdminDemoRequestsPage() {
   const { data: isAdmin, isPending: checkingRole } = useIsAdmin();
@@ -111,7 +115,7 @@ function AdminDemoRequestsPage() {
     <>
       <PageHeader
         title="Demandes de démo"
-        subtitle={`${requests.length} demande(s) — ${counts.get("nouveau") ?? 0} nouvelle(s)`}
+        subtitle={`${requests.length} demande(s) — ${counts.get("nouvelle") ?? 0} nouvelle(s)`}
         action={
           <Select value={filter} onValueChange={(v) => setFilter(v as DemoRequestStatus | "tous")}>
             <SelectTrigger className="w-[200px]">
@@ -142,8 +146,8 @@ function AdminDemoRequestsPage() {
               key={request.id}
               request={request}
               onStatusChange={(status) => update.mutate({ id: request.id, values: { status } })}
-              onNotesSave={(admin_notes) =>
-                update.mutate({ id: request.id, values: { admin_notes } })
+              onFollowUpSave={(admin_notes, follow_up_date) =>
+                update.mutate({ id: request.id, values: { admin_notes, follow_up_date } })
               }
               onDelete={() => remove.mutate(request.id)}
             />
@@ -157,16 +161,18 @@ function AdminDemoRequestsPage() {
 function RequestCard({
   request,
   onStatusChange,
-  onNotesSave,
+  onFollowUpSave,
   onDelete,
 }: {
   request: DemoRequest;
   onStatusChange: (status: DemoRequestStatus) => void;
-  onNotesSave: (notes: string | null) => void;
+  onFollowUpSave: (notes: string | null, followUpDate: string | null) => void;
   onDelete: () => void;
 }) {
   const [notes, setNotes] = useState(request.admin_notes ?? "");
-  const dirty = notes !== (request.admin_notes ?? "");
+  const [followUp, setFollowUp] = useState<string | null>(request.follow_up_date ?? null);
+  const dirty =
+    notes !== (request.admin_notes ?? "") || followUp !== (request.follow_up_date ?? null);
 
   return (
     <article className="panel p-5">
@@ -241,23 +247,52 @@ function RequestCard({
         </p>
       )}
 
+      {(request.attachment_name || request.attachment_path) && (
+        <a
+          href={attachmentUrl(request.attachment_path ?? "")}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex items-center gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm text-primary hover:bg-secondary"
+        >
+          <FileText className="size-4" /> {request.attachment_name ?? "Pièce jointe"} — voir
+        </a>
+      )}
+
       <div className="mt-4">
         <label className="text-xs uppercase tracking-widest text-muted-foreground">
-          Notes internes
+          Suivi & notes internes
         </label>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarClock className="size-4" />
+            <Input
+              type="date"
+              className="h-8 w-[170px] text-xs"
+              value={followUp ?? ""}
+              onChange={(e) => setFollowUp(e.target.value || null)}
+            />
+          </div>
+        </div>
         <Textarea
           className="mt-1"
           rows={2}
           value={notes}
-          placeholder="Suivi commercial, date de rappel…"
+          placeholder="Suivi commercial, contexte…"
           onChange={(e) => setNotes(e.target.value)}
         />
         {dirty && (
           <div className="mt-2 flex gap-2">
-            <Button size="sm" onClick={() => onNotesSave(notes.trim() || null)}>
-              Enregistrer la note
+            <Button size="sm" onClick={() => onFollowUpSave(notes.trim() || null, followUp)}>
+              Enregistrer
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setNotes(request.admin_notes ?? "")}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setNotes(request.admin_notes ?? "");
+                setFollowUp(request.follow_up_date ?? null);
+              }}
+            >
               Annuler
             </Button>
           </div>

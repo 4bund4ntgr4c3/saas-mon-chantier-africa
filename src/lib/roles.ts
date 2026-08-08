@@ -44,6 +44,7 @@ export type Feature =
   | "rapports"
   | "recherche"
   | "alertes"
+  | "calendrier"
   | "parametres"
   | "audit";
 
@@ -65,6 +66,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     rapports: "full",
     recherche: "full",
     alertes: "full",
+    calendrier: "full",
     parametres: "full",
     audit: "full",
   },
@@ -82,6 +84,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     rapports: "full",
     recherche: "full",
     alertes: "full",
+    calendrier: "full",
     parametres: "full",
     audit: "full",
   },
@@ -99,6 +102,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     rapports: "none",
     recherche: "read",
     alertes: "none",
+    calendrier: "read",
     parametres: "full",
     audit: "read",
   },
