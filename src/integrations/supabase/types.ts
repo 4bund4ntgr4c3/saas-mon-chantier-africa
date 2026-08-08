@@ -340,6 +340,274 @@ export type Database = {
         };
         Relationships: [];
       };
+      invoice_payments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          id: string;
+          invoice_id: string;
+          method: Database["public"]["Enums"]["payment_method"];
+          notes: string | null;
+          payment_date: string;
+          project_id: string;
+          reference: string | null;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          invoice_id: string;
+          method?: Database["public"]["Enums"]["payment_method"];
+          notes?: string | null;
+          payment_date?: string;
+          project_id: string;
+          reference?: string | null;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          invoice_id?: string;
+          method?: Database["public"]["Enums"]["payment_method"];
+          notes?: string | null;
+          payment_date?: string;
+          project_id?: string;
+          reference?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "invoices";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      invoices: {
+        Row: {
+          amount: number;
+          created_at: string;
+          due_date: string | null;
+          id: string;
+          invoice_date: string;
+          notes: string | null;
+          project_id: string;
+          reference: string | null;
+          status: Database["public"]["Enums"]["invoice_status"];
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number;
+          created_at?: string;
+          due_date?: string | null;
+          id?: string;
+          invoice_date?: string;
+          notes?: string | null;
+          project_id: string;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["invoice_status"];
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          due_date?: string | null;
+          id?: string;
+          invoice_date?: string;
+          notes?: string | null;
+          project_id?: string;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["invoice_status"];
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoices_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      materials: {
+        Row: {
+          category: string | null;
+          created_at: string;
+          id: string;
+          name: string;
+          notes: string | null;
+          project_id: string;
+          quantity: number;
+          reorder_level: number;
+          supplier_id: string | null;
+          unit: string | null;
+          unit_price: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          category?: string | null;
+          created_at?: string;
+          id?: string;
+          name: string;
+          notes?: string | null;
+          project_id: string;
+          quantity?: number;
+          reorder_level?: number;
+          supplier_id?: string | null;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          category?: string | null;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          notes?: string | null;
+          project_id?: string;
+          quantity?: number;
+          reorder_level?: number;
+          supplier_id?: string | null;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "materials_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "materials_supplier_id_fkey";
+            columns: ["supplier_id"];
+            isOneToOne: false;
+            referencedRelation: "suppliers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      photos: {
+        Row: {
+          caption: string | null;
+          category_id: string | null;
+          created_at: string;
+          file_path: string;
+          id: string;
+          phase: string | null;
+          project_id: string;
+          taken_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          caption?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          file_path: string;
+          id?: string;
+          phase?: string | null;
+          project_id: string;
+          taken_at?: string | null;
+          user_id?: string;
+        };
+        Update: {
+          caption?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          file_path?: string;
+          id?: string;
+          phase?: string | null;
+          project_id?: string;
+          taken_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "photos_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photos_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      tasks: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          due_date: string | null;
+          id: string;
+          priority: Database["public"]["Enums"]["task_priority"];
+          project_id: string;
+          status: Database["public"]["Enums"]["task_status"];
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          id?: string;
+          priority?: Database["public"]["Enums"]["task_priority"];
+          project_id: string;
+          status?: Database["public"]["Enums"]["task_status"];
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          id?: string;
+          priority?: Database["public"]["Enums"]["task_priority"];
+          project_id?: string;
+          status?: Database["public"]["Enums"]["task_status"];
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       expenses: {
         Row: {
           amount: number;
@@ -558,6 +826,7 @@ export type Database = {
           levels: number | null;
           name: string;
           quartier: string | null;
+          share_token: string | null;
           start_date: string | null;
           status: Database["public"]["Enums"]["project_status"];
           updated_at: string;
@@ -578,6 +847,7 @@ export type Database = {
           levels?: number | null;
           name: string;
           quartier?: string | null;
+          share_token?: string | null;
           start_date?: string | null;
           status?: Database["public"]["Enums"]["project_status"];
           updated_at?: string;
@@ -598,6 +868,7 @@ export type Database = {
           levels?: number | null;
           name?: string;
           quartier?: string | null;
+          share_token?: string | null;
           start_date?: string | null;
           status?: Database["public"]["Enums"]["project_status"];
           updated_at?: string;
@@ -826,6 +1097,7 @@ export type Database = {
     };
     Functions: {
       seed_demo_data: { Args: { _user_id: string }; Returns: undefined };
+      get_shared_project: { Args: { p_token: string }; Returns: string };
     };
     Enums: {
       account_type: "particulier" | "maitre_oeuvre" | "entreprise";
@@ -840,10 +1112,13 @@ export type Database = {
         | "garantie"
         | "photo_chantier"
         | "autre";
+      invoice_status: "emise" | "partielle" | "payee" | "annulee";
       payment_method: "especes" | "mtn_momo" | "moov_money" | "virement" | "cheque";
       payment_type: "comptant" | "acompte" | "partiel" | "solde";
       project_status: "planifie" | "en_cours" | "suspendu" | "termine";
       quote_status: "en_attente" | "accepte" | "rejete" | "converti";
+      task_priority: "basse" | "moyenne" | "haute";
+      task_status: "a_faire" | "en_cours" | "terminee" | "annulee";
     };
     CompositeTypes: {
       [_ in never]: never;

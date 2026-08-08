@@ -85,6 +85,11 @@ const FEATURE_LABELS: [Feature, string][] = [
   ["paiements", "Paiements"],
   ["fournisseurs", "Fournisseurs"],
   ["entreprises", "Entreprises"],
+  ["facturation", "Facturation"],
+  ["stock", "Stock & matériaux"],
+  ["photos", "Photos de chantier"],
+  ["taches", "Tâches & planning"],
+  ["partage", "Partage"],
 ];
 
 type PrefKey =

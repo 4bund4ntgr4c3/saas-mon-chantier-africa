@@ -24,6 +24,7 @@ import {
   FileSpreadsheet,
   FileText,
   PiggyBank,
+  Plus,
   Receipt,
   Store,
   Wallet,
@@ -31,6 +32,8 @@ import {
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { StartupChecklist } from "@/components/startup-checklist";
+import { QuickExpenseDialog } from "@/components/quick-expense";
+import { ShareProjectButton } from "@/components/share-project";
 
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -313,6 +316,14 @@ function Dashboard() {
             <Badge variant="outline" className="border-primary/40 text-primary">
               {num(progress, 1)} % d'avancement financier
             </Badge>
+            <ShareProjectButton project={project} />
+            <QuickExpenseDialog
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-2 size-4" /> Dépense rapide
+                </Button>
+              }
+            />
             {canSeeBudget && (
               <>
                 <Button

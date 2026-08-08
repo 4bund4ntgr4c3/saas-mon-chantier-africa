@@ -21,14 +21,19 @@ import { Route as AuthenticatedDepensesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDevisRouteImport } from './routes/_authenticated/devis'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedEntreprisesRouteImport } from './routes/_authenticated/entreprises'
+import { Route as AuthenticatedFacturationRouteImport } from './routes/_authenticated/facturation'
 import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authenticated/fournisseurs'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authenticated/paiements'
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
+import { Route as AuthenticatedPhotosRouteImport } from './routes/_authenticated/photos'
 import { Route as AuthenticatedProjetsRouteImport } from './routes/_authenticated/projets'
 import { Route as AuthenticatedRapportsRouteImport } from './routes/_authenticated/rapports'
 import { Route as AuthenticatedRechercheRouteImport } from './routes/_authenticated/recherche'
+import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
 import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
+import { Route as AuthenticatedTachesRouteImport } from './routes/_authenticated/taches'
+import { Route as PartageTokenRouteImport } from './routes/partage.$token'
 import { Route as AuthenticatedAdminDemandesDemoRouteImport } from './routes/_authenticated/admin.demandes-demo'
 
 const IndexRoute = IndexRouteImport.update({
@@ -91,6 +96,12 @@ const AuthenticatedEntreprisesRoute =
     path: '/entreprises',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFacturationRoute =
+  AuthenticatedFacturationRouteImport.update({
+    id: '/facturation',
+    path: '/facturation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFournisseursRoute =
   AuthenticatedFournisseursRouteImport.update({
     id: '/fournisseurs',
@@ -112,6 +123,11 @@ const AuthenticatedParametresRoute = AuthenticatedParametresRouteImport.update({
   path: '/parametres',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPhotosRoute = AuthenticatedPhotosRouteImport.update({
+  id: '/photos',
+  path: '/photos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProjetsRoute = AuthenticatedProjetsRouteImport.update({
   id: '/projets',
   path: '/projets',
@@ -127,12 +143,27 @@ const AuthenticatedRechercheRoute = AuthenticatedRechercheRouteImport.update({
   path: '/recherche',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStockRoute = AuthenticatedStockRouteImport.update({
+  id: '/stock',
+  path: '/stock',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTableauDeBordRoute =
   AuthenticatedTableauDeBordRouteImport.update({
     id: '/tableau-de-bord',
     path: '/tableau-de-bord',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTachesRoute = AuthenticatedTachesRouteImport.update({
+  id: '/taches',
+  path: '/taches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const PartageTokenRoute = PartageTokenRouteImport.update({
+  id: '/partage/$token',
+  path: '/partage/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminDemandesDemoRoute =
   AuthenticatedAdminDemandesDemoRouteImport.update({
     id: '/admin/demandes-demo',
@@ -152,14 +183,19 @@ export interface FileRoutesByFullPath {
   '/devis': typeof AuthenticatedDevisRoute
   '/documents': typeof AuthenticatedDocumentsRoute
   '/entreprises': typeof AuthenticatedEntreprisesRoute
+  '/facturation': typeof AuthenticatedFacturationRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/parametres': typeof AuthenticatedParametresRoute
+  '/photos': typeof AuthenticatedPhotosRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/rapports': typeof AuthenticatedRapportsRoute
   '/recherche': typeof AuthenticatedRechercheRoute
+  '/stock': typeof AuthenticatedStockRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/taches': typeof AuthenticatedTachesRoute
+  '/partage/$token': typeof PartageTokenRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
 export interface FileRoutesByTo {
@@ -174,14 +210,19 @@ export interface FileRoutesByTo {
   '/devis': typeof AuthenticatedDevisRoute
   '/documents': typeof AuthenticatedDocumentsRoute
   '/entreprises': typeof AuthenticatedEntreprisesRoute
+  '/facturation': typeof AuthenticatedFacturationRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/parametres': typeof AuthenticatedParametresRoute
+  '/photos': typeof AuthenticatedPhotosRoute
   '/projets': typeof AuthenticatedProjetsRoute
   '/rapports': typeof AuthenticatedRapportsRoute
   '/recherche': typeof AuthenticatedRechercheRoute
+  '/stock': typeof AuthenticatedStockRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/taches': typeof AuthenticatedTachesRoute
+  '/partage/$token': typeof PartageTokenRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
 export interface FileRoutesById {
@@ -198,14 +239,19 @@ export interface FileRoutesById {
   '/_authenticated/devis': typeof AuthenticatedDevisRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
   '/_authenticated/entreprises': typeof AuthenticatedEntreprisesRoute
+  '/_authenticated/facturation': typeof AuthenticatedFacturationRoute
   '/_authenticated/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/paiements': typeof AuthenticatedPaiementsRoute
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
+  '/_authenticated/photos': typeof AuthenticatedPhotosRoute
   '/_authenticated/projets': typeof AuthenticatedProjetsRoute
   '/_authenticated/rapports': typeof AuthenticatedRapportsRoute
   '/_authenticated/recherche': typeof AuthenticatedRechercheRoute
+  '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/_authenticated/taches': typeof AuthenticatedTachesRoute
+  '/partage/$token': typeof PartageTokenRoute
   '/_authenticated/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
 }
 export interface FileRouteTypes {
@@ -222,14 +268,19 @@ export interface FileRouteTypes {
     | '/devis'
     | '/documents'
     | '/entreprises'
+    | '/facturation'
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
     | '/parametres'
+    | '/photos'
     | '/projets'
     | '/rapports'
     | '/recherche'
+    | '/stock'
     | '/tableau-de-bord'
+    | '/taches'
+    | '/partage/$token'
     | '/admin/demandes-demo'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -244,14 +295,19 @@ export interface FileRouteTypes {
     | '/devis'
     | '/documents'
     | '/entreprises'
+    | '/facturation'
     | '/fournisseurs'
     | '/journal'
     | '/paiements'
     | '/parametres'
+    | '/photos'
     | '/projets'
     | '/rapports'
     | '/recherche'
+    | '/stock'
     | '/tableau-de-bord'
+    | '/taches'
+    | '/partage/$token'
     | '/admin/demandes-demo'
   id:
     | '__root__'
@@ -267,14 +323,19 @@ export interface FileRouteTypes {
     | '/_authenticated/devis'
     | '/_authenticated/documents'
     | '/_authenticated/entreprises'
+    | '/_authenticated/facturation'
     | '/_authenticated/fournisseurs'
     | '/_authenticated/journal'
     | '/_authenticated/paiements'
     | '/_authenticated/parametres'
+    | '/_authenticated/photos'
     | '/_authenticated/projets'
     | '/_authenticated/rapports'
     | '/_authenticated/recherche'
+    | '/_authenticated/stock'
     | '/_authenticated/tableau-de-bord'
+    | '/_authenticated/taches'
+    | '/partage/$token'
     | '/_authenticated/admin/demandes-demo'
   fileRoutesById: FileRoutesById
 }
@@ -283,6 +344,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PartageTokenRoute: typeof PartageTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -371,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEntreprisesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/facturation': {
+      id: '/_authenticated/facturation'
+      path: '/facturation'
+      fullPath: '/facturation'
+      preLoaderRoute: typeof AuthenticatedFacturationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/fournisseurs': {
       id: '/_authenticated/fournisseurs'
       path: '/fournisseurs'
@@ -399,6 +468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedParametresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/photos': {
+      id: '/_authenticated/photos'
+      path: '/photos'
+      fullPath: '/photos'
+      preLoaderRoute: typeof AuthenticatedPhotosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/projets': {
       id: '/_authenticated/projets'
       path: '/projets'
@@ -420,12 +496,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRechercheRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/stock': {
+      id: '/_authenticated/stock'
+      path: '/stock'
+      fullPath: '/stock'
+      preLoaderRoute: typeof AuthenticatedStockRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tableau-de-bord': {
       id: '/_authenticated/tableau-de-bord'
       path: '/tableau-de-bord'
       fullPath: '/tableau-de-bord'
       preLoaderRoute: typeof AuthenticatedTableauDeBordRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/taches': {
+      id: '/_authenticated/taches'
+      path: '/taches'
+      fullPath: '/taches'
+      preLoaderRoute: typeof AuthenticatedTachesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/partage/$token': {
+      id: '/partage/$token'
+      path: '/partage/$token'
+      fullPath: '/partage/$token'
+      preLoaderRoute: typeof PartageTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/demandes-demo': {
       id: '/_authenticated/admin/demandes-demo'
@@ -446,14 +543,18 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDevisRoute: typeof AuthenticatedDevisRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
   AuthenticatedEntreprisesRoute: typeof AuthenticatedEntreprisesRoute
+  AuthenticatedFacturationRoute: typeof AuthenticatedFacturationRoute
   AuthenticatedFournisseursRoute: typeof AuthenticatedFournisseursRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedPaiementsRoute: typeof AuthenticatedPaiementsRoute
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
+  AuthenticatedPhotosRoute: typeof AuthenticatedPhotosRoute
   AuthenticatedProjetsRoute: typeof AuthenticatedProjetsRoute
   AuthenticatedRapportsRoute: typeof AuthenticatedRapportsRoute
   AuthenticatedRechercheRoute: typeof AuthenticatedRechercheRoute
+  AuthenticatedStockRoute: typeof AuthenticatedStockRoute
   AuthenticatedTableauDeBordRoute: typeof AuthenticatedTableauDeBordRoute
+  AuthenticatedTachesRoute: typeof AuthenticatedTachesRoute
   AuthenticatedAdminDemandesDemoRoute: typeof AuthenticatedAdminDemandesDemoRoute
 }
 
@@ -466,14 +567,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDevisRoute: AuthenticatedDevisRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
   AuthenticatedEntreprisesRoute: AuthenticatedEntreprisesRoute,
+  AuthenticatedFacturationRoute: AuthenticatedFacturationRoute,
   AuthenticatedFournisseursRoute: AuthenticatedFournisseursRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedPaiementsRoute: AuthenticatedPaiementsRoute,
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
+  AuthenticatedPhotosRoute: AuthenticatedPhotosRoute,
   AuthenticatedProjetsRoute: AuthenticatedProjetsRoute,
   AuthenticatedRapportsRoute: AuthenticatedRapportsRoute,
   AuthenticatedRechercheRoute: AuthenticatedRechercheRoute,
+  AuthenticatedStockRoute: AuthenticatedStockRoute,
   AuthenticatedTableauDeBordRoute: AuthenticatedTableauDeBordRoute,
+  AuthenticatedTachesRoute: AuthenticatedTachesRoute,
   AuthenticatedAdminDemandesDemoRoute: AuthenticatedAdminDemandesDemoRoute,
 }
 
@@ -485,6 +590,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PartageTokenRoute: PartageTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

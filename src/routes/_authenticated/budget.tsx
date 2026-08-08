@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FeatureGate } from "@/components/feature-gate";
 import { useMemo, useState } from "react";
-import { Check, FileDown, FileSpreadsheet } from "lucide-react";
+import { Check, Eye, FileDown, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,11 @@ import {
   useExpenses,
   useProjects,
   useSaveRow,
+  type Category,
   type Expense,
 } from "@/lib/data";
 import { fcfa, monthKey, monthLabel } from "@/lib/format";
+import { PosteDetailDialog } from "@/components/poste-detail";
 
 export const Route = createFileRoute("/_authenticated/budget")({
   head: () => ({
@@ -56,6 +58,7 @@ function BudgetPage() {
   const { data: expenses = [] } = useExpenses(projectId);
   const save = useSaveRow("budget_lines", "Budget mis à jour");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [detailCategory, setDetailCategory] = useState<Category | null>(null);
   const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
   const [exportProjectId, setExportProjectId] = useState<string>(projectId ?? "");
   const [period, setPeriod] = useState<"all" | "month" | "range">("all");
@@ -345,6 +348,14 @@ function BudgetPage() {
                       >
                         <Check className="size-4" />
                       </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setDetailCategory(c)}
+                        aria-label={`Voir le détail de ${c.name}`}
+                      >
+                        <Eye className="size-4" />
+                      </Button>
                     </div>
                   </div>
                 );
@@ -353,6 +364,12 @@ function BudgetPage() {
           </section>
         ))}
       </div>
+
+      <PosteDetailDialog
+        category={detailCategory}
+        open={!!detailCategory}
+        onOpenChange={(o) => !o && setDetailCategory(null)}
+      />
     </>
   );
 }

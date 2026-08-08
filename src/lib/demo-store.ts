@@ -557,6 +557,180 @@ function seed() {
     },
   ];
 
+  const invoices: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      reference: "FAC-2026-001",
+      title: "Acompte travaux — 40 %",
+      amount: 16500000,
+      invoice_date: shift(-70),
+      due_date: shift(-30),
+      status: "partielle",
+      notes: "Premier appel de fonds client.",
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      reference: "FAC-2026-002",
+      title: "Situation gros œuvre",
+      amount: 9800000,
+      invoice_date: shift(-25),
+      due_date: shift(35),
+      status: "emise",
+      notes: null,
+    },
+  ];
+  const [invAcompte, invGros] = invoices;
+
+  const invoice_payments: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      invoice_id: invAcompte!.id,
+      project_id: project.id,
+      amount: 9000000,
+      payment_date: shift(-55),
+      method: "virement",
+      reference: "VIR-CLIENT-001",
+      notes: null,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      invoice_id: invAcompte!.id,
+      project_id: project.id,
+      amount: 3000000,
+      payment_date: shift(-12),
+      method: "mtn_momo",
+      reference: "MOMO-CLIENT-009",
+      notes: "Paiement partiel en attente du solde.",
+    },
+  ];
+
+  const materials: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      name: "Ciment CIMBENIN 50 kg",
+      category: "Liants",
+      quantity: 80,
+      unit: "sac",
+      unit_price: 6000,
+      reorder_level: 30,
+      supplier_id: sQuinc!.id,
+      notes: "Stock chantier.",
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      name: "Fer à béton HA12",
+      category: "Acier",
+      quantity: 25,
+      unit: "barre",
+      unit_price: 5000,
+      reorder_level: 15,
+      supplier_id: sQuinc!.id,
+      notes: "Barres de 12 m.",
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      name: "Sable (camion)",
+      category: "Granulats",
+      quantity: 3,
+      unit: "camion",
+      unit_price: 90000,
+      reorder_level: 2,
+      supplier_id: sSable!.id,
+      notes: null,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      name: "Tôles bac alu 6/10",
+      category: "Couverture",
+      quantity: 12,
+      unit: "feuille",
+      unit_price: 25000,
+      reorder_level: 20,
+      supplier_id: sQuinc!.id,
+      notes: "Reste à commander pour la toiture.",
+    },
+  ];
+
+  const tasks: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      title: "Coulage dalle de toiture",
+      description: "Vérifier le coffrage avant bétonnage.",
+      status: "en_cours",
+      priority: "haute",
+      due_date: shift(3),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      title: "Commander tôles et gouttières",
+      description: "Négocier le prix avec la quincaillerie.",
+      status: "a_faire",
+      priority: "moyenne",
+      due_date: shift(7),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      title: "Pré-câblage électricité RDC",
+      description: null,
+      status: "a_faire",
+      priority: "haute",
+      due_date: shift(10),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      title: "Rendez-vous topographe",
+      description: "Bornage parcelle avant clôture.",
+      status: "terminee",
+      priority: "basse",
+      due_date: shift(-5),
+    },
+  ];
+
+  const photos: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      category_id: cat("fondation"),
+      phase: "Gros œuvre",
+      file_path: null,
+      caption: "Coulage des semelles",
+      taken_at: shift(-90),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      category_id: cat("elevation-murs"),
+      phase: "Gros œuvre",
+      file_path: null,
+      caption: "Élévation murs RDC",
+      taken_at: shift(-55),
+    },
+  ];
+
   return {
     categories: cats as unknown as DemoRow[],
     projects: [project],
@@ -568,6 +742,11 @@ function seed() {
     quotes,
     site_logs,
     documents,
+    invoices,
+    invoice_payments,
+    materials,
+    tasks,
+    photos,
     profiles: [
       {
         id: DEMO_USER,
@@ -693,6 +872,32 @@ export function demoDuplicateProject(projectId: string): string {
   (db["documents"] as DemoRow[])
     .filter((d) => d["project_id"] === projectId)
     .forEach((d) => copy("documents", d));
+
+  (db["materials"] as DemoRow[])
+    .filter((m) => m["project_id"] === projectId)
+    .forEach((m) => copy("materials", m));
+
+  (db["tasks"] as DemoRow[])
+    .filter((t) => t["project_id"] === projectId)
+    .forEach((t) => copy("tasks", t));
+
+  (db["photos"] as DemoRow[])
+    .filter((p) => p["project_id"] === projectId)
+    .forEach((p) => copy("photos", p));
+
+  (db["invoices"] as DemoRow[])
+    .filter((i) => i["project_id"] === projectId)
+    .forEach((i) => {
+      const dest = copy("invoices", i);
+      idMap.set(i.id, dest.id);
+    });
+
+  (db["invoice_payments"] as DemoRow[])
+    .filter((p) => p["project_id"] === projectId)
+    .forEach((p) => {
+      const dest = copy("invoice_payments", p);
+      if (p["invoice_id"]) dest["invoice_id"] = idMap.get(p["invoice_id"]) ?? p["invoice_id"];
+    });
 
   return newId;
 }

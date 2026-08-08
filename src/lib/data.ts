@@ -210,6 +210,7 @@ export function useSignedPhotos(paths: string[]) {
     enabled: paths.length > 0,
     staleTime: 30 * 60_000,
     queryFn: async () => {
+      if (isGuestMode()) return {} as Record<string, string>;
       const { data, error } = await supabase.storage
         .from(JOURNAL_BUCKET)
         .createSignedUrls(paths, 60 * 60);
@@ -355,7 +356,12 @@ type TableName =
   | "categories"
   | "site_logs"
   | "documents"
-  | "profiles";
+  | "profiles"
+  | "invoices"
+  | "invoice_payments"
+  | "materials"
+  | "tasks"
+  | "photos";
 
 const RELATED: Record<TableName, string[]> = {
   projects: ["projects"],
@@ -369,6 +375,11 @@ const RELATED: Record<TableName, string[]> = {
   site_logs: ["site_logs"],
   documents: ["documents"],
   profiles: ["profile"],
+  invoices: ["invoices", "invoice_payments"],
+  invoice_payments: ["invoice_payments", "invoices"],
+  materials: ["materials"],
+  tasks: ["tasks"],
+  photos: ["photos"],
 };
 
 export type Profile = Tables["profiles"]["Row"];
@@ -783,6 +794,275 @@ export function useSendNotificationEmail() {
       } else {
         toast.success("E-mail envoyé");
       }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Facturation client ---------- */
+
+export type Invoice = Tables["invoices"]["Row"];
+export type InvoicePayment = Tables["invoice_payments"]["Row"];
+export type InvoiceStatus = Database["public"]["Enums"]["invoice_status"];
+
+export function useInvoices(projectId: string | null) {
+  return useQuery({
+    queryKey: ["invoices", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Invoice>("invoices").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<Invoice[]>(
+            supabase
+              .from("invoices")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("invoice_date", { ascending: false }),
+          ),
+  });
+}
+
+export function useInvoicePayments(projectId: string | null) {
+  return useQuery({
+    queryKey: ["invoice_payments", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<InvoicePayment>("invoice_payments").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<InvoicePayment[]>(
+            supabase
+              .from("invoice_payments")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("payment_date", { ascending: false }),
+          ),
+  });
+}
+
+export function useAddInvoicePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: Tables["invoice_payments"]["Insert"]) => {
+      if (isGuestMode()) {
+        demoInsert("invoice_payments", values);
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase
+        .from("invoice_payments")
+        .insert({ ...values, user_id: auth.user.id });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoice_payments"] });
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success("Encaissement enregistré");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Stock / matériaux ---------- */
+
+export type Material = Tables["materials"]["Row"];
+
+export function useMaterials(projectId: string | null) {
+  return useQuery({
+    queryKey: ["materials", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Material>("materials").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<Material[]>(
+            supabase.from("materials").select("*").eq("project_id", projectId!).order("name"),
+          ),
+  });
+}
+
+/* ---------- Tâches & planning ---------- */
+
+export type Task = Tables["tasks"]["Row"];
+
+export function useTasks(projectId: string | null) {
+  return useQuery({
+    queryKey: ["tasks", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Task>("tasks").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<Task[]>(
+            supabase
+              .from("tasks")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("due_date", { ascending: true, nullsFirst: false }),
+          ),
+  });
+}
+
+/* ---------- Photos de chantier ---------- */
+
+export type Photo = Tables["photos"]["Row"];
+export const PHOTOS_BUCKET = "photos";
+
+export function usePhotos(projectId: string | null) {
+  return useQuery({
+    queryKey: ["photos", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Photo>("photos").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<Photo[]>(
+            supabase
+              .from("photos")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+export async function uploadPhotoFiles(files: File[], projectId: string) {
+  if (isGuestMode()) return [];
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new Error("Session expirée");
+  const paths: string[] = [];
+  for (const file of files) {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${auth.user.id}/${projectId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(PHOTOS_BUCKET)
+      .upload(path, file, { contentType: file.type || "image/jpeg" });
+    if (error) throw new Error(error.message);
+    paths.push(path);
+  }
+  return paths;
+}
+
+/** URLs signées pour afficher les photos de chantier. */
+export function usePhotoUrls(paths: string[]) {
+  const key = paths.join("|");
+  return useQuery({
+    queryKey: ["photo_urls", key],
+    enabled: paths.length > 0,
+    staleTime: 30 * 60_000,
+    queryFn: async () => {
+      if (isGuestMode()) return {} as Record<string, string>;
+      const { data, error } = await supabase.storage
+        .from(PHOTOS_BUCKET)
+        .createSignedUrls(paths, 60 * 60);
+      if (error) throw new Error(error.message);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((d) => {
+        if (d.path && d.signedUrl) map[d.path] = d.signedUrl;
+      });
+      return map;
+    },
+  });
+}
+
+export function useDeletePhoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, file_path }: { id: string; file_path: string }) => {
+      if (isGuestMode()) {
+        demoDelete("photos", id);
+        return;
+      }
+      await supabase.storage.from(PHOTOS_BUCKET).remove([file_path]);
+      const { error } = await supabase.from("photos").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["photos"] });
+      toast.success("Photo supprimée");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export type NewPhoto = {
+  project_id: string;
+  file_path: string;
+  phase?: string | null;
+  caption?: string | null;
+};
+
+export function useAddPhotos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (photos: NewPhoto[]) => {
+      if (photos.length === 0) return;
+      if (isGuestMode()) {
+        photos.forEach((p) => demoInsert("photos", p));
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase
+        .from("photos")
+        .insert(photos.map((p) => ({ ...p, user_id: auth.user!.id })));
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["photos"] });
+      toast.success("Photos ajoutées");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Partage lecture seule ---------- */
+
+export function useCreateShareLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string): Promise<string> => {
+      if (isGuestMode()) return "demo-share-token";
+      const token = crypto.randomUUID();
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase
+        .from("projects")
+        .update({ share_token: token })
+        .eq("id", projectId)
+        .eq("user_id", auth.user.id);
+      if (error) throw new Error(error.message);
+      return token;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useRevokeShareLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      if (isGuestMode()) return;
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase
+        .from("projects")
+        .update({ share_token: null })
+        .eq("id", projectId)
+        .eq("user_id", auth.user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Lien de partage révoqué");
     },
     onError: (e: Error) => toast.error(e.message),
   });

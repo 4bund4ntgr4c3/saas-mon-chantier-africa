@@ -2,16 +2,21 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   BellRing,
+  Boxes,
   Building2,
   CalendarDays,
   FileText,
   FolderOpen,
   Gauge,
-  HardHat,
   Hammer,
+  HardHat,
+  Images,
+  Landmark,
+  ListChecks,
   LogOut,
   NotebookPen,
   PiggyBank,
+  Plus,
   Search,
   ShieldCheck,
   Settings,
@@ -37,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { exitGuestMode, useGuestMode } from "@/lib/guest-mode";
 import { GuestBanner } from "@/components/guest-banner";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { QuickExpenseDialog } from "@/components/quick-expense";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -51,6 +57,10 @@ const NAV = [
   { to: "/calendrier", label: "Échéances", icon: CalendarDays, feature: "calendrier" },
   { to: "/fournisseurs", label: "Fournisseurs", icon: Store, feature: "fournisseurs" },
   { to: "/entreprises", label: "Entreprises", icon: Building2, feature: "entreprises" },
+  { to: "/facturation", label: "Facturation", icon: Landmark, feature: "facturation" },
+  { to: "/stock", label: "Stock & matériaux", icon: Boxes, feature: "stock" },
+  { to: "/photos", label: "Photos", icon: Images, feature: "photos" },
+  { to: "/taches", label: "Tâches", icon: ListChecks, feature: "taches" },
   { to: "/rapports", label: "Rapports", icon: BarChart3, feature: "rapports" },
   { to: "/recherche", label: "Recherche", icon: Search, feature: "recherche" },
   { to: "/alertes", label: "Alertes", icon: BellRing, feature: "alertes" },
@@ -148,6 +158,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Select>
             </div>
             <div className="flex items-center gap-2">
+              <QuickExpenseDialog
+                trigger={
+                  <Button size="sm" variant="secondary" disabled={!projectId} title="Saisie rapide">
+                    <Plus className="mr-1.5 size-4" />
+                    <span className="hidden sm:inline">Dépense</span>
+                  </Button>
+                }
+              />
               <NotificationsBell />
               <Button asChild size="sm" variant="secondary">
                 <Link to="/projets">Gérer les projets</Link>

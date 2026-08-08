@@ -41,6 +41,11 @@ export type Feature =
   | "paiements"
   | "fournisseurs"
   | "entreprises"
+  | "facturation"
+  | "stock"
+  | "photos"
+  | "taches"
+  | "partage"
   | "rapports"
   | "recherche"
   | "alertes"
@@ -63,6 +68,11 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     paiements: "full",
     fournisseurs: "full",
     entreprises: "full",
+    facturation: "full",
+    stock: "full",
+    photos: "full",
+    taches: "full",
+    partage: "full",
     rapports: "full",
     recherche: "full",
     alertes: "full",
@@ -81,6 +91,11 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     paiements: "full",
     fournisseurs: "full",
     entreprises: "full",
+    facturation: "full",
+    stock: "full",
+    photos: "full",
+    taches: "full",
+    partage: "full",
     rapports: "full",
     recherche: "full",
     alertes: "full",
@@ -99,6 +114,11 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     paiements: "none",
     fournisseurs: "full",
     entreprises: "none",
+    facturation: "none",
+    stock: "read",
+    photos: "full",
+    taches: "full",
+    partage: "none",
     rapports: "none",
     recherche: "read",
     alertes: "none",
