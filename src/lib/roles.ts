@@ -57,6 +57,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     paiements: "full",
     fournisseurs: "full",
     entreprises: "full",
+    parametres: "full",
     audit: "full",
   },
   maitre_oeuvre: {
@@ -70,6 +71,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     fournisseurs: "full",
     entreprises: "full",
     parametres: "full",
+    audit: "full",
   },
   entreprise: {
     "tableau-de-bord": "full",
@@ -82,6 +84,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     fournisseurs: "full",
     entreprises: "none",
     parametres: "full",
+    audit: "read",
   },
 };
 
