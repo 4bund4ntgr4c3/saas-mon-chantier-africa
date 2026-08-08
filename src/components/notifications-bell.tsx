@@ -1,14 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bell } from "lucide-react";
+import { AlertTriangle, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCurrentProject } from "@/context/project-context";
-import { useAuditLogs, type AuditLog } from "@/lib/data";
-import { fcfa } from "@/lib/format";
+import {
+  useAuditLogs,
+  useBudgetLines,
+  useCategories,
+  useDocuments,
+  useExpenses,
+  usePayments,
+  useQuotes,
+  type AuditLog,
+} from "@/lib/data";
+import { fcfa, frDate, labelOf, num, PAYMENT_METHODS } from "@/lib/format";
 
 const ACTION_LABEL: Record<string, string> = {
   creation: "Création",
@@ -60,9 +69,26 @@ function relative(value: string) {
   return new Date(value).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
 }
 
+type BusinessAlert = {
+  id: string;
+  title: string;
+  detail: string;
+  severity: "danger" | "warning";
+};
+
+function daysFromNow(value: string) {
+  return Math.round((Date.now() - new Date(value).getTime()) / 86400000);
+}
+
 export function NotificationsBell() {
-  const { projectId } = useCurrentProject();
+  const { project, projectId } = useCurrentProject();
   const { data: logs = [] } = useAuditLogs(projectId);
+  const { data: expenses = [] } = useExpenses(projectId);
+  const { data: budgetLines = [] } = useBudgetLines(projectId);
+  const { data: categories = [] } = useCategories();
+  const { data: payments = [] } = usePayments(projectId);
+  const { data: quotes = [] } = useQuotes(projectId);
+  const { data: documents = [] } = useDocuments(projectId);
   const [lastSeen, setLastSeen] = useState<string>(() => {
     if (typeof window === "undefined") return new Date().toISOString();
     return window.localStorage.getItem(SEEN_KEY) ?? new Date(0).toISOString();
@@ -70,10 +96,97 @@ export function NotificationsBell() {
   const toasted = useRef<Set<string>>(new Set());
   const bootstrapped = useRef(false);
 
+  const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+
+  const businessAlerts = useMemo<BusinessAlert[]>(() => {
+    if (!project) return [];
+    const out: BusinessAlert[] = [];
+    const today = new Date().toISOString().slice(0, 10);
+
+    const spentByCat = new Map<string, number>();
+    for (const e of expenses) {
+      if (!e.category_id) continue;
+      spentByCat.set(e.category_id, (spentByCat.get(e.category_id) ?? 0) + Number(e.amount));
+    }
+    for (const line of budgetLines) {
+      const planned = Number(line.planned_amount);
+      if (planned <= 0) continue;
+      const spent = spentByCat.get(line.category_id) ?? 0;
+      const ratio = (spent / planned) * 100;
+      if (ratio >= 80) {
+        out.push({
+          id: `budget-${line.id}`,
+          title: `Poste « ${catName.get(line.category_id) ?? "Sans catégorie"} » à ${num(ratio)} %`,
+          detail: `${fcfa(spent)} dépensés sur ${fcfa(planned)} prévus`,
+          severity: ratio > 100 ? "danger" : "warning",
+        });
+      }
+    }
+
+    for (const p of payments) {
+      if (!p.due_date || p.due_date >= today) continue;
+      out.push({
+        id: `paiement-${p.id}`,
+        title: `Paiement en retard de ${daysFromNow(p.due_date)} j`,
+        detail: `${fcfa(Number(p.amount))} · ${labelOf(PAYMENT_METHODS, p.method)} · échéance ${frDate(p.due_date)}`,
+        severity: "danger",
+      });
+    }
+
+    for (const q of quotes) {
+      if (!q.valid_until || q.valid_until >= today || q.status !== "en_attente") continue;
+      out.push({
+        id: `devis-${q.id}`,
+        title: `Devis « ${q.label} » expiré depuis ${daysFromNow(q.valid_until)} j`,
+        detail: `${fcfa(Number(q.amount))} · réf. ${q.reference ?? "—"}`,
+        severity: "warning",
+      });
+    }
+
+    const required = ["plan", "permis_construire", "acte_vente", "contrat"] as const;
+    const present = new Set(documents.map((d) => d.category));
+    const missing = required.filter((c) => !present.has(c));
+    if (missing.length > 0) {
+      out.push({
+        id: "documents-manquants",
+        title: `${missing.length} pièce(s) réglementaire(s) manquante(s)`,
+        detail: "Plans, permis, acte de vente ou contrat absents du dossier.",
+        severity: "warning",
+      });
+    }
+
+    if (project.end_date && project.end_date < today && project.status !== "termine") {
+      out.push({
+        id: "projet-fin",
+        title: `Chantier hors délai de ${daysFromNow(project.end_date)} j`,
+        detail: `Fin prévue le ${frDate(project.end_date)}.`,
+        severity: "warning",
+      });
+    }
+
+    return out;
+  }, [project, expenses, budgetLines, payments, quotes, documents, catName]);
+
   const alerts = useMemo(() => logs.filter(isSensitive).slice(0, 30), [logs]);
   const unread = useMemo(() => alerts.filter((l) => l.created_at > lastSeen), [alerts, lastSeen]);
+  const badgeCount = unread.length + businessAlerts.length;
 
-  // Notification in-app (toast) pour chaque nouvelle action sensible.
+  // Toast des nouvelles alertes métier (dédupliquées par session).
+  useEffect(() => {
+    if (!bootstrapped.current) {
+      bootstrapped.current = true;
+      businessAlerts.forEach((a) => toasted.current.add(a.id));
+      return;
+    }
+    businessAlerts
+      .filter((a) => !toasted.current.has(a.id))
+      .forEach((a) => {
+        toasted.current.add(a.id);
+        toast.warning("Alerte chantier", { description: `${a.title} — ${a.detail}` });
+      });
+  }, [businessAlerts]);
+
+  // Toast des nouvelles actions sensibles du journal d'audit.
   useEffect(() => {
     if (!bootstrapped.current) {
       bootstrapped.current = true;
@@ -99,37 +212,60 @@ export function NotificationsBell() {
       <PopoverTrigger asChild>
         <Button size="icon" variant="ghost" className="relative" aria-label="Notifications">
           <Bell className="size-4" />
-          {unread.length > 0 && (
+          {badgeCount > 0 && (
             <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-4 text-destructive-foreground">
-              {unread.length > 9 ? "9+" : unread.length}
+              {badgeCount > 9 ? "9+" : badgeCount}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
+      <PopoverContent align="end" className="w-96 p-0">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
-          <span className="text-sm font-medium">Alertes</span>
-          <Badge variant="outline">{alerts.length}</Badge>
+          <span className="text-sm font-medium">Notifications</span>
+          <Badge variant="outline">{badgeCount}</Badge>
         </div>
-        <ScrollArea className="max-h-80">
-          {alerts.length === 0 ? (
+        <ScrollArea className="max-h-96">
+          {badgeCount === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-              Aucune action sensible récente.
+              Aucune alerte ni action récente.
             </p>
           ) : (
-            <ul className="divide-y divide-border">
-              {alerts.map((l) => (
-                <li key={l.id} className="px-3 py-2 text-sm">
-                  <p className="leading-snug">{notificationText(l)}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{relative(l.created_at)}</p>
-                </li>
-              ))}
-            </ul>
+            <>
+              {businessAlerts.length > 0 && (
+                <div className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-widest text-muted-foreground">
+                  À surveiller
+                </div>
+              )}
+              <ul className="divide-y divide-border">
+                {businessAlerts.map((a) => (
+                  <li key={a.id} className="px-3 py-2 text-sm">
+                    <p className="flex items-start gap-1.5 leading-snug">
+                      <AlertTriangle
+                        className={`mt-0.5 size-3.5 shrink-0 ${
+                          a.severity === "danger" ? "text-destructive" : "text-accent"
+                        }`}
+                      />
+                      <span className="font-medium">{a.title}</span>
+                    </p>
+                    <p className="mt-0.5 pl-5 text-xs text-muted-foreground">{a.detail}</p>
+                  </li>
+                ))}
+                {alerts.map((l) => (
+                  <li key={l.id} className="px-3 py-2 text-sm">
+                    <p className="leading-snug">{notificationText(l)}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{relative(l.created_at)}</p>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </ScrollArea>
-        <div className="border-t border-border p-2">
+        <div className="grid grid-cols-2 gap-2 border-t border-border p-2">
           <Button asChild size="sm" variant="secondary" className="w-full">
-            <Link to="/audit">Voir le journal d'audit</Link>
+            <Link to="/alertes">Voir les alertes</Link>
+          </Button>
+          <Button asChild size="sm" variant="ghost" className="w-full">
+            <Link to="/audit">Journal d'audit</Link>
           </Button>
         </div>
       </PopoverContent>

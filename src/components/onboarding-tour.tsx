@@ -81,15 +81,15 @@ const STEPS: Step[] = [
   },
   {
     icon: FilePlus2,
-    title: "Enregistrer une nouvelle facture",
+    title: "Lier fournisseur, catégorie et facture",
     description:
-      "Le bouton « Ajouter une dépense » ouvre le formulaire de saisie d'une facture. Essayez-le : en mode démo, la ligne apparaît immédiatement dans la liste.",
+      "Une dépense relie toujours un fournisseur à une catégorie (le poste de budget qui sera débité). Le bouton « Ajouter une dépense » ouvre ce formulaire — en mode démo, la ligne apparaît immédiatement.",
     bullets: [
+      "Sélectionnez la catégorie : terrassement, fondations, électricité…",
+      "Sélectionnez le fournisseur ou l'entreprise qui a été facturé",
+      "N° de facture / reçu : la pièce justificative qui référence la dépense",
       "Libellé, montant en FCFA et date : les champs obligatoires",
-      "Catégorie : le poste de budget qui sera débité",
-      "Fournisseur ou entreprise : qui a été facturé",
       "Quantité et prix unitaire pour les achats de matériaux",
-      "N° de facture / reçu pour retrouver la pièce justificative",
     ],
     to: "/depenses",
     highlight: "expense-new",
@@ -97,13 +97,14 @@ const STEPS: Step[] = [
   },
   {
     icon: Wallet,
-    title: "Les paiements",
+    title: "Régler la facture par des paiements",
     description:
-      "Une facture peut être réglée en plusieurs fois. Les paiements enregistrent l'argent réellement sorti et se rattachent à une dépense, un fournisseur ou une entreprise.",
+      "Une facture peut être réglée en plusieurs fois. Chaque paiement enregistre l'argent réellement sorti et se rattache à la dépense, au fournisseur ou à l'entreprise.",
     bullets: [
       "Type : comptant, acompte, paiement partiel ou solde",
       "Moyen : espèces, MTN MoMo, Moov Money, virement, chèque",
       "Comparez le total payé au total facturé pour voir le reste à payer",
+      "Une date d'échéance déclenche une alerte si le paiement n'est pas fait à temps",
     ],
     to: "/paiements",
     highlight: "payment-new",
