@@ -40,7 +40,8 @@ export type Feature =
   | "paiements"
   | "fournisseurs"
   | "entreprises"
-  | "parametres";
+  | "parametres"
+  | "audit";
 
 /** none = module masqué, read = consultation seule, full = création/modification. */
 export type Access = "none" | "read" | "full";
@@ -56,7 +57,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     paiements: "full",
     fournisseurs: "full",
     entreprises: "full",
-    parametres: "full",
+    audit: "full",
   },
   maitre_oeuvre: {
     "tableau-de-bord": "full",
