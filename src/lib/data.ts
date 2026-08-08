@@ -246,6 +246,24 @@ export function useProfile() {
   });
 }
 
+export type AuditLog = Tables["audit_logs"]["Row"];
+
+/** Journal d'audit : actions sensibles tracées côté base de données. */
+export function useAuditLogs(projectId: string | null) {
+  return useQuery({
+    queryKey: ["audit_logs", projectId],
+    queryFn: async () => {
+      if (isGuestMode()) return [] as AuditLog[];
+      let query = supabase
+        .from("audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (projectId) query = query.eq("project_id", projectId);
+      return unwrap<AuditLog[]>(query);
+    },
+  });
+}
 
 
 export function useSaveRow(table: TableName, successMessage = "Enregistré") {
