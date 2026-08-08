@@ -8,6 +8,7 @@ import {
   LogOut,
   NotebookPen,
   PiggyBank,
+  ShieldCheck,
   Settings,
   Receipt,
   Store,
@@ -42,6 +43,7 @@ const NAV = [
   { to: "/paiements", label: "Paiements", icon: Wallet, feature: "paiements" },
   { to: "/fournisseurs", label: "Fournisseurs", icon: Store, feature: "fournisseurs" },
   { to: "/entreprises", label: "Entreprises", icon: Building2, feature: "entreprises" },
+  { to: "/audit", label: "Journal d'audit", icon: ShieldCheck, feature: "audit" },
   { to: "/parametres", label: "Paramètres", icon: Settings, feature: "parametres" },
 ] as const satisfies readonly { to: string; label: string; icon: typeof Gauge; feature: Feature }[];
 
