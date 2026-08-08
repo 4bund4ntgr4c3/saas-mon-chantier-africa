@@ -31,6 +31,7 @@ import { accessFor, accountTypeLabel, useAccountType, type Feature } from "@/lib
 import { Badge } from "@/components/ui/badge";
 import { exitGuestMode, useGuestMode } from "@/lib/guest-mode";
 import { GuestBanner } from "@/components/guest-banner";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -139,6 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Select>
             </div>
             <div className="flex items-center gap-2">
+              <NotificationsBell />
               <Button asChild size="sm" variant="secondary">
                 <Link to="/projets">Gérer les projets</Link>
               </Button>
