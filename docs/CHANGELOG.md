@@ -6,6 +6,17 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.19 — Audit complet de la plateforme (2026-08-09)
+
+### Documentation
+- ✅ `docs/audit-2026-08-09.md` : analyse de build (build ✅, `tsc` 21 erreurs, ESLint 648 erreurs de formatage, 26 tests verts), poids des bundles, cartographie fonctionnelle, rapport des manques et plan d'exécution en 10 étapes.
+
+### À noter
+- ⚠️ **Dérive base de données critique** : la base ne contient que 13 tables alors que le code en interroge 46. Les migrations `20260810000000` → `20260821000000` ne sont pas appliquées, ainsi que les buckets `documents` / `demo-attachments` et les RPC `get_shared_project` / `get_payment_link_order`. Une vingtaine de pages sont donc non fonctionnelles. Étape 0 du plan.
+- ⚠️ Les 21 erreurs TypeScript et la majorité des erreurs ESLint découlent de cette dérive (`src/integrations/supabase/types.ts` régénéré sur une base incomplète).
+
+
+
 ## v0.18 — Vague 5 : Litiges & remboursements (2026-08-09)
 
 ### Migrations
