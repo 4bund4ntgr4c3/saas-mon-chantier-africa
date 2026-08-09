@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Bell } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  BellRing,
+  ClipboardList,
+  FileText,
+  Handshake,
+  ListChecks,
+  Package,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +26,16 @@ import {
   useCategories,
   useDocuments,
   useExpenses,
+  useMarkNotificationsRead,
+  useNotifications,
   usePayments,
   useQuotes,
+  type AppNotification,
+  type AppNotificationKind,
   type AuditLog,
 } from "@/lib/data";
 import { fcfa, frDate, labelOf, num, PAYMENT_METHODS } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const ACTION_LABEL: Record<string, string> = {
   creation: "Création",
@@ -83,12 +101,14 @@ function daysFromNow(value: string) {
 export function NotificationsBell() {
   const { project, projectId } = useCurrentProject();
   const { data: logs = [] } = useAuditLogs(projectId);
+  const { data: notifications = [] } = useNotifications(100);
   const { data: expenses = [] } = useExpenses(projectId);
   const { data: budgetLines = [] } = useBudgetLines(projectId);
   const { data: categories = [] } = useCategories();
   const { data: payments = [] } = usePayments(projectId);
   const { data: quotes = [] } = useQuotes(projectId);
   const { data: documents = [] } = useDocuments(projectId);
+  const markRead = useMarkNotificationsRead();
   const [lastSeen, setLastSeen] = useState<string>(() => {
     if (typeof window === "undefined") return new Date().toISOString();
     return window.localStorage.getItem(SEEN_KEY) ?? new Date(0).toISOString();
@@ -168,8 +188,15 @@ export function NotificationsBell() {
   }, [project, expenses, budgetLines, payments, quotes, documents, catName]);
 
   const alerts = useMemo(() => logs.filter(isSensitive).slice(0, 30), [logs]);
-  const unread = useMemo(() => alerts.filter((l) => l.created_at > lastSeen), [alerts, lastSeen]);
-  const badgeCount = unread.length + businessAlerts.length;
+  const unreadAlerts = useMemo(
+    () => alerts.filter((l) => l.created_at > lastSeen),
+    [alerts, lastSeen],
+  );
+  const unreadNotifications = useMemo(
+    () => notifications.filter((n) => !n.read_at),
+    [notifications],
+  );
+  const badgeCount = unreadAlerts.length + businessAlerts.length + unreadNotifications.length;
 
   // Toast des nouvelles alertes métier (dédupliquées par session).
   useEffect(() => {
@@ -201,14 +228,29 @@ export function NotificationsBell() {
       });
   }, [alerts, lastSeen]);
 
+  // Toast des nouvelles notifications persistées non lues.
+  useEffect(() => {
+    if (!bootstrapped.current) {
+      unreadNotifications.forEach((n) => toasted.current.add(n.id));
+      return;
+    }
+    unreadNotifications
+      .filter((n) => !toasted.current.has(n.id))
+      .forEach((n) => {
+        toasted.current.add(n.id);
+        toast.success(n.title, { description: n.body ?? undefined });
+      });
+  }, [unreadNotifications]);
+
   function markAllRead() {
     const now = new Date().toISOString();
     window.localStorage.setItem(SEEN_KEY, now);
     setLastSeen(now);
+    markRead.mutate();
   }
 
   return (
-    <Popover onOpenChange={(open) => open && unread.length > 0 && markAllRead()}>
+    <Popover onOpenChange={(open) => open && unreadNotifications.length > 0 && markAllRead()}>
       <PopoverTrigger asChild>
         <Button size="icon" variant="ghost" className="relative" aria-label="Notifications">
           <Bell className="size-4" />
@@ -230,34 +272,35 @@ export function NotificationsBell() {
               Aucune alerte ni action récente.
             </p>
           ) : (
-            <>
+            <ul className="divide-y divide-border">
+              {notifications.map((n) => (
+                <NotificationRow key={n.id} notification={n} />
+              ))}
               {businessAlerts.length > 0 && (
-                <div className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-widest text-muted-foreground">
+                <li className="px-3 py-2 text-[11px] uppercase tracking-widest text-muted-foreground">
                   À surveiller
-                </div>
+                </li>
               )}
-              <ul className="divide-y divide-border">
-                {businessAlerts.map((a) => (
-                  <li key={a.id} className="px-3 py-2 text-sm">
-                    <p className="flex items-start gap-1.5 leading-snug">
-                      <AlertTriangle
-                        className={`mt-0.5 size-3.5 shrink-0 ${
-                          a.severity === "danger" ? "text-destructive" : "text-accent"
-                        }`}
-                      />
-                      <span className="font-medium">{a.title}</span>
-                    </p>
-                    <p className="mt-0.5 pl-5 text-xs text-muted-foreground">{a.detail}</p>
-                  </li>
-                ))}
-                {alerts.map((l) => (
-                  <li key={l.id} className="px-3 py-2 text-sm">
-                    <p className="leading-snug">{notificationText(l)}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{relative(l.created_at)}</p>
-                  </li>
-                ))}
-              </ul>
-            </>
+              {businessAlerts.map((a) => (
+                <li key={a.id} className="px-3 py-2 text-sm">
+                  <p className="flex items-start gap-1.5 leading-snug">
+                    <AlertTriangle
+                      className={`mt-0.5 size-3.5 shrink-0 ${
+                        a.severity === "danger" ? "text-destructive" : "text-accent"
+                      }`}
+                    />
+                    <span className="font-medium">{a.title}</span>
+                  </p>
+                  <p className="mt-0.5 pl-5 text-xs text-muted-foreground">{a.detail}</p>
+                </li>
+              ))}
+              {alerts.map((l) => (
+                <li key={l.id} className="px-3 py-2 text-sm">
+                  <p className="leading-snug">{notificationText(l)}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{relative(l.created_at)}</p>
+                </li>
+              ))}
+            </ul>
           )}
         </ScrollArea>
         <div className="grid grid-cols-2 gap-2 border-t border-border p-2">
@@ -270,5 +313,37 @@ export function NotificationsBell() {
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+const KIND_ICONS: Record<AppNotificationKind, typeof Bell> = {
+  alerte: BellRing,
+  commande: Package,
+  livraison: Truck,
+  paiement: Wallet,
+  devis: FileText,
+  rapport: ClipboardList,
+  litige: Handshake,
+  verification: ShieldCheck,
+  assistant: Sparkles,
+};
+
+function NotificationRow({ notification }: { notification: AppNotification }) {
+  const Icon = KIND_ICONS[notification.kind] ?? Bell;
+  const unread = !notification.read_at;
+  return (
+    <li className={cn("px-3 py-2 text-sm", unread && "bg-primary/5")}>
+      <p className="flex items-start gap-1.5 leading-snug">
+        <Icon className={cn("mt-0.5 size-3.5 shrink-0 text-primary")} />
+        <span className="font-medium">{notification.title}</span>
+        {unread && <span className="mt-1 ml-1 size-1.5 shrink-0 rounded-full bg-primary" />}
+      </p>
+      {notification.body && (
+        <p className="mt-0.5 pl-5 text-xs text-muted-foreground">{notification.body}</p>
+      )}
+      <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
+        {relative(notification.created_at)}
+      </p>
+    </li>
   );
 }

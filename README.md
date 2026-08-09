@@ -16,7 +16,7 @@ Permettre à un particulier, un maître d'œuvre ou une entreprise de suivre l'e
 | UI | React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui (Radix) |
 | Données | TanStack Query + Supabase (PostgreSQL, Auth, Storage, Edge Functions) |
 | Exports | PDF (jspdf) · Excel (xlsx) |
-| Notifications | Resend (e-mail) + alertes in-app |
+| Notifications | Resend (e-mail) + notifications persistées multi-canal (in-app, push, SMS, WhatsApp) |
 | Tests | Vitest + jsdom |
 | Déploiement | Vercel / Cloudflare Workers (Nitro) |
 
@@ -31,6 +31,7 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 
 ### Alertes & notifications
 - Alertes métier (budget dépassant 80 %, échéances, paiements en retard, documents manquants), notifications e-mail (quotidiennes + digest hebdomadaire), préférences dans Paramètres
+- Notifications persistées multi-canal (in-app dans la cloche, push/SMS/WhatsApp configurables) : commandes, paiements, livraisons — canaux préférentiels dans Paramètres, appareils web enregistrés pour le push
 
 ### Rapports & recherche
 - Rapports par mois/catégorie/fournisseur/commune/entreprise, budget prévu vs réalisé, coût moyen au m², exports PDF et Excel, recherche globale

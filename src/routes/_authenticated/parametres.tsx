@@ -118,7 +118,10 @@ type PrefKey =
   | "alert_budget"
   | "alert_documents"
   | "alert_projects"
-  | "weekly_digest";
+  | "weekly_digest"
+  | "push_enabled"
+  | "sms_enabled"
+  | "whatsapp_enabled";
 
 const NOTIFICATION_TOGGLES: { key: PrefKey; label: string; hint: string }[] = [
   {
@@ -156,6 +159,21 @@ const NOTIFICATION_TOGGLES: { key: PrefKey; label: string; hint: string }[] = [
     label: "Récapitulatif hebdomadaire",
     hint: "Résumé de vos points d'attention chaque début de semaine.",
   },
+  {
+    key: "push_enabled",
+    label: "Notifications push",
+    hint: "Alertes en temps réel sur vos appareils connectés.",
+  },
+  {
+    key: "sms_enabled",
+    label: "Notifications SMS",
+    hint: "Alertes importantes envoyées par SMS.",
+  },
+  {
+    key: "whatsapp_enabled",
+    label: "Notifications WhatsApp",
+    hint: "Partage de devis, commandes, rapports et liens de paiement.",
+  },
 ];
 
 const TOGGLE_DEFAULTS: Record<PrefKey, boolean> = {
@@ -166,6 +184,9 @@ const TOGGLE_DEFAULTS: Record<PrefKey, boolean> = {
   alert_documents: true,
   alert_projects: true,
   weekly_digest: true,
+  push_enabled: true,
+  sms_enabled: true,
+  whatsapp_enabled: true,
 };
 
 function VerificationSection() {
@@ -348,6 +369,9 @@ function SettingsPage() {
       alert_documents: prefs.alert_documents,
       alert_projects: prefs.alert_projects,
       weekly_digest: prefs.weekly_digest,
+      push_enabled: prefs.push_enabled,
+      sms_enabled: prefs.sms_enabled,
+      whatsapp_enabled: prefs.whatsapp_enabled,
     }));
   }, [prefs, profile]);
 
@@ -629,7 +653,13 @@ function SettingsPage() {
                     <p className="text-xs text-muted-foreground">{hint}</p>
                   </div>
                   <Switch
-                    disabled={key !== "alerts_enabled" && !toggles.alerts_enabled}
+                    disabled={
+                      key !== "alerts_enabled" &&
+                      key !== "push_enabled" &&
+                      key !== "sms_enabled" &&
+                      key !== "whatsapp_enabled" &&
+                      !toggles.alerts_enabled
+                    }
                     checked={toggles[key]}
                     onCheckedChange={(v) => setToggle(key, v)}
                     aria-label={label}

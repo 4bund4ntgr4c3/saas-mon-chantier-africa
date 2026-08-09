@@ -11,6 +11,9 @@ erDiagram
     profiles ||--o{ user_roles : "1..n"
     profiles ||--o{ profile_verifications : "1..n"
     profiles ||--o{ notification_preferences : "1..1"
+    profiles ||--o{ notifications : "1..n"
+    profiles ||--o{ device_tokens : "1..n"
+    projects ||--o{ notifications : "1..n"
 
     projects ||--o{ budget_lines : "1..n"
     projects ||--o{ expenses : "1..n"
@@ -94,7 +97,9 @@ erDiagram
 | `profiles` | Profil utilisateur : `full_name`, `phone`, `account_type` (particulier / maitre_oeuvre / entreprise). |
 | `user_roles` | Rôles étendus (ex. `admin`) — porte la vérification `useIsAdmin()`. |
 | `profile_verifications` | Demandes de vérification d'identité des comptes. |
-| `notification_preferences` | Préférences e-mail (alertes, digest hebdomadaire) — une ligne par utilisateur. |
+| `notification_preferences` | Préférences de notification (canaux e-mail/push/SMS/WhatsApp, alertes, digest hebdomadaire) — une ligne par utilisateur. |
+| `notifications` | Notifications persistées multi-canal : `channel` (`in_app`/`email`/`push`/`sms`/`whatsapp`), `kind` (commande, livraison, paiement, devis, rapport, litige, verification, assistant), `title`, `body`, `link`, `read_at`. RLS propriétaire. |
+| `device_tokens` | Appareils enregistrés pour le push : `token` unique par utilisateur (`user_id, token`), `platform`, `last_seen_at`. RLS propriétaire. |
 | `email_log` | Journal d'envoi des notifications. |
 | `demo_requests` | Demandes d'accès à la démo commerciale. |
 

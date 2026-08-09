@@ -113,10 +113,16 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Descriptions IA de produits (générateur à base de règles + bouton dans Ma boutique)
 - ⬜ Branchage LLM (optionnel) pour des réponses ouvertes
 
-## Vague 8 — Notifications multi-canal ⬜
+## Vague 8 — Notifications multi-canal 🔄
 
-- Table `notifications` persistée + `device_tokens`
-- Push web/mobile, SMS, WhatsApp (partage devis/commande/rapport, liens de paiement, suivi de livraison)
+- ✅ Table `notifications` persistée + `device_tokens` (migration `20260824000000_notifications-multicanal.sql`)
+- ✅ Infrastructure : hooks `useNotifications` / `useMarkNotificationsRead` / `useRegisterDeviceToken` / `useAddNotification`, enums `notification_channel` + `notification_kind`
+- ✅ Cloche de notifications alimentée par les notifications persistées (canal `in_app`), marquées lues à l'ouverture
+- ✅ Câblage des événements : commande passée, paiement confirmé, livraison mise à jour, livraison de matériaux
+- ✅ Préférences de canaux Push/SMS/WhatsApp dans Paramètres + enregistrement du navigateur comme appareil web
+- ⬜ Push web réel (service worker) + push mobile
+- ⬜ SMS, WhatsApp (partage devis/commande/rapport, liens de paiement, suivi de livraison)
+- ⬜ Page dédiée « Mes notifications » (historique + filtres par canal/kind)
 
 ## Vague 9 — Location de matériel ⬜
 

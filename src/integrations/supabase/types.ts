@@ -444,6 +444,72 @@ export type Database = {
         };
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          body: string | null;
+          channel: Database["public"]["Enums"]["notification_channel"];
+          created_at: string;
+          id: string;
+          kind: Database["public"]["Enums"]["notification_kind"];
+          link: string | null;
+          project_id: string | null;
+          read_at: string | null;
+          title: string;
+          user_id: string;
+        };
+        Insert: {
+          body?: string | null;
+          channel?: Database["public"]["Enums"]["notification_channel"];
+          created_at?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["notification_kind"];
+          link?: string | null;
+          project_id?: string | null;
+          read_at?: string | null;
+          title: string;
+          user_id: string;
+        };
+        Update: {
+          body?: string | null;
+          channel?: Database["public"]["Enums"]["notification_channel"];
+          created_at?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["notification_kind"];
+          link?: string | null;
+          project_id?: string | null;
+          read_at?: string | null;
+          title?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      device_tokens: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_seen_at: string;
+          platform: string;
+          token: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          platform?: string;
+          token: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          platform?: string;
+          token?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       notification_preferences: {
         Row: {
           alert_budget: boolean;
@@ -455,9 +521,12 @@ export type Database = {
           created_at: string;
           email: string | null;
           last_digest_at: string | null;
+          push_enabled: boolean;
+          sms_enabled: boolean;
           updated_at: string;
           user_id: string;
           weekly_digest: boolean;
+          whatsapp_enabled: boolean;
         };
         Insert: {
           alert_budget?: boolean;
@@ -469,9 +538,12 @@ export type Database = {
           created_at?: string;
           email?: string | null;
           last_digest_at?: string | null;
+          push_enabled?: boolean;
+          sms_enabled?: boolean;
           updated_at?: string;
           user_id: string;
           weekly_digest?: boolean;
+          whatsapp_enabled?: boolean;
         };
         Update: {
           alert_budget?: boolean;
@@ -483,9 +555,12 @@ export type Database = {
           created_at?: string;
           email?: string | null;
           last_digest_at?: string | null;
+          push_enabled?: boolean;
+          sms_enabled?: boolean;
           updated_at?: string;
           user_id?: string;
           weekly_digest?: boolean;
+          whatsapp_enabled?: boolean;
         };
         Relationships: [];
       };
@@ -2818,6 +2893,17 @@ export type Database = {
         | "photo_chantier"
         | "autre";
       invoice_status: "emise" | "partielle" | "payee" | "annulee";
+      notification_channel: "in_app" | "email" | "push" | "sms" | "whatsapp";
+      notification_kind:
+        | "alerte"
+        | "commande"
+        | "livraison"
+        | "paiement"
+        | "devis"
+        | "rapport"
+        | "litige"
+        | "verification"
+        | "assistant";
       order_status:
         | "creee"
         | "paiement_en_attente"
@@ -3010,6 +3096,18 @@ export const Constants = {
       reserve_priority: ["basse", "moyenne", "haute", "critique"],
       reserve_status: ["ouverte", "en_cours", "resolue", "annulee"],
       review_target: ["store", "product", "driver"],
+      notification_channel: ["in_app", "email", "push", "sms", "whatsapp"],
+      notification_kind: [
+        "alerte",
+        "commande",
+        "livraison",
+        "paiement",
+        "devis",
+        "rapport",
+        "litige",
+        "verification",
+        "assistant",
+      ],
       verification_doc_type: [
         "identite",
         "rccm",

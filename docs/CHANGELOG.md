@@ -6,6 +6,41 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.23 — Vague 8 : Notifications multi-canal (tranche 1 — infrastructure & in-app) (2026-08-09)
+
+### Migration
+- `supabase/migrations/20260824000000_notifications-multicanal.sql`
+  - ✅ Enums `notification_channel` (`in_app` / `email` / `push` / `sms` / `whatsapp`) et `notification_kind` (`alerte` / `commande` / `livraison` / `paiement` / `devis` / `rapport` / `litige` / `verification` / `assistant`)
+  - ✅ Table `notifications` (persistées) : `user_id`, `project_id`, `channel`, `kind`, `title`, `body`, `link`, `read_at`, `created_at` — RLS propriétaire + index `user_id, created_at DESC` + index partiel sur les non-lues
+  - ✅ Table `device_tokens` : `user_id`, `token`, `platform`, `last_seen_at` — contrainte `UNIQUE (user_id, token)`, RLS propriétaire
+  - ✅ `notification_preferences` étendue : colonnes `push_enabled`, `sms_enabled`, `whatsapp_enabled` (default `true`)
+
+### Hooks de données (`src/lib/data.ts`)
+- ✅ `useNotifications(limit)` / `useUnreadNotificationCount()` / `useMarkNotificationsRead()` — notifications persistées de l'utilisateur courant (guest + Supabase)
+- ✅ `useAddNotification()` + helper `addPersistedNotification()` (fire-and-forget) — création de notifications depuis les mutations
+- ✅ `useDeviceTokens()` / `useRegisterDeviceToken()` (upsert `user_id,token`) / `useRemoveDeviceToken()` — appareils pour le push
+- ✅ `AppNotification`, `AppNotificationChannel`, `AppNotificationKind`, `DeviceToken`, `NOTIFICATION_KIND_LABELS`, `NOTIFICATION_CHANNEL_LABELS`
+- ✅ `DEFAULT_NOTIFICATION_PREFS` étendu avec les 3 canaux
+
+### Cloche de notifications (`src/components/notifications-bell.tsx`)
+- 🔧 La cloche affiche désormais les **notifications persistées** (icône selon `kind`, pastille pour les non-lues) en plus des alertes métier calculées et des actions d'audit sensibles
+- 🔧 Ouverture de la cloche → tout marqué lu (`read_at`)
+
+### Événements câblés
+- ✅ `useCreateOrder` → « Commande passée » (kind `commande`)
+- ✅ `useUpdateDeliveryStatus` → « Livraison mise à jour » (kind `livraison`)
+- ✅ `useConfirmMobileMoney` → « Paiement confirmé » (kind `paiement`)
+- ✅ `useAddMaterialDelivery` → « Livraison de matériaux enregistrée » (kind `livraison`)
+
+### Préférences de canaux (`src/routes/_authenticated/parametres.tsx`)
+- ✅ Toggles **Push / SMS / WhatsApp** ajoutés aux préférences de notification (indépendants de l'interrupteur e-mail)
+- ✅ Enregistrement automatique du navigateur comme appareil `web` (id stable par navigateur) dans `app-shell.tsx`
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur · 33 tests OK
+
+---
+
 ## v0.22 — Vague 7 : IA (2e tranche — Achats avancés & fournisseur) (2026-08-09)
 
 ### IA Achats — comparaison multi-boutiques & calcul de quantités (`src/routes/_authenticated/assistant.tsx`)

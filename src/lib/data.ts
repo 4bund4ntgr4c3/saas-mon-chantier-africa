@@ -15,7 +15,7 @@ import {
 } from "@/lib/demo-store";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { haversineKm } from "@/lib/geo";
-import { labelOf, PRODUCT_UNITS } from "@/lib/format";
+import { DELIVERY_STATUSES, fcfa, labelOf, PRODUCT_UNITS } from "@/lib/format";
 
 type Tables = Database["public"]["Tables"];
 export type Project = Tables["projects"]["Row"];
@@ -564,6 +564,8 @@ type TableName =
   | "market_reviews"
   | "ai_conversations"
   | "ai_actions"
+  | "notifications"
+  | "device_tokens"
   | "organizations"
   | "organization_members"
   | "project_members";
@@ -617,6 +619,8 @@ const RELATED: Record<TableName, string[]> = {
   market_reviews: ["market_reviews"],
   ai_conversations: ["ai_conversations", "ai_actions"],
   ai_actions: ["ai_actions", "ai_conversations"],
+  notifications: ["notifications"],
+  device_tokens: ["device_tokens"],
   organizations: ["organizations", "organization_members"],
   organization_members: ["organization_members", "organizations"],
   project_members: ["project_members"],
@@ -1089,6 +1093,9 @@ const DEFAULT_NOTIFICATION_PREFS: Omit<Tables["notification_preferences"]["Inser
   alert_documents: true,
   alert_projects: true,
   weekly_digest: true,
+  push_enabled: true,
+  sms_enabled: true,
+  whatsapp_enabled: true,
 };
 
 export function useNotificationPreferences() {
@@ -1172,6 +1179,243 @@ export function useSendNotificationEmail() {
       } else {
         toast.success("E-mail envoyé");
       }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Vague 8 : notifications persistées multi-canal ---------- */
+
+export type AppNotification = Tables["notifications"]["Row"];
+export type AppNotificationChannel = Database["public"]["Enums"]["notification_channel"];
+export type AppNotificationKind = Database["public"]["Enums"]["notification_kind"];
+export type DeviceToken = Tables["device_tokens"]["Row"];
+
+export const NOTIFICATION_KIND_LABELS: Record<AppNotificationKind, string> = {
+  alerte: "Alerte",
+  commande: "Commande",
+  livraison: "Livraison",
+  paiement: "Paiement",
+  devis: "Devis",
+  rapport: "Rapport",
+  litige: "Litige",
+  verification: "Vérification",
+  assistant: "Assistant",
+};
+
+export const NOTIFICATION_CHANNEL_LABELS: Record<AppNotificationChannel, string> = {
+  in_app: "In-app",
+  email: "E-mail",
+  push: "Push",
+  sms: "SMS",
+  whatsapp: "WhatsApp",
+};
+
+/** Notifications persistées de l'utilisateur courant (les plus récentes d'abord). */
+export function useNotifications(limit = 50) {
+  return useQuery({
+    queryKey: ["notifications", limit],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<AppNotification>("notifications")
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .slice(0, limit)
+        : unwrap<AppNotification[]>(
+            supabase
+              .from("notifications")
+              .select("*")
+              .order("created_at", { ascending: false })
+              .limit(limit),
+          ),
+  });
+}
+
+/** Nombre de notifications non lues de l'utilisateur courant. */
+export function useUnreadNotificationCount() {
+  const { data: notifications = [] } = useNotifications(100);
+  return notifications.filter((n) => !n.read_at).length;
+}
+
+/** Marque toutes les notifications comme lues. */
+export function useMarkNotificationsRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (isGuestMode()) {
+        demoRows<AppNotification>("notifications").forEach((n) =>
+          demoUpdate("notifications", n.id, { read_at: new Date().toISOString() }),
+        );
+        return;
+      }
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read_at: new Date().toISOString() })
+        .is("read_at", null);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export type AddNotificationInput = {
+  title: string;
+  body?: string | null;
+  kind?: AppNotificationKind;
+  channel?: AppNotificationChannel;
+  projectId?: string | null;
+  link?: string | null;
+};
+
+/** Ajoute une notification persistée (canal in_app par défaut). */
+export function useAddNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: AddNotificationInput) => {
+      if (isGuestMode()) {
+        const id = crypto.randomUUID();
+        demoInsert("notifications", {
+          id,
+          user_id: DEMO_USER,
+          project_id: values.projectId ?? null,
+          channel: values.channel ?? "in_app",
+          kind: values.kind ?? "alerte",
+          title: values.title,
+          body: values.body ?? null,
+          link: values.link ?? null,
+          read_at: null,
+          created_at: new Date().toISOString(),
+        });
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase.from("notifications").insert({
+        user_id: auth.user.id,
+        project_id: values.projectId ?? null,
+        channel: values.channel ?? "in_app",
+        kind: values.kind ?? "alerte",
+        title: values.title,
+        body: values.body ?? null,
+        link: values.link ?? null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/**
+ * Ajoute une notification persistée pour un utilisateur précis (déclencheurs métier).
+ * Fire-and-forget : les erreurs sont silencieuses pour ne pas casser l'action principale.
+ */
+export async function addPersistedNotification(
+  input: AddNotificationInput & { userId?: string | null },
+) {
+  try {
+    if (isGuestMode()) {
+      demoInsert("notifications", {
+        id: crypto.randomUUID(),
+        user_id: input.userId ?? DEMO_USER,
+        project_id: input.projectId ?? null,
+        channel: input.channel ?? "in_app",
+        kind: input.kind ?? "alerte",
+        title: input.title,
+        body: input.body ?? null,
+        link: input.link ?? null,
+        read_at: null,
+        created_at: new Date().toISOString(),
+      });
+      return;
+    }
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return;
+    const { error } = await supabase.from("notifications").insert({
+      user_id: input.userId ?? auth.user.id,
+      project_id: input.projectId ?? null,
+      channel: input.channel ?? "in_app",
+      kind: input.kind ?? "alerte",
+      title: input.title,
+      body: input.body ?? null,
+      link: input.link ?? null,
+    });
+    if (error) console.error("addPersistedNotification:", error.message);
+  } catch (e) {
+    console.error("addPersistedNotification:", e);
+  }
+}
+
+/** Appareils enregistrés pour le push. */
+export function useDeviceTokens() {
+  return useQuery({
+    queryKey: ["device_tokens"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<DeviceToken>("device_tokens")
+        : unwrap<DeviceToken[]>(
+            supabase.from("device_tokens").select("*").order("last_seen_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Enregistre ou renouvelle un token d'appareil pour le push. */
+export function useRegisterDeviceToken() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ token, platform }: { token: string; platform: string }) => {
+      if (isGuestMode()) {
+        const existing = demoRows<DeviceToken>("device_tokens").find((t) => t.token === token);
+        if (existing) {
+          demoUpdate("device_tokens", existing.id, { last_seen_at: new Date().toISOString() });
+        } else {
+          demoInsert("device_tokens", {
+            id: crypto.randomUUID(),
+            user_id: DEMO_USER,
+            token,
+            platform,
+            created_at: new Date().toISOString(),
+            last_seen_at: new Date().toISOString(),
+          });
+        }
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase
+        .from("device_tokens")
+        .upsert(
+          { user_id: auth.user.id, token, platform, last_seen_at: new Date().toISOString() },
+          { onConflict: "user_id,token" },
+        );
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["device_tokens"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Supprime un token d'appareil (déconnexion / révocation). */
+export function useRemoveDeviceToken() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (token: string) => {
+      if (isGuestMode()) {
+        const existing = demoRows<DeviceToken>("device_tokens").find((t) => t.token === token);
+        if (existing) demoDelete("device_tokens", existing.id);
+        return;
+      }
+      const { error } = await supabase.from("device_tokens").delete().eq("token", token);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["device_tokens"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1390,6 +1634,13 @@ export function useAddMaterialDelivery() {
       qc.invalidateQueries({ queryKey: ["material_deliveries", v.project_id] });
       qc.invalidateQueries({ queryKey: ["material_requirements", v.project_id] });
       toast.success("Livraison enregistrée");
+      void addPersistedNotification({
+        title: "Livraison de matériaux enregistrée",
+        body: `${v.quantity} unité(s) ajoutée(s) au besoin matériaux.`,
+        kind: "livraison",
+        projectId: v.project_id,
+        link: "/materiaux",
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1654,6 +1905,13 @@ export function useConfirmMobileMoney() {
         qc.invalidateQueries({ queryKey: [k] }),
       );
       toast.success("Paiement confirmé");
+      void addPersistedNotification({
+        title: "Paiement confirmé",
+        body: `Le paiement de ${fcfa(v.amount)} via ${v.provider === "mtn_momo" ? "MTN MoMo" : "Moov Money"} est confirmé.`,
+        kind: "paiement",
+        projectId: v.project_id ?? null,
+        link: v.order_id ? "/commandes" : null,
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -3392,11 +3650,18 @@ export function useCreateOrder() {
 
       return order.id!;
     },
-    onSuccess: () => {
+    onSuccess: (_d, v) => {
       ["orders", "cart", "deliveries", "order_items", "products"].forEach((k) =>
         qc.invalidateQueries({ queryKey: [k] }),
       );
       toast.success("Commande passée !");
+      void addPersistedNotification({
+        title: "Commande passée",
+        body: `Votre commande de ${fcfa(v.total)} a bien été enregistrée.`,
+        kind: "commande",
+        projectId: v.projectId,
+        link: "/commandes",
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -3440,9 +3705,15 @@ export function useUpdateDeliveryStatus() {
         .eq("id", values.id);
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => {
+    onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["deliveries"] });
       toast.success("Livraison mise à jour");
+      void addPersistedNotification({
+        title: "Livraison mise à jour",
+        body: `Le statut de la livraison est désormais : ${labelOf(DELIVERY_STATUSES, v.status)}.`,
+        kind: "livraison",
+        link: "/suivi-livraison",
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });

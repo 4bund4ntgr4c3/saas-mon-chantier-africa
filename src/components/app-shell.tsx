@@ -35,7 +35,7 @@ import {
   Truck,
   TicketCheck,
 } from "lucide-react";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
-import { useIsAdmin } from "@/lib/data";
+import { useIsAdmin, useRegisterDeviceToken } from "@/lib/data";
 import { accessFor, accountTypeLabel, useAccountType, type Feature } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { exitGuestMode, useGuestMode } from "@/lib/guest-mode";
@@ -124,6 +124,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const guest = useGuestMode();
   const navigate = useNavigate();
   const { lang } = usePreferences();
+  const registerDevice = useRegisterDeviceToken();
+
+  // Enregistre ce navigateur comme appareil web pour le push (id stable par navigateur).
+  useEffect(() => {
+    if (guest) return;
+    let token = window.localStorage.getItem("device_token_web");
+    if (!token) {
+      token = `web-${crypto.randomUUID()}`;
+      window.localStorage.setItem("device_token_web", token);
+    }
+    registerDevice.mutate({ token, platform: "web" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guest]);
 
   async function signOut() {
     if (guest) {
