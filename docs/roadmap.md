@@ -21,8 +21,8 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 | Demande de devis en ligne (Vague 5 — quote_requests, quote_bids) | ✅ |
 | Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds) | ✅ |
 | Confiance & vérification (Vague 6 — verification_documents, market_reviews, avis vérifiés) | ✅ |
-| IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales) | 🔄 |
-| Tests unitaires (26), docs (schéma, installation, déploiement, changelog, stack) | ✅ |
+| IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales, achats multi-boutiques, prévision stock fournisseur, descriptions IA) | ✅ |
+| Tests unitaires (33), docs (schéma, installation, déploiement, changelog, stack) | ✅ |
 
 ---
 
@@ -107,9 +107,10 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 ## Vague 7 — IA 🔄
 
 - ✅ Notes vocales + speech-to-text « Parler au chantier » (bouton micro, Web Speech)
-- 🔄 Assistant conversationnel par rôle (`ai_conversations`, `ai_actions`) — 1ère tranche : assistant à base de règles, IA Achats (liste + estimation + panier), recommandations produits
-- ⬜ IA achats : comparaison multi-boutiques, calcul de quantités avancé
-- ⬜ Recommandations marketplace, IA fournisseur (prévision stock, descriptions)
+- ✅ Assistant conversationnel par rôle (`ai_conversations`, `ai_actions`) — assistant à base de règles, IA Achats (liste + estimation + panier), recommandations produits
+- ✅ IA achats avancé : comparaison multi-boutiques (meilleure offre en stock par besoin), calcul de quantités (multiple de la commande minimale), économie estimée
+- ✅ IA fournisseur : prévision de stock 30 j (vélocité, jours restants, réappro suggéré) pour le rôle quincaillerie + panel et intention « stock »
+- ✅ Descriptions IA de produits (générateur à base de règles + bouton dans Ma boutique)
 - ⬜ Branchage LLM (optionnel) pour des réponses ouvertes
 
 ## Vague 8 — Notifications multi-canal ⬜

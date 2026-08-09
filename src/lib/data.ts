@@ -15,6 +15,7 @@ import {
 } from "@/lib/demo-store";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { haversineKm } from "@/lib/geo";
+import { labelOf, PRODUCT_UNITS } from "@/lib/format";
 
 type Tables = Database["public"]["Tables"];
 export type Project = Tables["projects"]["Row"];
@@ -2863,6 +2864,161 @@ function computeStoreAnalytics(
     topProducts,
     recentOrders: validOrders.slice(0, 5),
   };
+}
+
+/* ---------- IA fournisseur : prévision de stock ---------- */
+
+export type StockForecastStatus = "rupture" | "critique" | "bas" | "ok";
+
+/** Prévision de stock d'un produit : vélocité, jours de couverture, réappro suggéré. */
+export type StockForecast = {
+  productId: string;
+  name: string;
+  unit: string | null;
+  price: number;
+  stock: number;
+  soldLast30d: number;
+  avgDaily: number;
+  daysLeft: number | null;
+  suggestedReorder: number;
+  status: StockForecastStatus;
+};
+
+const FORECAST_DAYS = 30;
+const REORDER_WINDOW_DAYS = 14;
+
+/** Calcule la prévision de stock d'un catalogue à partir des commandes (pur, testable). */
+export function computeStockForecast(
+  products: Pick<Product, "id" | "name" | "unit" | "price" | "stock" | "min_order_quantity">[],
+  orders: Pick<Order, "id" | "store_id" | "status">[],
+  items: Pick<OrderItem, "order_id" | "product_id" | "quantity">[],
+  now = Date.now(),
+): StockForecast[] {
+  const cut = new Date(now - FORECAST_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const activeOrderIds = new Set(
+    orders.filter((o) => o.status !== "annulee" && o.status !== "remboursee").map((o) => o.id),
+  );
+  const sold = new Map<string, number>();
+  for (const it of items) {
+    if (!it.product_id || !activeOrderIds.has(it.order_id)) continue;
+    sold.set(it.product_id, (sold.get(it.product_id) ?? 0) + Number(it.quantity ?? 0));
+  }
+  return products
+    .map((p) => {
+      const soldLast30d = sold.get(p.id) ?? 0;
+      const avgDaily = soldLast30d / FORECAST_DAYS;
+      const stock = Number(p.stock);
+      const daysLeft = avgDaily > 0 ? Math.floor(stock / avgDaily) : null;
+      const suggestedReorder =
+        avgDaily > 0
+          ? Math.max(Number(p.min_order_quantity ?? 1), Math.ceil(avgDaily * REORDER_WINDOW_DAYS))
+          : Number(p.min_order_quantity ?? 1);
+      const status: StockForecastStatus =
+        stock <= 0
+          ? "rupture"
+          : daysLeft === null
+            ? "ok"
+            : daysLeft < 3
+              ? "critique"
+              : daysLeft < REORDER_WINDOW_DAYS
+                ? "bas"
+                : "ok";
+      return {
+        productId: p.id,
+        name: p.name,
+        unit: p.unit,
+        price: Number(p.price),
+        stock,
+        soldLast30d,
+        avgDaily,
+        daysLeft,
+        suggestedReorder,
+        status,
+      } satisfies StockForecast;
+    })
+    .sort((a, b) => statusRank(a.status) - statusRank(b.status) || a.name.localeCompare(b.name));
+}
+
+function statusRank(s: StockForecastStatus) {
+  return s === "rupture" ? 0 : s === "critique" ? 1 : s === "bas" ? 2 : 3;
+}
+
+/**
+ * Prévision de stock de la boutique du fournisseur connecté : vélocité de
+ * vente sur 30 jours, jours de couverture restants et quantité de réappro
+ * suggérée par produit. Utilisé par l'IA fournisseur.
+ */
+export function useStoreStockForecast(storeId: string | null) {
+  return useQuery({
+    queryKey: ["store_stock_forecast", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      if (!storeId) return [] as StockForecast[];
+      if (isGuestMode()) {
+        const products = demoRows<Product>("products").filter(
+          (p) => (p as { store_id: string }).store_id === storeId,
+        );
+        const orders = demoRows<Order>("orders").filter((o) => o.store_id === storeId);
+        const items = demoRows<OrderItem>("order_items");
+        return computeStockForecast(products, orders, items);
+      }
+      const { data: products, error: pErr } = await supabase
+        .from("products")
+        .select("*")
+        .eq("store_id", storeId)
+        .eq("active", true);
+      if (pErr) throw new Error(pErr.message);
+      const { data: orders, error: oErr } = await supabase
+        .from("orders")
+        .select("id, store_id, status")
+        .eq("store_id", storeId);
+      if (oErr) throw new Error(oErr.message);
+      const { data: items, error: iErr } = await supabase
+        .from("order_items")
+        .select("order_id, product_id, quantity");
+      if (iErr) throw new Error(iErr.message);
+      return computeStockForecast(
+        (products ?? []) as Product[],
+        (orders ?? []) as Order[],
+        (items ?? []) as OrderItem[],
+      );
+    },
+  });
+}
+
+/**
+ * Génère une description de produit (IA à base de règles) à partir du nom,
+ * de la catégorie et des attributs — utilisée pour compléter automatiquement
+ * le champ description des produits d'une boutique.
+ */
+export function suggestProductDescription(
+  product: Pick<Product, "name" | "brand" | "unit" | "features" | "warranty">,
+  categoryName?: string | null,
+): string {
+  const unit = product.unit ? (labelOf(PRODUCT_UNITS, product.unit) ?? product.unit) : null;
+  const features = (product.features ?? "")
+    .split("\n")
+    .map((f) => f.trim())
+    .filter(Boolean);
+  const parts: string[] = [];
+
+  const intro = [`${product.name}`];
+  if (product.brand) intro.push(`de la marque ${product.brand}`);
+  intro.push(categoryName ? `pour la catégorie « ${categoryName} »` : "pour votre chantier");
+  parts.push(`${intro.join(" ")}, c'est le bon choix pour des travaux de construction réussis.`);
+
+  if (unit) parts.push(`Conditionnement : vendu à l'unité / au ${unit.toLowerCase()}.`);
+  if (features.length > 0) {
+    parts.push(
+      `Caractéristiques principales : ${features.slice(0, 4).join(" ; ")}${features.length > 4 ? "…" : ""}.`,
+    );
+  }
+  parts.push(
+    "Élément clé de la construction, vérifiez ses caractéristiques techniques et sa conformité avant livraison.",
+  );
+  if (product.warranty) parts.push(`Garantie : ${product.warranty}.`);
+
+  return parts.join("\n");
 }
 
 /* ---------- Chantier avancé : réserves, plans, messages ---------- */

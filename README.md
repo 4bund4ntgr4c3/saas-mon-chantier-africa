@@ -72,8 +72,10 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 
 ### IA — Assistant conversationnel
 - Assistant par rôle (« Parler au chantier ») : dictée vocale (Web Speech), questions en français, réponses à base de règles sur vos données réelles
-- IA Achats : liste les besoins matériaux restants du chantier, estime le coût et propose l'ajout au panier
-- Recommandations produits, alertes budget et planning, fils de discussion et actions persistés
+- IA Achats : besoins matériaux restants, meilleure offre par produit parmi toutes les boutiques (comparaison multi-boutiques), calcul des quantités au multiple de la commande minimale, estimation du plan d'achat et économie vs prix de référence, ajout au panier
+- Recommandations marketplace (meilleures notes et meilleurs prix par boutique), alertes budget et planning, fils de discussion et actions persistés
+- IA fournisseur (rôle quincaillerie) : prévision de stock sur 30 jours (vélocité, jours de couverture, réappro suggéré), panel dédié et intention « stock / réappro »
+- Descriptions IA de produits : générateur à base de règles intégré au formulaire « Ma boutique »
 
 ### Expérience
 - PWA installable, i18n FR/EN (navigation), multi-pays/devise (FCFA/XOF, XAF, CDF), mode invité démo, tour guidé, conseiller IA à base de règles, page publique « Nouveautés » (changelog)

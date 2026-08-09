@@ -7,6 +7,7 @@ import {
   Package,
   Pencil,
   Plus,
+  Sparkles,
   Store as StoreIcon,
   Trash2,
   Truck,
@@ -37,6 +38,7 @@ import {
   useSaveRow,
   useStoreAnalytics,
   useStores,
+  suggestProductDescription,
   type Product,
   type Store,
 } from "@/lib/data";
@@ -385,6 +387,32 @@ function MaBoutiquePage() {
                     rows={2}
                     className="sm:col-span-2"
                   />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start gap-1.5 text-xs text-primary"
+                    onClick={() => {
+                      if (!prodForm.name.trim()) return;
+                      const cat =
+                        categories.find((c) => c.id === prodForm.category_id)?.name ?? null;
+                      setProdForm({
+                        ...prodForm,
+                        description: suggestProductDescription(
+                          {
+                            name: prodForm.name,
+                            brand: null,
+                            unit: prodForm.unit || null,
+                            features: null,
+                            warranty: null,
+                          },
+                          cat,
+                        ),
+                      });
+                    }}
+                  >
+                    <Sparkles className="size-3.5" /> Générer une description IA
+                  </Button>
                 </div>
                 <Button type="submit" size="sm" className="mt-2 w-full">
                   {editingProductId ? (

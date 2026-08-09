@@ -120,7 +120,7 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | Demande de devis (Vague 5) | demandes-devis (mes demandes + répondre aux besoins) | `useQuoteRequests`, `useMyQuoteRequests`, `useQuoteBids`, `useMyQuoteBids`, `useAwardQuoteBid` |
 | Litiges & remboursements (Vague 5) | litiges (mes litiges + tous) | `useDisputes`, `useMyDisputes`, `useDisputeEvidences`, `useRefunds`, `useDecideDispute` |
 | Confiance & vérification (Vague 6) | parametres (section vérification), admin/verifications, avis vendeurs/produits/transporteurs (boutique — fiche produit, panier, prestataires) | `useProfileVerification`, `useMyVerificationDocuments`, `useAllVerificationDocuments`, `useSubmitVerificationDocument`, `useReviewVerificationDocument`, `useMarketReviews`, `useAddMarketReview` |
-| IA — Assistant (Vague 7) | assistant (conversation par rôle, IA Achats, notes vocales) | `useAiConversations`, `useAiActions`, `useUpsertAiConversation`, `useAddAiAction` |
+| IA — Assistant (Vague 7) | assistant (conversation par rôle, IA Achats multi-boutiques, calcul de quantités, notes vocales, prévision de stock fournisseur, descriptions IA produits) | `useAiConversations`, `useAiActions`, `useUpsertAiConversation`, `useAddAiAction`, `useStoreStockForecast`, `computeStockForecast`, `suggestProductDescription` |
 | Admin | admin/, admin/utilisateurs, admin/demandes-demo, admin/verifications, audit | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs` |
 | IA (règles) | tableau-de-bord (Conseiller) | — |
 
@@ -130,9 +130,9 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 npm run build      # génère routeTree.gen.ts + build complet
 npx tsc --noEmit   # 0 erreur attendue
 npx eslint .       # 0 erreur (18 warnings fast-refresh tolérés)
-npm run test       # 26 tests (format 16, i18n 3, guest-mode 3, geo 4)
+npm run test       # 33 tests (format 16, i18n 3, guest-mode 3, geo 4, data 7)
 ```
 
 ## 7. Prochaines étapes
 
-Voir `docs/roadmap.md` — **Vague 7** (IA) : compléter la comparaison multi-boutiques de l'IA Achats, les recommandations marketplace et l'IA fournisseur (prévision stock, descriptions).
+Voir `docs/roadmap.md` — **Vague 7** (IA) : brancher un LLM optionnel pour des réponses ouvertes. Ensuite **Vague 8** (notifications multi-canal).

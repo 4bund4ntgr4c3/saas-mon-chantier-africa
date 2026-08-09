@@ -11,6 +11,7 @@ import {
   ListChecks,
   ThumbsUp,
   Loader2,
+  PackageSearch,
 } from "lucide-react";
 import { useCurrentProject } from "@/context/project-context";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ import {
   useExpenses,
   useMaterialRequirements,
   useProducts,
+  useStores,
+  useStoreStockForecast,
   useAddToCart,
   useMyCart,
   useTasks,
@@ -34,6 +37,8 @@ import {
   type Expense,
   type BudgetLine,
   type AiActionType,
+  type Store,
+  type StockForecast,
 } from "@/lib/data";
 import { useAccountType, accountTypeLabel } from "@/lib/roles";
 import { fcfa } from "@/lib/format";
@@ -58,6 +63,8 @@ type Suggestion = {
 type Analysis = {
   requirements: MaterialRequirement[];
   products: Product[];
+  stores: Store[];
+  forecast: StockForecast[];
   cartCount: number;
   budgetLines: BudgetLine[];
   expenses: Expense[];
@@ -68,7 +75,8 @@ const QUICK_PROMPTS = [
   "Prépare mes achats de matériaux",
   "Comment va mon budget ?",
   "Quelles tâches sont en retard ?",
-  "Recommande-moi des produits",
+  "Recommande-moi les meilleurs prix en boutique",
+  "Prévision de stock de ma boutique",
 ];
 
 function AssistantPage() {
@@ -80,6 +88,8 @@ function AssistantPage() {
 
   const { data: requirements = [] } = useMaterialRequirements(projectId);
   const { data: products = [] } = useProducts();
+  const { data: stores = [] } = useStores();
+  const { data: forecast = [] } = useStoreStockForecast(stores[0]?.id ?? null);
   const { data: cart } = useMyCart();
   const { data: budgetLines = [] } = useBudgetLines(projectId);
   const { data: expenses = [] } = useExpenses(projectId);
@@ -134,12 +144,14 @@ function AssistantPage() {
     const analysis: Analysis = {
       requirements,
       products,
+      stores,
+      forecast,
       cartCount: cart?.items?.length ?? 0,
       budgetLines,
       expenses,
       tasks,
     };
-    const reply = buildReply(q, roleLabel, analysis);
+    const reply = buildReply(q, roleLabel, accountType, analysis);
     const assistantMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
@@ -169,6 +181,7 @@ function AssistantPage() {
             actions={actions}
             suggestions={suggestions?.length ? suggestions : null}
           />
+          {accountType === "quincaillerie" && <SupplierForecastPanel forecast={forecast} />}
         </div>
       </div>
     </div>
@@ -421,6 +434,82 @@ type AiActionLike = {
   created_at: string;
 };
 
+const FORECAST_LABELS: Record<StockForecast["status"], string> = {
+  rupture: "Rupture",
+  critique: "Critique",
+  bas: "Stock bas",
+  ok: "OK",
+};
+
+function SupplierForecastPanel({ forecast }: { forecast: StockForecast[] }) {
+  const atRisk = forecast.filter((f) => f.status !== "ok");
+  const display = atRisk.length > 0 ? atRisk : forecast;
+  return (
+    <Card className="mt-4">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+          <PackageSearch className="size-4 text-primary" /> Prévision de stock (30 j)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {display.length === 0 && (
+          <p className="text-muted-foreground">Aucun produit dans votre boutique pour l'instant.</p>
+        )}
+        {display.slice(0, 6).map((f) => (
+          <div
+            key={f.productId}
+            className="flex items-start gap-2 rounded-md border border-border p-2"
+          >
+            <StatusDot status={f.status} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm leading-snug">{f.name}</p>
+              <p className="text-xs text-muted-foreground">
+                Stock {f.stock} {f.unit ?? ""} · {f.soldLast30d} vendus / 30 j
+                {f.daysLeft !== null && ` · ~${f.daysLeft} j restants`}
+              </p>
+              {f.status !== "ok" && (
+                <p className="text-xs font-medium text-amber-600">
+                  Réappro suggéré : +{f.suggestedReorder} {f.unit ?? ""}
+                </p>
+              )}
+            </div>
+            <Badge
+              variant="outline"
+              className={cn(
+                f.status === "rupture" && "border-destructive bg-destructive/10 text-destructive",
+                f.status === "critique" && "border-amber-500 bg-amber-50 text-amber-700",
+                f.status === "bas" && "border-amber-300 bg-amber-50/60 text-amber-600",
+              )}
+            >
+              {FORECAST_LABELS[f.status]}
+            </Badge>
+          </div>
+        ))}
+        {atRisk.length > 1 && (
+          <p className="pt-1 text-xs text-muted-foreground">
+            + {atRisk.length - display.slice(0, 6).filter((f) => atRisk.includes(f)).length}{" "}
+            nécessitant votre attention — demandez « prévision de stock » pour le détail complet.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatusDot({ status }: { status: StockForecast["status"] }) {
+  return (
+    <span
+      className={cn(
+        "mt-1.5 size-2 shrink-0 rounded-full",
+        status === "ok" && "bg-success",
+        status === "bas" && "bg-amber-400",
+        status === "critique" && "bg-amber-500",
+        status === "rupture" && "bg-destructive",
+      )}
+    />
+  );
+}
+
 function AiTypeIcon({ type }: { type: string }) {
   switch (type) {
     case "achat":
@@ -442,7 +531,8 @@ function inferType(q: string): AiActionType {
   if (q.includes("achat") || q.includes("matériau") || q.includes("panier")) return "achat";
   if (q.includes("budget") || q.includes("dépense") || q.includes("finance")) return "finance";
   if (q.includes("retard") || q.includes("tâche") || q.includes("planning")) return "planning";
-  if (q.includes("recommand")) return "recommandation";
+  if (q.includes("recommand") || q.includes("prix")) return "recommandation";
+  if (q.includes("stock") || q.includes("réappro") || q.includes("rupture")) return "achat";
   return "autre";
 }
 
@@ -453,7 +543,7 @@ type Reply = {
   suggestions: Suggestion[];
 };
 
-function buildReply(question: string, roleLabel: string, a: Analysis): Reply {
+function buildReply(question: string, roleLabel: string, accountType: string, a: Analysis): Reply {
   const q = question.toLowerCase();
   if (
     q.includes("achat") ||
@@ -479,21 +569,62 @@ function buildReply(question: string, roleLabel: string, a: Analysis): Reply {
   ) {
     return planningReply(a);
   }
-  if (q.includes("recommand") || q.includes("produit") || q.includes("bonne affaire")) {
+  if (q.includes("stock") || q.includes("réappro") || q.includes("rupture")) {
+    if (accountType === "quincaillerie") return supplierForecastReply(a);
+  }
+  if (
+    q.includes("recommand") ||
+    q.includes("produit") ||
+    q.includes("bonne affaire") ||
+    q.includes("prix") ||
+    q.includes("boutique")
+  ) {
     return recommendationsReply(a);
   }
   return healthReply(a, roleLabel);
 }
 
+/** Normalise un nom pour comparer produits entre boutiques. */
+function normName(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .trim();
+}
+
+/**
+ * Meilleure offre pour un besoin : produits en stock dont le nom contient le
+ * mot-clé, triés par prix croissant. `storeById` résout le libellé boutique.
+ */
+function bestOfferFor(needName: string, products: Product[], storeById: Map<string, Store>) {
+  const keyword = normName(needName).slice(0, 10);
+  const candidates = products
+    .filter((p) => p.active && Number(p.stock) > 0 && normName(p.name).includes(keyword))
+    .sort((x, y) => Number(x.price) - Number(y.price));
+  if (candidates.length === 0) return null;
+  const best = candidates[0]!;
+  return {
+    product: best,
+    store: storeById.get(best.store_id) ?? null,
+    suppliers: candidates.length,
+  };
+}
+
 function materialsReply(a: Analysis): Reply {
+  const storeById = new Map(a.stores.map((s) => [s.id, s]));
   const needs = a.requirements
     .map((r) => {
       const remaining =
         Number(r.quantity_needed) - Number(r.quantity_delivered) - Number(r.quantity_consumed);
-      return { ...r, remaining: Math.max(0, remaining) };
+      const qty = Math.max(0, remaining);
+      const offer = bestOfferFor(r.name, a.products, storeById);
+      const unitPrice = offer ? Number(offer.product.price) : Number(r.unit_price);
+      return { ...r, remaining: qty, offer, unitPrice };
     })
     .filter((r) => r.remaining > 0)
-    .sort((x, y) => y.remaining * Number(y.unit_price) - x.remaining * Number(x.unit_price));
+    .sort((x, y) => y.remaining * y.unitPrice - x.remaining * x.unitPrice);
 
   if (needs.length === 0) {
     return {
@@ -504,39 +635,57 @@ function materialsReply(a: Analysis): Reply {
     };
   }
 
-  const lines = needs
-    .map(
-      (r) =>
-        `${r.name} : ${r.remaining} ${r.unit ?? ""} — ${fcfa(r.remaining * Number(r.unit_price))}`,
-    )
-    .join("\n");
-  const total = needs.reduce((s, r) => s + r.remaining * Number(r.unit_price), 0);
+  const lines = needs.map((r) => {
+    const qty = suggestOrderQuantity(r.remaining, r.offer?.product);
+    const place = r.offer?.store ? ` — ${r.offer.store.name}` : "";
+    const unitLabel = r.offer?.product?.unit ?? r.unit ?? "";
+    return `${r.name} : ${qty} ${unitLabel.trim() ? unitLabel + " " : ""}à ${fcfa(r.unitPrice)}${place}`;
+  });
+  const total = needs.reduce((s, r) => s + r.remaining * r.unitPrice, 0);
+  const referenceTotal = needs.reduce((s, r) => s + r.remaining * Number(r.unit_price), 0);
+  const savings = referenceTotal - total;
 
   const suggestions: Suggestion[] = [];
   for (const n of needs) {
-    const keyword = n.name.toLowerCase().split(" ")[0] ?? "";
-    const match = a.products.find((p) => p.name.toLowerCase().includes(keyword));
-    if (match) {
-      suggestions.push({
-        type: "achat",
-        label: `Ajouter : ${match.name} (×${n.remaining})`,
-        payload: { productId: match.id, quantity: n.remaining },
-      });
-    }
+    const product = n.offer?.product ?? null;
+    if (!product) continue;
+    const qty = suggestOrderQuantity(n.remaining, product);
+    const label = n.offer?.store
+      ? `Ajouter : ${product.name} ×${qty} (${n.offer.store.name})`
+      : `Ajouter : ${product.name} (×${qty})`;
+    suggestions.push({
+      type: "achat",
+      label,
+      payload: { productId: product.id, quantity: qty },
+    });
   }
+
+  const savingsLine =
+    savings > 0
+      ? `\n\n💡 Meilleur prix trouvé chez ${needs.filter((n) => n.offer?.store).length} boutique(s) différente(s) — économie estimée de ${fcfa(savings)} par rapport au prix de référence.`
+      : "";
 
   return {
     intent: "achat",
     suggestionType: "achat",
-    text: [
-      `Voici vos besoins en matériaux à compléter (estimation ${fcfa(total)}) :`,
-      lines,
-      a.cartCount > 0
-        ? `Votre panier contient déjà ${a.cartCount} article(s). Ajoutez les suggestions ci-dessous pour tout regrouper.`
-        : "Aucun article au panier pour l'instant — ajoutez les suggestions ci-dessous.",
-    ].join("\n\n"),
+    text:
+      [
+        `Voici votre plan d'achat optimal (estimation ${fcfa(total)}) :`,
+        lines.join("\n"),
+        a.cartCount > 0
+          ? `Votre panier contient déjà ${a.cartCount} article(s). Ajoutez les suggestions ci-dessous pour tout regrouper.`
+          : "Aucun article au panier pour l'instant — ajoutez les suggestions ci-dessous.",
+      ].join("\n\n") + savingsLine,
     suggestions,
   };
+}
+
+/** Arrondit la quantité à commander au multiple de la commande minimale. */
+function suggestOrderQuantity(remaining: number, product?: Product | null): number {
+  if (!product) return remaining;
+  const min = Number(product.min_order_quantity ?? 1);
+  if (min <= 1) return remaining;
+  return Math.max(min, Math.ceil(remaining / min) * min);
 }
 
 function budgetReply(a: Analysis): Reply {
@@ -583,25 +732,88 @@ function planningReply(a: Analysis): Reply {
 }
 
 function recommendationsReply(a: Analysis): Reply {
+  const storeById = new Map(a.stores.map((s) => [s.id, s]));
+
+  // Produits "bien notés" déjà en stock, toutes boutiques confondues.
   const best = [...a.products]
-    .filter((p) => p.active)
+    .filter((p) => p.active && Number(p.stock) > 0)
     .sort((x, y) => y.rating - x.rating || y.review_count - x.review_count)
     .slice(0, 3);
 
-  const suggestions: Suggestion[] = best.map((p) => ({
-    type: "recommandation",
-    label: `Voir : ${p.name} (${p.rating} ★)`,
-    payload: { productId: p.id, quantity: 1 },
-  }));
+  // Produits les moins chers du catalogue (bonnes affaires), toutes boutiques.
+  const cheapest = [...a.products]
+    .filter((p) => p.active && Number(p.stock) > 0)
+    .sort((x, y) => Number(x.price) - Number(y.price))
+    .slice(0, 3);
+
+  const seller = (p: Product) => storeById.get(p.store_id)?.name ?? "boutique locale";
+
+  const suggestions: Suggestion[] = [
+    ...best.map((p) => ({
+      type: "recommandation" as const,
+      label: `Voir : ${p.name} (${p.rating} ★)`,
+      payload: { productId: p.id, quantity: 1 },
+    })),
+    ...cheapest.map((p) => ({
+      type: "achat" as const,
+      label: `Ajouter : ${p.name} à ${fcfa(p.price)}`,
+      payload: { productId: p.id, quantity: 1 },
+    })),
+  ];
 
   return {
     intent: "recommandation",
     suggestionType: "recommandation",
-    text: `Les produits les mieux notés du catalogue : ${best
-      .map((p) => p.name)
-      .join(
-        ", ",
-      )}. La quincaillerie locale reste le meilleur rapport qualité/prix pour ce chantier.`,
+    text: [
+      `Meilleures notes (${best.length ? best.map((p) => `${p.name} — ${seller(p)}`).join(" · ") : "aucun produit noté pour l'instant"}) :`,
+      `Meilleurs prix (${cheapest.length ? cheapest.map((p) => `${p.name} à ${fcfa(p.price)} (${seller(p)})`).join(" · ") : "aucun article en stock"}) :`,
+      "Comparez les offres entre boutiques vérifiées, ou laissez-moi préparer un panier : dites « Prépare mes achats de matériaux ».",
+    ].join("\n\n"),
+    suggestions,
+  };
+}
+
+function supplierForecastReply(a: Analysis): Reply {
+  const atRisk = a.forecast.filter((f) => f.status !== "ok");
+  if (a.forecast.length === 0) {
+    return {
+      intent: "achat",
+      suggestionType: "achat",
+      text: "Aucun produit dans votre boutique pour l'instant. Publiez des produits depuis « Ma boutique » pour que je puisse prévoir vos stocks.",
+      suggestions: [],
+    };
+  }
+  if (atRisk.length === 0) {
+    return {
+      intent: "achat",
+      suggestionType: "achat",
+      text: `Bonnes nouvelles : votre stock est sain sur l'ensemble du catalogue (${a.forecast.length} produit(s) suivis sur 30 jours). Aucun réapprovisionnement urgent.`,
+      suggestions: [],
+    };
+  }
+  const top = atRisk.slice(0, 5);
+  const lines = top
+    .map(
+      (f) =>
+        `${f.name} : stock ${f.stock} ${f.unit ?? ""} · ${f.soldLast30d} vendus/30 j · ${f.daysLeft !== null ? `~${f.daysLeft} j restants` : "vente lente"} → réappro +${f.suggestedReorder} ${f.unit ?? ""}`,
+    )
+    .join("\n");
+  const suggestions: Suggestion[] = top
+    .filter((f) => f.stock <= f.suggestedReorder)
+    .map((f) => ({
+      type: "recommandation" as const,
+      label: `Réapprovisionner : ${f.name} (+${f.suggestedReorder})`,
+      payload: { productId: f.productId, quantity: f.suggestedReorder },
+    }));
+
+  return {
+    intent: "achat",
+    suggestionType: "achat",
+    text: [
+      `${atRisk.length} produit(s) à surveiller dans votre boutique (ventes sur 30 jours) :`,
+      lines,
+      "Commandez avant la rupture, notamment les références à rotation rapide.",
+    ].join("\n\n"),
     suggestions,
   };
 }

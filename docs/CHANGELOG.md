@@ -6,6 +6,33 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.22 — Vague 7 : IA (2e tranche — Achats avancés & fournisseur) (2026-08-09)
+
+### IA Achats — comparaison multi-boutiques & calcul de quantités (`src/routes/_authenticated/assistant.tsx`)
+- 🔧 `materialsReply` : pour chaque besoin restant, sélectionne la **meilleure offre en stock** parmi toutes les boutiques (nom normalisé, prix croissant) et affiche le libellé de la boutique
+- 🔧 `suggestOrderQuantity()` : arrondit la quantité au **multiple de la commande minimale** du produit retenu
+- 🔧 Estimation du plan d'achat au meilleur prix + **économie estimée** vs prix de référence
+- 🔧 `recommendationsReply` : « meilleures notes » et « meilleurs prix » du catalogue, avec nom de boutique pour chaque suggestion
+- 🔧 Nouvelles intentions : « meilleur prix », « boutique » ; `inferType` étendu (prix, stock, réappro, rupture)
+
+### IA fournisseur — prévision de stock (`src/lib/data.ts`)
+- ✅ `StockForecast` + `computeStockForecast()` (purement calculé) : vélocité de vente 30 j, jours de couverture restants, quantité de réappro suggérée, statut `rupture/critique/bas/ok`
+- ✅ `useStoreStockForecast(storeId)` — prévision de la boutique du fournisseur connecté (guest + Supabase)
+- ✅ Panel **« Prévision de stock (30 j) »** dans `/assistant` (visible pour le rôle `quincaillerie`) : produits à risque + jour restants + réappro suggéré
+- ✅ `supplierForecastReply` : réponse conversationnelle « stock / réappro / rupture » pour la quincaillerie
+
+### Descriptions IA de produits (`src/lib/data.ts` + `ma-boutique`)
+- ✅ `suggestProductDescription(product, categoryName)` — générateur à base de règles (nom, marque, unité, caractéristiques, garantie)
+- ✅ Bouton « Générer une description IA » (✨) dans le formulaire produit de « Ma boutique », pré-remplit la description
+
+### Tests
+- ✅ `src/lib/data.test.ts` : 7 tests (rupture, jours de couverture, commandes annulées ignorées, réappro minimal, tri par criticité, génération de description)
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur · 33 tests OK
+
+---
+
 ## v0.21 — Vague 7 : IA (1ère tranche — Assistant conversationnel) (2026-08-09)
 
 ### Migrations
