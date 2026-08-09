@@ -91,6 +91,12 @@ erDiagram
     equipment ||--o{ equipment_rentals : "1..n"
     profiles ||--o{ equipment_rentals : "1..n"
     projects ||--o{ equipment_rentals : "1..n"
+    profiles ||--o{ development_programs : "1..n"
+    development_programs ||--o{ buildings : "1..n"
+    buildings ||--o{ property_units : "1..n"
+    profiles ||--o{ property_reservations : "1..n"
+    property_units ||--o{ property_reservations : "1..n"
+    projects ||--o{ property_reservations : "1..n"
 ```
 
 ## Tables
@@ -107,6 +113,10 @@ erDiagram
 | `email_log` | Journal d'envoi des notifications. |
 | `equipment` | Matériel à louer : nom, catégorie, marque/modèle, ville, `daily_price`, `weekly_price`, `deposit` (caution), `quantity`, `condition` (excellent/bon/moyen/mauvais), `status` (disponible/loue/hors_service). RLS : catalogue lisible par tous les connectés, écriture propriétaire. |
 | `equipment_rentals` | Location de matériel : matériel, client, chantier, `start_date`/`end_date`, tarifs figés, `total_price`, `deposit`, `deposit_paid`, livraison (`delivery_fee`, `delivery_address`, `scheduled_at`), `return_code` (remise QR), `returned_at`, `status` (demande → confirmee → en_cours → retour_en_cours → terminee, + annulee/litige). RLS : client + propriétaire du matériel. |
+| `development_programs` | Programme immobilier : promoteur, nom, description, ville/adresse, `status` (planification/commercialisation/en_construction/livre), `budget_total` (objectif de ventes), dates. RLS : lecture tous connectés, écriture promoteur. |
+| `buildings` | Immeuble d'un programme : `program_id`, nom, `floor_count`, `status`. RLS : écriture via le promoteur du programme. |
+| `property_units` | Lot/appartement : `building_id`, étage, référence (`label`), `unit_type` (appartement/villa/boutique/bureau/terrain/garage/magasin), `surface_m2`, pièces, salles de bain, `price`, `status` (disponible/reserve/vendu). RLS : écriture via le promoteur. |
+| `property_reservations` | Dossier client (réservation/vente) : `unit_id`, auteur, chantier, nom/téléphone/email du client, `amount`, notes, `status` (demande → confirmee → vendue, + annulee). Confirmer → lot `reserve`, vendre → lot `vendu`, annuler → lot `disponible`. RLS : auteur + promoteur du programme. |
 | `demo_requests` | Demandes d'accès à la démo commerciale. |
 
 ### Chantiers & suivi

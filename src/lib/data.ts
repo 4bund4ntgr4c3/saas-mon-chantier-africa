@@ -574,6 +574,10 @@ type TableName =
   | "device_tokens"
   | "equipment"
   | "equipment_rentals"
+  | "development_programs"
+  | "buildings"
+  | "property_units"
+  | "property_reservations"
   | "organizations"
   | "organization_members"
   | "project_members";
@@ -631,6 +635,10 @@ const RELATED: Record<TableName, string[]> = {
   device_tokens: ["device_tokens"],
   equipment: ["equipment", "equipment_rentals"],
   equipment_rentals: ["equipment_rentals", "equipment"],
+  development_programs: ["development_programs", "buildings", "property_units"],
+  buildings: ["buildings", "property_units", "development_programs"],
+  property_units: ["property_units", "buildings", "development_programs", "property_reservations"],
+  property_reservations: ["property_reservations", "property_units"],
   organizations: ["organizations", "organization_members"],
   organization_members: ["organization_members", "organizations"],
   project_members: ["project_members"],
@@ -1805,6 +1813,266 @@ export function useReturnEquipmentRental() {
           userId,
         });
       }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Immobilier promoteurs ---------- */
+
+export type DevelopmentProgram = Tables["development_programs"]["Row"];
+export type Building = Tables["buildings"]["Row"];
+export type PropertyUnit = Tables["property_units"]["Row"];
+export type PropertyReservation = Tables["property_reservations"]["Row"];
+export type PropertyUnitStatus = Database["public"]["Enums"]["property_unit_status"];
+export type PropertyReservationStatus = Database["public"]["Enums"]["property_reservation_status"];
+
+/** Statistiques de vente d'un programme à partir de ses lots (pur et testé). */
+export function computeProgramStats(units: Pick<PropertyUnit, "status" | "price">[]) {
+  let disponible = 0;
+  let reserve = 0;
+  let vendu = 0;
+  let montantVendu = 0;
+  for (const u of units) {
+    if (u.status === "disponible") disponible += 1;
+    else if (u.status === "reserve") reserve += 1;
+    else if (u.status === "vendu") {
+      vendu += 1;
+      montantVendu += Number(u.price);
+    }
+  }
+  return {
+    total: units.length,
+    disponible,
+    reserve,
+    vendu,
+    montantVendu,
+    avancementPct: units.length === 0 ? 0 : Math.round((vendu / units.length) * 100),
+  };
+}
+
+/** Tous les programmes immobiliers (catalogue promoteurs). */
+export function useDevelopmentPrograms() {
+  return useQuery({
+    queryKey: ["development_programs"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<DevelopmentProgram>("development_programs")
+        : unwrap<DevelopmentProgram[]>(
+            supabase
+              .from("development_programs")
+              .select("*")
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Mes programmes immobiliers (promoteur). */
+export function useMyDevelopmentPrograms() {
+  const { data: profile } = useProfile();
+  const uid = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["development_programs", "mine", uid],
+    enabled: !!uid,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<DevelopmentProgram>("development_programs").filter((p) => p.user_id === uid)
+        : unwrap<DevelopmentProgram[]>(
+            supabase
+              .from("development_programs")
+              .select("*")
+              .eq("user_id", uid!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Immeubles d'un programme. */
+export function useBuildings(programId: string | null) {
+  return useQuery({
+    queryKey: ["buildings", programId],
+    enabled: !!programId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Building>("buildings").filter((b) => b.program_id === programId!)
+        : unwrap<Building[]>(
+            supabase
+              .from("buildings")
+              .select("*")
+              .eq("program_id", programId!)
+              .order("name", { ascending: true }),
+          ),
+  });
+}
+
+/** Lots/unités d'un immeuble. */
+export function usePropertyUnits(buildingId: string | null) {
+  return useQuery({
+    queryKey: ["property_units", buildingId],
+    enabled: !!buildingId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<PropertyUnit>("property_units").filter((u) => u.building_id === buildingId!)
+        : unwrap<PropertyUnit[]>(
+            supabase
+              .from("property_units")
+              .select("*")
+              .eq("building_id", buildingId!)
+              .order("label", { ascending: true }),
+          ),
+  });
+}
+
+/** Tous les lots d'un programme (joins immeubles). */
+export function useProgramUnits(programId: string | null) {
+  return useQuery({
+    queryKey: ["property_units", "program", programId],
+    enabled: !!programId,
+    queryFn: async () => {
+      if (isGuestMode()) {
+        const buildings = demoRows<Building>("buildings").filter(
+          (b) => b.program_id === programId!,
+        );
+        const ids = new Set(buildings.map((b) => b.id));
+        return demoRows<PropertyUnit>("property_units").filter((u) => ids.has(u.building_id));
+      }
+      const { data, error } = await supabase
+        .from("property_units")
+        .select("*, buildings!inner(program_id)")
+        .eq("buildings.program_id", programId!)
+        .order("label", { ascending: true });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as PropertyUnit[];
+    },
+  });
+}
+
+/** Mes dossiers clients (réservations enregistrées). */
+export function useMyPropertyReservations() {
+  const { data: profile } = useProfile();
+  const uid = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["property_reservations", "mine", uid],
+    enabled: !!uid,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<PropertyReservation>("property_reservations").filter((r) => r.user_id === uid)
+        : unwrap<PropertyReservation[]>(
+            supabase
+              .from("property_reservations")
+              .select("*")
+              .eq("user_id", uid!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+export type PropertyReservationPayload = {
+  unit_id: string;
+  project_id?: string | null;
+  client_name: string;
+  client_phone?: string | null;
+  client_email?: string | null;
+  amount?: number;
+  notes?: string | null;
+};
+
+/** Crée un dossier client (réservation, statut « demande »). */
+export function useCreatePropertyReservation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: PropertyReservationPayload) => {
+      if (isGuestMode()) {
+        demoInsert("property_reservations", {
+          id: crypto.randomUUID(),
+          unit_id: values.unit_id,
+          user_id: DEMO_USER,
+          project_id: values.project_id ?? null,
+          client_name: values.client_name,
+          client_phone: values.client_phone ?? null,
+          client_email: values.client_email ?? null,
+          amount: values.amount ?? 0,
+          notes: values.notes ?? null,
+          status: "demande",
+          created_at: new Date().toISOString(),
+        });
+        return crypto.randomUUID();
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { data, error } = await supabase
+        .from("property_reservations")
+        .insert({
+          unit_id: values.unit_id,
+          user_id: auth.user.id,
+          project_id: values.project_id ?? null,
+          client_name: values.client_name,
+          client_phone: values.client_phone ?? null,
+          client_email: values.client_email ?? null,
+          amount: values.amount ?? 0,
+          notes: values.notes ?? null,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return data.id;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["property_reservations"] });
+      toast.success("Dossier client créé");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+const RESERVATION_UNIT_STATUS: Record<PropertyReservationStatus, PropertyUnitStatus | null> = {
+  demande: null,
+  confirmee: "reserve",
+  vendue: "vendu",
+  annulee: "disponible",
+};
+
+/** Fait évoluer un dossier (confirmee → lot réservé, vendue → lot vendu, annulee → lot dispo). */
+export function useUpdatePropertyReservationStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: PropertyReservationStatus }) => {
+      const findUnitId = (r: PropertyReservation) => r.unit_id;
+      if (isGuestMode()) {
+        demoUpdate("property_reservations", id, { status });
+        const rental = demoRows<PropertyReservation>("property_reservations").find(
+          (r) => r.id === id,
+        );
+        if (rental) {
+          const unitStatus = RESERVATION_UNIT_STATUS[status];
+          if (unitStatus) demoUpdate("property_units", rental.unit_id, { status: unitStatus });
+        }
+        return;
+      }
+      const { data: reservation } = await supabase
+        .from("property_reservations")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (!reservation) throw new Error("Dossier introuvable");
+      const { error } = await supabase
+        .from("property_reservations")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+      const unitStatus = RESERVATION_UNIT_STATUS[status];
+      if (unitStatus && findUnitId(reservation)) {
+        const { error: unitErr } = await supabase
+          .from("property_units")
+          .update({ status: unitStatus })
+          .eq("id", findUnitId(reservation));
+        if (unitErr) throw new Error(unitErr.message);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["property_reservations"] });
+      qc.invalidateQueries({ queryKey: ["property_units"] });
+      toast.success("Dossier mis à jour");
     },
     onError: (e: Error) => toast.error(e.message),
   });

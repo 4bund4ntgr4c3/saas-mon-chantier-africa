@@ -309,3 +309,39 @@ export const EQUIPMENT_RENTAL_STATUSES = [
   { value: "annulee", label: "Annulée" },
   { value: "litige", label: "Litige" },
 ] as const;
+
+export const PROGRAM_STATUSES = [
+  { value: "planification", label: "En planification" },
+  { value: "commercialisation", label: "En commercialisation" },
+  { value: "en_construction", label: "En construction" },
+  { value: "livre", label: "Livré" },
+] as const;
+
+export const BUILDING_STATUSES = [
+  { value: "planification", label: "En planification" },
+  { value: "en_construction", label: "En construction" },
+  { value: "livre", label: "Livré" },
+] as const;
+
+export const PROPERTY_UNIT_TYPES = [
+  { value: "appartement", label: "Appartement" },
+  { value: "villa", label: "Villa" },
+  { value: "boutique", label: "Boutique" },
+  { value: "bureau", label: "Bureau" },
+  { value: "terrain", label: "Terrain" },
+  { value: "garage", label: "Garage" },
+  { value: "magasin", label: "Magasin" },
+] as const;
+
+export const PROPERTY_UNIT_STATUSES = [
+  { value: "disponible", label: "Disponible" },
+  { value: "reserve", label: "Réservé" },
+  { value: "vendu", label: "Vendu" },
+] as const;
+
+export const PROPERTY_RESERVATION_STATUSES = [
+  { value: "demande", label: "Demande" },
+  { value: "confirmee", label: "Confirmée" },
+  { value: "vendue", label: "Vendue" },
+  { value: "annulee", label: "Annulée" },
+] as const;

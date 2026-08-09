@@ -123,6 +123,7 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | IA — Assistant (Vague 7) | assistant (conversation par rôle, IA Achats multi-boutiques, calcul de quantités, notes vocales, prévision de stock fournisseur, descriptions IA produits) | `useAiConversations`, `useAiActions`, `useUpsertAiConversation`, `useAddAiAction`, `useStoreStockForecast`, `computeStockForecast`, `suggestProductDescription` |
 | Notifications multi-canal (Vague 8) | cloche (notifications persistées + marquage lu), parametres (canaux push/SMS/WhatsApp + autorisation navigateur), `/notifications` (historique/filtres/suppression), commandes (partage SMS lien de paiement) | `useNotifications`, `useUnreadNotificationCount`, `useMarkNotificationsRead`, `useMarkNotificationRead`, `useDeleteNotification`, `useAddNotification`, `addPersistedNotification`, `useDeviceTokens`, `useRegisterDeviceToken`, `useRemoveDeviceToken` |
 | Location de matériel (Vague 9) | `/location` (catalogue, mon matériel, mes locations, QR de remise, paiement caution) | `useEquipment`, `useMyEquipment`, `useMyEquipmentRentals`, `useCreateEquipmentRental`, `useUpdateEquipmentRentalStatus`, `useReturnEquipmentRental`, `computeRentalPrice`, `hasRentalConflict`, `generateReturnCode` |
+| Immobilier promoteurs (Vague 10) | `/immobilier` (programmes, immeubles & lots, dossiers clients) | `useMyDevelopmentPrograms`, `useBuildings`, `useProgramUnits`, `useMyPropertyReservations`, `useCreatePropertyReservation`, `useUpdatePropertyReservationStatus`, `computeProgramStats` |
 | Admin | admin/, admin/utilisateurs, admin/demandes-demo, admin/verifications, audit | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs` |
 | IA (règles) | tableau-de-bord (Conseiller) | — |
 
@@ -132,9 +133,9 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 npm run build      # génère routeTree.gen.ts + build complet
 npx tsc --noEmit   # 0 erreur attendue
 npx eslint .       # 0 erreur (18 warnings fast-refresh tolérés)
-npm run test       # 44 tests (format 16, i18n 3, guest-mode 3, geo 4, data 18)
+npm run test       # 47 tests (format 16, i18n 3, guest-mode 3, geo 4, data 21)
 ```
 
 ## 7. Prochaines étapes
 
-Voir `docs/roadmap.md` — **Vague 8** (notifications) : push web réel (service worker) et SMS/WhatsApp transactionnels. **Vague 9** (location de matériel) : paiement intégral de la location par mobile money (hors caution). Ensuite **Vague 10** (immobilier promoteurs).
+Voir `docs/roadmap.md` — **Vague 8** (notifications) : push web réel (service worker) et SMS/WhatsApp transactionnels. **Vague 9** (location de matériel) : paiement intégral de la location par mobile money (hors caution). **Vague 10** (immobilier promoteurs) : plans d'étage interactifs, paiement acompte réservation par mobile money. Ensuite **Vague 11** (géolocalisation & cartes).

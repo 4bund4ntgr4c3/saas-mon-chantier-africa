@@ -28,6 +28,7 @@ import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedEntreprisesRouteImport } from './routes/_authenticated/entreprises'
 import { Route as AuthenticatedFacturationRouteImport } from './routes/_authenticated/facturation'
 import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authenticated/fournisseurs'
+import { Route as AuthenticatedImmobilierRouteImport } from './routes/_authenticated/immobilier'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedLitigesRouteImport } from './routes/_authenticated/litiges'
 import { Route as AuthenticatedLocationRouteImport } from './routes/_authenticated/location'
@@ -153,6 +154,11 @@ const AuthenticatedFournisseursRoute =
     path: '/fournisseurs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedImmobilierRoute = AuthenticatedImmobilierRouteImport.update({
+  id: '/immobilier',
+  path: '/immobilier',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   id: '/journal',
   path: '/journal',
@@ -309,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/entreprises': typeof AuthenticatedEntreprisesRoute
   '/facturation': typeof AuthenticatedFacturationRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
+  '/immobilier': typeof AuthenticatedImmobilierRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/litiges': typeof AuthenticatedLitigesRoute
   '/location': typeof AuthenticatedLocationRoute
@@ -355,6 +362,7 @@ export interface FileRoutesByTo {
   '/entreprises': typeof AuthenticatedEntreprisesRoute
   '/facturation': typeof AuthenticatedFacturationRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
+  '/immobilier': typeof AuthenticatedImmobilierRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/litiges': typeof AuthenticatedLitigesRoute
   '/location': typeof AuthenticatedLocationRoute
@@ -403,6 +411,7 @@ export interface FileRoutesById {
   '/_authenticated/entreprises': typeof AuthenticatedEntreprisesRoute
   '/_authenticated/facturation': typeof AuthenticatedFacturationRoute
   '/_authenticated/fournisseurs': typeof AuthenticatedFournisseursRoute
+  '/_authenticated/immobilier': typeof AuthenticatedImmobilierRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/litiges': typeof AuthenticatedLitigesRoute
   '/_authenticated/location': typeof AuthenticatedLocationRoute
@@ -451,6 +460,7 @@ export interface FileRouteTypes {
     | '/entreprises'
     | '/facturation'
     | '/fournisseurs'
+    | '/immobilier'
     | '/journal'
     | '/litiges'
     | '/location'
@@ -497,6 +507,7 @@ export interface FileRouteTypes {
     | '/entreprises'
     | '/facturation'
     | '/fournisseurs'
+    | '/immobilier'
     | '/journal'
     | '/litiges'
     | '/location'
@@ -544,6 +555,7 @@ export interface FileRouteTypes {
     | '/_authenticated/entreprises'
     | '/_authenticated/facturation'
     | '/_authenticated/fournisseurs'
+    | '/_authenticated/immobilier'
     | '/_authenticated/journal'
     | '/_authenticated/litiges'
     | '/_authenticated/location'
@@ -715,6 +727,13 @@ declare module '@tanstack/react-router' {
       path: '/fournisseurs'
       fullPath: '/fournisseurs'
       preLoaderRoute: typeof AuthenticatedFournisseursRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/immobilier': {
+      id: '/_authenticated/immobilier'
+      path: '/immobilier'
+      fullPath: '/immobilier'
+      preLoaderRoute: typeof AuthenticatedImmobilierRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/journal': {
@@ -917,6 +936,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEntreprisesRoute: typeof AuthenticatedEntreprisesRoute
   AuthenticatedFacturationRoute: typeof AuthenticatedFacturationRoute
   AuthenticatedFournisseursRoute: typeof AuthenticatedFournisseursRoute
+  AuthenticatedImmobilierRoute: typeof AuthenticatedImmobilierRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLitigesRoute: typeof AuthenticatedLitigesRoute
   AuthenticatedLocationRoute: typeof AuthenticatedLocationRoute
@@ -958,6 +978,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEntreprisesRoute: AuthenticatedEntreprisesRoute,
   AuthenticatedFacturationRoute: AuthenticatedFacturationRoute,
   AuthenticatedFournisseursRoute: AuthenticatedFournisseursRoute,
+  AuthenticatedImmobilierRoute: AuthenticatedImmobilierRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLitigesRoute: AuthenticatedLitigesRoute,
   AuthenticatedLocationRoute: AuthenticatedLocationRoute,

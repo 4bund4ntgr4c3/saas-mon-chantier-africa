@@ -6,6 +6,41 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.27 — Vague 10 : Immobilier promoteurs (2026-08-10)
+
+### Migration
+- `supabase/migrations/20260826000000_immobilier-promoteurs.sql`
+  - ✅ Enums `development_program_status` (planification / commercialisation / en_construction / livre), `building_status`, `property_unit_type` (appartement, villa, boutique, bureau, terrain, garage, magasin), `property_unit_status` (disponible / reserve / vendu), `property_reservation_status` (demande → confirmee → vendue, + annulee)
+  - ✅ Table `development_programs` : promoteur, nom, description, ville/adresse, statut, **budget/objectif de ventes**, dates — RLS (lecture tous connectés, écriture promoteur)
+  - ✅ Table `buildings` : programme, nom, étages, statut — RLS (écriture via le promoteur du programme)
+  - ✅ Table `property_units` (lots) : immeuble, étage, référence, type, surface, pièces, salles de bain, **prix**, statut — RLS (écriture via promoteur)
+  - ✅ Table `property_reservations` (dossiers clients) : lot, auteur, chantier, nom/téléphone/email du client, montant, notes, statut — RLS (auteur + promoteur du programme)
+  - ✅ Index + triggers `updated_at` sur les 4 tables
+
+### Hooks (`src/lib/data.ts`)
+- ✅ `computeProgramStats(units)` — pur et testé : total / disponibles / réservés / vendus / montant encaissé / avancement %
+- ✅ `useDevelopmentPrograms()` (catalogue) / `useMyDevelopmentPrograms()` (mes programmes) / `useBuildings(programId)` / `usePropertyUnits(buildingId)` / `useProgramUnits(programId)` (lots d'un programme, jointure immeubles)
+- ✅ `useMyPropertyReservations()` / `useCreatePropertyReservation()` (dossier statut « demande »)
+- ✅ `useUpdatePropertyReservationStatus()` — confirmee → lot `reserve`, vendue → lot `vendu`, annulee → lot `disponible`
+- ✅ CRUD via `useSaveRow`/`useDeleteRow` (`development_programs`, `buildings`, `property_units`)
+
+### Interface (`src/routes/_authenticated/immobilier.tsx`)
+- ✅ Route `/immobilier` (feature `marketplace`) avec 2 onglets :
+  - **Programmes** : cartes (statut, barre d'avancement des ventes, vendus/réservés/dispo, objectif), création/édition/suppression ; détail d'un programme (stats + budget vs encaissé) puis immeubles et lots (CRUD) ; « Réserver » un lot → crée le dossier client, « Rendre disponible »
+  - **Dossiers clients** : liste par programme, sélecteur de programme, « Nouveau dossier » (choix du lot disponible), Confirmer / Vendre / Annuler
+- ✅ Entrée de navigation `nav.immobilier` (FR/EN), icône `Building2`
+
+### Démo
+- ✅ Seeds : programme « Résidence Les Palmiers » (Cotonou, objectif 650 MFCFA), 2 immeubles, 6 lots (2 vendus, 1 réservé, 3 disponibles), 2 dossiers clients (1 confirmé, 1 demande)
+
+### Tests
+- ✅ `computeProgramStats` : 3 tests (comptage + montant vendu, avancement % , programme vide) → **47 tests OK**
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur (18 warnings préexistants)
+
+---
+
 ## v0.26 — Vague 9 : Location de matériel (2ème tranche — disponibilité, QR retour, caution) (2026-08-10)
 
 ### Migration

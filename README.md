@@ -78,6 +78,11 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 - Paiement de la caution par mobile money (MTN MoMo / Moov Money)
 - Mon parc de matériel : ajout, modification, statut (disponible/loué/hors service)
 
+### Immobilier promoteurs
+- Programmes immobiliers décomposés en immeubles puis en lots/appartements (type, étage, surface, pièces, prix, statut)
+- Budget / objectif de ventes par programme avec barre d'avancement (vendus / réservés / disponibles + montant encaissé)
+- Dossiers clients : réservation, confirmation (lot réservé), vente (lot vendu), annulation
+
 ### IA — Assistant conversationnel
 - Assistant par rôle (« Parler au chantier ») : dictée vocale (Web Speech), questions en français, réponses à base de règles sur vos données réelles
 - IA Achats : besoins matériaux restants, meilleure offre par produit parmi toutes les boutiques (comparaison multi-boutiques), calcul des quantités au multiple de la commande minimale, estimation du plan d'achat et économie vs prix de référence, ajout au panier

@@ -137,10 +137,13 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Paiement de la caution par mobile money (`MobileMoneyDialog` + `deposit_paid`)
 - ⬜ Paiement intégral de la location par mobile money (hors caution)
 
-## Vague 10 — Immobilier promoteurs ⬜
+## Vague 10 — Immobilier promoteurs 🔄
 
-- Programmes → immeubles → étages → lots/appartements
-- Budgets, avancement, ventes, dossiers clients, réservation
+- ✅ `development_programs` → `buildings` → `property_units` (lots) : statuts, types, prix, étages, surfaces (migration `20260826000000_immobilier-promoteurs.sql`)
+- ✅ Budget / objectif de ventes par programme, avancement des ventes (vendus/réservés/dispo + montant encaissé, `computeProgramStats`)
+- ✅ Dossiers clients (`property_reservations`) : réservation, confirmation (lot réservé), vente (lot vendu), annulation (lot disponible)
+- ✅ Route `/immobilier` : programmes (CRUD + détail), immeubles & lots (CRUD), dossiers clients (par programme)
+- ⬜ Plans d'étage interactifs / visites, paiement acompte réservation par mobile money
 
 ## Vague 11 — Géolocalisation & cartes ⬜
 

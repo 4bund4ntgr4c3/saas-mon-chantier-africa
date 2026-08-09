@@ -98,6 +98,7 @@ const NAV = [
   { to: "/commandes", labelKey: "nav.commandes", icon: Package, feature: "marketplace" },
   { to: "/ma-boutique", labelKey: "nav.ma-boutique", icon: Truck, feature: "marketplace" },
   { to: "/location", labelKey: "nav.location", icon: Wrench, feature: "marketplace" },
+  { to: "/immobilier", labelKey: "nav.immobilier", icon: Building2, feature: "marketplace" },
   { to: "/rapports", labelKey: "nav.rapports", icon: BarChart3, feature: "rapports" },
   { to: "/recherche", labelKey: "nav.recherche", icon: Search, feature: "recherche" },
   { to: "/alertes", labelKey: "nav.alertes", icon: BellRing, feature: "alertes" },

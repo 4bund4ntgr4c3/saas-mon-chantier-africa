@@ -573,6 +573,174 @@ export type Database = {
         };
         Relationships: [];
       };
+      buildings: {
+        Row: {
+          created_at: string;
+          floor_count: number;
+          id: string;
+          name: string;
+          program_id: string;
+          status: Database["public"]["Enums"]["building_status"];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          floor_count?: number;
+          id?: string;
+          name: string;
+          program_id: string;
+          status?: Database["public"]["Enums"]["building_status"];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          floor_count?: number;
+          id?: string;
+          name?: string;
+          program_id?: string;
+          status?: Database["public"]["Enums"]["building_status"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      development_programs: {
+        Row: {
+          address: string | null;
+          budget_total: number;
+          city: string | null;
+          created_at: string;
+          description: string | null;
+          end_date: string | null;
+          id: string;
+          image_url: string | null;
+          name: string;
+          start_date: string | null;
+          status: Database["public"]["Enums"]["development_program_status"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          address?: string | null;
+          budget_total?: number;
+          city?: string | null;
+          created_at?: string;
+          description?: string | null;
+          end_date?: string | null;
+          id?: string;
+          image_url?: string | null;
+          name: string;
+          start_date?: string | null;
+          status?: Database["public"]["Enums"]["development_program_status"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          address?: string | null;
+          budget_total?: number;
+          city?: string | null;
+          created_at?: string;
+          description?: string | null;
+          end_date?: string | null;
+          id?: string;
+          image_url?: string | null;
+          name?: string;
+          start_date?: string | null;
+          status?: Database["public"]["Enums"]["development_program_status"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      property_reservations: {
+        Row: {
+          amount: number;
+          client_email: string | null;
+          client_name: string;
+          client_phone: string | null;
+          created_at: string;
+          id: string;
+          notes: string | null;
+          project_id: string | null;
+          status: Database["public"]["Enums"]["property_reservation_status"];
+          unit_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number;
+          client_email?: string | null;
+          client_name: string;
+          client_phone?: string | null;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          project_id?: string | null;
+          status?: Database["public"]["Enums"]["property_reservation_status"];
+          unit_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          client_email?: string | null;
+          client_name?: string;
+          client_phone?: string | null;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          project_id?: string | null;
+          status?: Database["public"]["Enums"]["property_reservation_status"];
+          unit_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      property_units: {
+        Row: {
+          bathrooms: number;
+          building_id: string;
+          created_at: string;
+          floor: number;
+          id: string;
+          label: string;
+          price: number;
+          rooms: number;
+          status: Database["public"]["Enums"]["property_unit_status"];
+          surface_m2: number;
+          unit_type: Database["public"]["Enums"]["property_unit_type"];
+          updated_at: string;
+        };
+        Insert: {
+          bathrooms?: number;
+          building_id: string;
+          created_at?: string;
+          floor?: number;
+          id?: string;
+          label: string;
+          price?: number;
+          rooms?: number;
+          status?: Database["public"]["Enums"]["property_unit_status"];
+          surface_m2?: number;
+          unit_type?: Database["public"]["Enums"]["property_unit_type"];
+          updated_at?: string;
+        };
+        Update: {
+          bathrooms?: number;
+          building_id?: string;
+          created_at?: string;
+          floor?: number;
+          id?: string;
+          label?: string;
+          price?: number;
+          rooms?: number;
+          status?: Database["public"]["Enums"]["property_unit_status"];
+          surface_m2?: number;
+          unit_type?: Database["public"]["Enums"]["property_unit_type"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           body: string | null;
@@ -3031,6 +3199,13 @@ export type Database = {
         | "annulee"
         | "litige";
       equipment_status: "disponible" | "loue" | "hors_service";
+      building_status: "planification" | "en_construction" | "livre";
+      development_program_status:
+        "planification" | "commercialisation" | "en_construction" | "livre";
+      property_reservation_status: "demande" | "confirmee" | "vendue" | "annulee";
+      property_unit_status: "disponible" | "reserve" | "vendu";
+      property_unit_type:
+        "appartement" | "villa" | "boutique" | "bureau" | "terrain" | "garage" | "magasin";
       invoice_status: "emise" | "partielle" | "payee" | "annulee";
       notification_channel: "in_app" | "email" | "push" | "sms" | "whatsapp";
       notification_kind:
@@ -3225,6 +3400,24 @@ export const Constants = {
         "litige",
       ],
       equipment_status: ["disponible", "loue", "hors_service"],
+      building_status: ["planification", "en_construction", "livre"],
+      development_program_status: [
+        "planification",
+        "commercialisation",
+        "en_construction",
+        "livre",
+      ],
+      property_reservation_status: ["demande", "confirmee", "vendue", "annulee"],
+      property_unit_status: ["disponible", "reserve", "vendu"],
+      property_unit_type: [
+        "appartement",
+        "villa",
+        "boutique",
+        "bureau",
+        "terrain",
+        "garage",
+        "magasin",
+      ],
       order_status: [
         "creee",
         "paiement_en_attente",

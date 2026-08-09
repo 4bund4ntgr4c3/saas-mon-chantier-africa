@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  computeProgramStats,
   computeRentalPrice,
   computeStockForecast,
   generateReturnCode,
@@ -215,5 +216,36 @@ describe("generateReturnCode", () => {
     const a = generateReturnCode();
     const b = generateReturnCode();
     expect(a).not.toBe(b);
+  });
+});
+
+describe("computeProgramStats", () => {
+  const units = [
+    { status: "disponible" as const, price: 32000000 },
+    { status: "reserve" as const, price: 35000000 },
+    { status: "vendu" as const, price: 45000000 },
+    { status: "vendu" as const, price: 30000000 },
+  ];
+
+  it("compte les lots par statut et le montant vendu", () => {
+    const s = computeProgramStats(units);
+    expect(s.total).toBe(4);
+    expect(s.disponible).toBe(1);
+    expect(s.reserve).toBe(1);
+    expect(s.vendu).toBe(2);
+    expect(s.montantVendu).toBe(75000000);
+  });
+
+  it("calcule l'avancement en pourcentage des lots vendus", () => {
+    expect(computeProgramStats(units).avancementPct).toBe(50);
+    expect(computeProgramStats([units[0]!]).avancementPct).toBe(0);
+    expect(computeProgramStats([units[2]!]).avancementPct).toBe(100);
+  });
+
+  it("gère un programme sans lots", () => {
+    const s = computeProgramStats([]);
+    expect(s.total).toBe(0);
+    expect(s.montantVendu).toBe(0);
+    expect(s.avancementPct).toBe(0);
   });
 });
