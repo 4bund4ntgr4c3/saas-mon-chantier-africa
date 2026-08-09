@@ -106,7 +106,7 @@ erDiagram
 | `device_tokens` | Appareils enregistrés pour le push : `token` unique par utilisateur (`user_id, token`), `platform`, `last_seen_at`. RLS propriétaire. |
 | `email_log` | Journal d'envoi des notifications. |
 | `equipment` | Matériel à louer : nom, catégorie, marque/modèle, ville, `daily_price`, `weekly_price`, `deposit` (caution), `quantity`, `condition` (excellent/bon/moyen/mauvais), `status` (disponible/loue/hors_service). RLS : catalogue lisible par tous les connectés, écriture propriétaire. |
-| `equipment_rentals` | Location de matériel : matériel, client, chantier, `start_date`/`end_date`, tarifs figés, `total_price`, `deposit`, livraison (`delivery_fee`, `delivery_address`, `scheduled_at`), `returned_at`, `status` (demande → confirmee → en_cours → retour_en_cours → terminee, + annulee/litige). RLS : client + propriétaire du matériel. |
+| `equipment_rentals` | Location de matériel : matériel, client, chantier, `start_date`/`end_date`, tarifs figés, `total_price`, `deposit`, `deposit_paid`, livraison (`delivery_fee`, `delivery_address`, `scheduled_at`), `return_code` (remise QR), `returned_at`, `status` (demande → confirmee → en_cours → retour_en_cours → terminee, + annulee/litige). RLS : client + propriétaire du matériel. |
 | `demo_requests` | Demandes d'accès à la démo commerciale. |
 
 ### Chantiers & suivi

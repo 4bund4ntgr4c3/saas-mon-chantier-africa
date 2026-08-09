@@ -6,6 +6,38 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.26 — Vague 9 : Location de matériel (2ème tranche — disponibilité, QR retour, caution) (2026-08-10)
+
+### Migration
+- `supabase/migrations/20260825000000_location-materiel.sql` (amendée, non appliquée en base)
+  - ✅ Colonnes `equipment_rentals` : **`return_code`** (code de remise à 6 caractères, affiché en QR) et **`deposit_paid`** (caution payée)
+
+### Hooks (`src/lib/data.ts`)
+- ✅ `hasRentalConflict(rentals, equipmentId, start, end, excludeId?)` — pur et testé : détecte un chevauchement de période avec une location active (`demande`/`confirmee`/`en_cours`/`retour_en_cours`)
+- ✅ `generateReturnCode()` — code de remise à 6 caractères sans caractères ambigus (alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`)
+- ✅ `useReturnEquipmentRental()` — valide le code de remise (QR) → statut `terminee` + `returned_at` + matériel `disponible` + notification au client
+- 🔧 `useCreateEquipmentRental()` — génère le `return_code` à la création
+
+### Interface (`src/routes/_authenticated/location.tsx`)
+- 🔧 **Catalogue** : blocage d'une réservation qui chevauche une période déjà réservée par le même client (toast + garde sur le formulaire)
+- ✅ **Demandes reçues** : confirmation vérifiée contre le chevauchement avec les autres locations actives du matériel (le propriétaire tranche la disponibilité) ; au retour (`retour_en_cours`) saisie du **code de remise** du client à valider
+- ✅ **Mes demandes** : **QR de remise** généré (`BATIBENIN:RETOUR:<code>`, lib `qrcode`) affiché au client en `en_cours`/`retour_en_cours` avec bouton copier ; badge « Caution payée »
+- ✅ **Paiement de la caution** par mobile money (bouton « Payer la caution » sur une location confirmée → `MobileMoneyDialog`, mise à jour `deposit_paid` via `onConfirmed`)
+
+### Composants
+- 🔧 `MobileMoneyDialog` : prop optionnelle `onConfirmed` (callback après confirmation du paiement)
+
+### Démo
+- 🔧 Location de démonstration passée à `en_cours` avec `return_code` + `deposit_paid` (QR et badge visibles)
+
+### Tests
+- ✅ `hasRentalConflict` : 5 tests (chevauchement, locations terminées ignorées, par équipement, exclusion, période libre) ; `generateReturnCode` : 2 tests → **44 tests OK**
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur (18 warnings préexistants)
+
+---
+
 ## v0.25 — Vague 9 : Location de matériel (1ère tranche) (2026-08-09)
 
 ### Migration

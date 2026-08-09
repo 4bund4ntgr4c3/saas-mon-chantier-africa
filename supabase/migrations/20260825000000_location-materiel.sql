@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS public.equipment_rentals (
   delivery_address text,
   scheduled_at timestamptz,
   returned_at timestamptz,
+  return_code text NOT NULL DEFAULT '',
+  deposit_paid boolean NOT NULL DEFAULT false,
   notes text,
   status public.equipment_rental_status NOT NULL DEFAULT 'demande',
   created_at timestamptz NOT NULL DEFAULT now(),

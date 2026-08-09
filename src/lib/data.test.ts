@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { computeRentalPrice, computeStockForecast, suggestProductDescription } from "@/lib/data";
+import {
+  computeRentalPrice,
+  computeStockForecast,
+  generateReturnCode,
+  hasRentalConflict,
+  suggestProductDescription,
+} from "@/lib/data";
 
 describe("computeStockForecast", () => {
   const now = Date.now();
@@ -139,5 +145,75 @@ describe("computeRentalPrice", () => {
     const r = computeRentalPrice(10000, 50000, "2026-08-01", "2026-08-01");
     expect(r.days).toBe(1);
     expect(r.total).toBe(10000);
+  });
+});
+
+describe("hasRentalConflict", () => {
+  const rentals = [
+    {
+      id: "a",
+      equipment_id: "eq1",
+      start_date: "2026-08-10",
+      end_date: "2026-08-15",
+      status: "confirmee" as const,
+    },
+    {
+      id: "b",
+      equipment_id: "eq1",
+      start_date: "2026-08-20",
+      end_date: "2026-08-25",
+      status: "en_cours" as const,
+    },
+    {
+      id: "c",
+      equipment_id: "eq1",
+      start_date: "2026-09-01",
+      end_date: "2026-09-05",
+      status: "terminee" as const,
+    },
+    {
+      id: "d",
+      equipment_id: "eq2",
+      start_date: "2026-09-10",
+      end_date: "2026-09-15",
+      status: "confirmee" as const,
+    },
+  ];
+
+  it("détecte un chevauchement avec une location active", () => {
+    expect(hasRentalConflict(rentals, "eq1", "2026-08-14", "2026-08-16")).toBe(true);
+    expect(hasRentalConflict(rentals, "eq1", "2026-08-09", "2026-08-10")).toBe(true);
+    expect(hasRentalConflict(rentals, "eq1", "2026-08-10", "2026-08-10")).toBe(true);
+  });
+
+  it("ignore les locations terminées", () => {
+    expect(hasRentalConflict(rentals, "eq1", "2026-09-03", "2026-09-04")).toBe(false);
+  });
+
+  it("ne tient pas compte des autres équipements", () => {
+    expect(hasRentalConflict(rentals, "eq2", "2026-08-12", "2026-08-13")).toBe(false);
+    expect(hasRentalConflict(rentals, "eq1", "2026-08-12", "2026-08-13")).toBe(true);
+  });
+
+  it("ignore la location exclue (modification en cours)", () => {
+    expect(hasRentalConflict(rentals, "eq1", "2026-08-12", "2026-08-13", "a")).toBe(false);
+  });
+
+  it("autorise une période libre", () => {
+    expect(hasRentalConflict(rentals, "eq1", "2026-08-16", "2026-08-19")).toBe(false);
+  });
+});
+
+describe("generateReturnCode", () => {
+  it("génère un code de 6 caractères sans caractères ambigus", () => {
+    const code = generateReturnCode();
+    expect(code).toHaveLength(6);
+    expect(code).toMatch(/^[A-Z2-9]{6}$/);
+  });
+
+  it("produit deux codes différents", () => {
+    const a = generateReturnCode();
+    const b = generateReturnCode();
+    expect(a).not.toBe(b);
   });
 });

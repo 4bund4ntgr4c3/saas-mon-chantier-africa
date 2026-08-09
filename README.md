@@ -73,7 +73,9 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 
 ### Location de matériel
 - Catalogue de matériel à louer (prix par jour/semaine, caution, état, ville) avec recherche et filtre par catégorie
-- Demande de location avec période et livraison ; le propriétaire confirme, démarre et clôture le retour
+- Demande de location avec période et livraison ; blocage des chevauchements de période, le propriétaire confirme la disponibilité
+- Suivi du retour : QR code de remise (code à 6 caractères) affiché au client, le propriétaire valide le code pour clôturer la location
+- Paiement de la caution par mobile money (MTN MoMo / Moov Money)
 - Mon parc de matériel : ajout, modification, statut (disponible/loué/hors service)
 
 ### IA — Assistant conversationnel

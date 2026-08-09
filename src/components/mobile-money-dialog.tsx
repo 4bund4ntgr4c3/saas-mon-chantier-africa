@@ -29,6 +29,7 @@ export function MobileMoneyDialog({
   beneficiary,
   open,
   onOpenChange,
+  onConfirmed,
 }: {
   projectId?: string | null;
   orderId?: string | null;
@@ -36,6 +37,7 @@ export function MobileMoneyDialog({
   beneficiary?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConfirmed?: () => void;
 }) {
   const initiate = useInitiateMobileMoney();
   const confirm = useConfirmMobileMoney();
@@ -87,6 +89,7 @@ export function MobileMoneyDialog({
       phone: phone.trim(),
     });
     setStep("done");
+    onConfirmed?.();
   }
 
   return (

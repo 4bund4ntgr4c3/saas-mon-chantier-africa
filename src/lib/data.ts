@@ -1494,6 +1494,48 @@ export function computeRentalPrice(
   };
 }
 
+const RENTAL_ACTIVE_STATUSES: EquipmentRentalStatus[] = [
+  "demande",
+  "confirmee",
+  "en_cours",
+  "retour_en_cours",
+];
+
+/** Génère un code de retour à 6 caractères (affiché en QR) pour la remise du matériel. */
+export function generateReturnCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  let code = "";
+  for (const byte of bytes) {
+    const char = alphabet[byte % alphabet.length];
+    if (char) code += char;
+  }
+  return code;
+}
+
+/**
+ * Détecte un chevauchement de période sur un équipement avec une location active
+ * (demande/confirmée/en cours/retour en cours). `excludeRentalId` permet d'ignorer
+ * la location en cours de modification.
+ */
+export function hasRentalConflict(
+  rentals: Pick<EquipmentRental, "id" | "equipment_id" | "start_date" | "end_date" | "status">[],
+  equipmentId: string,
+  startDate: string,
+  endDate: string,
+  excludeRentalId?: string,
+): boolean {
+  return rentals.some(
+    (r) =>
+      r.equipment_id === equipmentId &&
+      r.id !== excludeRentalId &&
+      RENTAL_ACTIVE_STATUSES.includes(r.status) &&
+      r.start_date <= endDate &&
+      r.end_date >= startDate,
+  );
+}
+
 /** Catalogue du matériel à louer (tous les équipements visibles). */
 export function useEquipment() {
   return useQuery({
@@ -1617,6 +1659,7 @@ export function useCreateEquipmentRental() {
           scheduled_at: payload.scheduled_at ?? null,
           notes: payload.notes ?? null,
           status: "demande",
+          return_code: generateReturnCode(),
           created_at: new Date().toISOString(),
           returned_at: null,
         });
@@ -1640,6 +1683,7 @@ export function useCreateEquipmentRental() {
           delivery_address: payload.delivery_address ?? null,
           scheduled_at: payload.scheduled_at ?? null,
           notes: payload.notes ?? null,
+          return_code: generateReturnCode(),
         })
         .select("id")
         .single();
@@ -1713,6 +1757,54 @@ export function useUpdateEquipmentRentalStatus() {
         kind: "livraison",
         link: "/location",
       });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Valide le code de retour (remise du matériel) et clôture la location. */
+export function useReturnEquipmentRental() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, code }: { id: string; code: string }) => {
+      const normalized = code.trim().toUpperCase();
+      const rental = isGuestMode()
+        ? (demoRows<EquipmentRental>("equipment_rentals").find((r) => r.id === id) ?? null)
+        : (await supabase.from("equipment_rentals").select("*").eq("id", id).maybeSingle()).data;
+      if (!rental) throw new Error("Location introuvable");
+      if (!rental.return_code) throw new Error("Aucun code de retour défini");
+      if (rental.return_code !== normalized) throw new Error("Code de retour invalide");
+      const returnedAt = new Date().toISOString();
+      if (isGuestMode()) {
+        demoUpdate("equipment_rentals", id, { status: "terminee", returned_at: returnedAt });
+        demoUpdate("equipment", rental.equipment_id, { status: "disponible" });
+        return rental.user_id;
+      }
+      const { error } = await supabase
+        .from("equipment_rentals")
+        .update({ status: "terminee", returned_at: returnedAt })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+      const { error: eqErr } = await supabase
+        .from("equipment")
+        .update({ status: "disponible" })
+        .eq("id", rental.equipment_id);
+      if (eqErr) throw new Error(eqErr.message);
+      return rental.user_id;
+    },
+    onSuccess: (userId) => {
+      qc.invalidateQueries({ queryKey: ["equipment_rentals"] });
+      qc.invalidateQueries({ queryKey: ["equipment"] });
+      toast.success("Retour validé, location terminée");
+      if (userId) {
+        void addPersistedNotification({
+          title: "Retour de matériel validé",
+          body: "Le propriétaire a validé le retour du matériel. Merci pour votre location.",
+          kind: "livraison",
+          link: "/location",
+          userId,
+        });
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });

@@ -1,18 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
+import { toast } from "sonner";
 import {
   CalendarDays,
   CheckCircle2,
+  Copy,
   Hammer,
   PackageX,
   Pencil,
   Plus,
+  ShieldCheck,
   Trash2,
   Truck,
   Wrench,
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
+import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,12 +33,15 @@ import {
 import { useAccess } from "@/lib/roles";
 import { useCurrentProject } from "@/context/project-context";
 import {
+  hasRentalConflict,
   useCreateEquipmentRental,
   useDeleteRow,
   useEquipment,
+  useEquipmentRentals,
   useMyEquipment,
   useMyEquipmentRentals,
   useProfile,
+  useReturnEquipmentRental,
   useSaveRow,
   useUpdateEquipmentRentalStatus,
   type Equipment,
@@ -150,10 +158,16 @@ function LocationPage() {
 
   async function submitRental(e: Equipment, v: Values) {
     const g = (k: string) => v[k] ?? "";
+    const start = g("start_date");
+    const end = g("end_date");
+    if (hasRentalConflict(myRentals, e.id, start, end)) {
+      toast.warning("Cette période chevauche déjà une de vos locations sur cet équipement.");
+      throw new Error("Conflit de période");
+    }
     await createRental.mutateAsync({
       equipment_id: e.id,
-      start_date: g("start_date"),
-      end_date: g("end_date"),
+      start_date: start,
+      end_date: end,
       project_id: projectId ?? null,
       delivery_address: orNull(g("delivery_address")),
       delivery_fee: toNumber(g("delivery_fee")) ?? 0,
@@ -250,7 +264,9 @@ function LocationPage() {
         />
       )}
 
-      {tab === "mes-locations" && <MyLocationsSection uid={uid} canEdit={canEdit} />}
+      {tab === "mes-locations" && (
+        <MyLocationsSection uid={uid} canEdit={canEdit} projectId={projectId} />
+      )}
     </>
   );
 }
@@ -418,10 +434,17 @@ function MyEquipmentSection({
   );
 }
 
-function MyLocationsSection({ uid, canEdit }: { uid: string | null; canEdit: boolean }) {
+function MyLocationsSection({
+  uid,
+  canEdit,
+  projectId,
+}: {
+  uid: string | null;
+  canEdit: boolean;
+  projectId: string | null;
+}) {
   const { data: equipment = [] } = useEquipment();
   const { data: myRentals = [] } = useMyEquipmentRentals();
-  const updateStatus = useUpdateEquipmentRentalStatus();
   const eqById = useMemo(() => new Map(equipment.map((e) => [e.id, e])), [equipment]);
   const ownIds = useMemo(
     () => new Set(equipment.filter((e) => e.user_id === uid).map((e) => e.id)),
@@ -452,70 +475,7 @@ function MyLocationsSection({ uid, canEdit }: { uid: string | null; canEdit: boo
         ) : (
           <ul className="space-y-2">
             {incoming.map(({ rental, equipment: eq }) => (
-              <li
-                key={rental.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/30 p-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm">
-                    <span className="font-medium">{eq.name}</span> · {frDate(rental.start_date)} →
-                    {frDate(rental.end_date)} ·{" "}
-                    <span className="num font-semibold text-primary">
-                      {fcfa(Number(rental.total_price))}
-                    </span>
-                  </p>
-                  {rental.delivery_address && (
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                      <Truck className="size-3" /> {rental.delivery_address}
-                      {Number(rental.delivery_fee) > 0 && ` · ${fcfa(Number(rental.delivery_fee))}`}
-                    </p>
-                  )}
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {labelOf(EQUIPMENT_RENTAL_STATUSES, rental.status)}
-                  </p>
-                </div>
-                {canEdit && (
-                  <div className="flex items-center gap-2">
-                    {rental.status === "demande" && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="bg-success text-success-foreground hover:bg-success/80"
-                        onClick={() => updateStatus.mutate({ id: rental.id, status: "confirmee" })}
-                      >
-                        <CheckCircle2 className="mr-1.5 size-4" /> Confirmer
-                      </Button>
-                    )}
-                    {rental.status === "confirmee" && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => updateStatus.mutate({ id: rental.id, status: "en_cours" })}
-                      >
-                        Démarrer
-                      </Button>
-                    )}
-                    {rental.status === "en_cours" && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => updateStatus.mutate({ id: rental.id, status: "terminee" })}
-                      >
-                        <Truck className="mr-1.5 size-4" /> Retour reçu
-                      </Button>
-                    )}
-                    {(rental.status === "demande" || rental.status === "confirmee") && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => updateStatus.mutate({ id: rental.id, status: "annulee" })}
-                      >
-                        Annuler
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </li>
+              <IncomingRentalRow key={rental.id} rental={rental} equipment={eq} canEdit={canEdit} />
             ))}
           </ul>
         )}
@@ -530,41 +490,247 @@ function MyLocationsSection({ uid, canEdit }: { uid: string | null; canEdit: boo
         ) : (
           <ul className="space-y-2">
             {rentals.map(({ rental, equipment: eq }) => (
-              <li
+              <MyRentalRow
                 key={rental.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/30 p-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm">
-                    {eq ? <span className="font-medium">{eq.name}</span> : "Équipement"} ·{" "}
-                    {frDate(rental.start_date)} → {frDate(rental.end_date)} ·{" "}
-                    <span className="num font-semibold text-primary">
-                      {fcfa(Number(rental.total_price))}
-                    </span>
-                  </p>
-                  {rental.notes && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{rental.notes}</p>
-                  )}
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    <Badge variant="outline">
-                      {labelOf(EQUIPMENT_RENTAL_STATUSES, rental.status)}
-                    </Badge>
-                  </p>
-                </div>
-                {canEdit && (rental.status === "demande" || rental.status === "confirmee") && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => updateStatus.mutate({ id: rental.id, status: "annulee" })}
-                  >
-                    Annuler
-                  </Button>
-                )}
-              </li>
+                rental={rental}
+                equipment={eq}
+                canEdit={canEdit}
+                projectId={rental.project_id ?? projectId}
+              />
             ))}
           </ul>
         )}
       </div>
+    </div>
+  );
+}
+
+function IncomingRentalRow({
+  rental,
+  equipment: eq,
+  canEdit,
+}: {
+  rental: EquipmentRental;
+  equipment: Equipment;
+  canEdit: boolean;
+}) {
+  const { data: allRentals = [] } = useEquipmentRentals(rental.equipment_id);
+  const updateStatus = useUpdateEquipmentRentalStatus();
+  const returnRental = useReturnEquipmentRental();
+  const [code, setCode] = useState("");
+
+  function confirm() {
+    if (hasRentalConflict(allRentals, eq.id, rental.start_date, rental.end_date, rental.id)) {
+      toast.error("Période en conflit avec une autre location active sur ce matériel.");
+      return;
+    }
+    updateStatus.mutate({ id: rental.id, status: "confirmee" });
+  }
+
+  function validateReturn() {
+    if (!code.trim()) return;
+    returnRental.mutate({ id: rental.id, code });
+  }
+
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/30 p-3">
+      <div className="min-w-0">
+        <p className="text-sm">
+          <span className="font-medium">{eq.name}</span> · {frDate(rental.start_date)} →
+          {frDate(rental.end_date)} ·{" "}
+          <span className="num font-semibold text-primary">{fcfa(Number(rental.total_price))}</span>
+        </p>
+        {rental.delivery_address && (
+          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+            <Truck className="size-3" /> {rental.delivery_address}
+            {Number(rental.delivery_fee) > 0 && ` · ${fcfa(Number(rental.delivery_fee))}`}
+          </p>
+        )}
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          <Badge variant="outline">{labelOf(EQUIPMENT_RENTAL_STATUSES, rental.status)}</Badge>
+          {rental.deposit_paid && (
+            <Badge className="ml-1.5 bg-success text-success-foreground">
+              <ShieldCheck className="mr-1 size-3" /> Caution payée
+            </Badge>
+          )}
+        </p>
+        {rental.status === "retour_en_cours" && (
+          <div className="mt-2 flex items-center gap-2">
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder="Code de retour du client"
+              className="h-8 w-52"
+              maxLength={6}
+            />
+            <Button
+              size="sm"
+              onClick={validateReturn}
+              disabled={!code.trim() || returnRental.isPending}
+            >
+              <Truck className="mr-1.5 size-4" /> Valider le retour
+            </Button>
+          </div>
+        )}
+      </div>
+      {canEdit && (
+        <div className="flex flex-wrap items-center gap-2">
+          {rental.status === "demande" && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="bg-success text-success-foreground hover:bg-success/80"
+              onClick={confirm}
+            >
+              <CheckCircle2 className="mr-1.5 size-4" /> Confirmer
+            </Button>
+          )}
+          {rental.status === "confirmee" && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => updateStatus.mutate({ id: rental.id, status: "en_cours" })}
+            >
+              Démarrer
+            </Button>
+          )}
+          {rental.status === "en_cours" && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => updateStatus.mutate({ id: rental.id, status: "retour_en_cours" })}
+            >
+              <Truck className="mr-1.5 size-4" /> Retour reçu
+            </Button>
+          )}
+          {(rental.status === "demande" || rental.status === "confirmee") && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => updateStatus.mutate({ id: rental.id, status: "annulee" })}
+            >
+              Annuler
+            </Button>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+function MyRentalRow({
+  rental,
+  equipment: eq,
+  canEdit,
+  projectId,
+}: {
+  rental: EquipmentRental;
+  equipment: Equipment | undefined;
+  canEdit: boolean;
+  projectId: string | null;
+}) {
+  const updateStatus = useUpdateEquipmentRentalStatus();
+  const markDepositPaid = useSaveRow("equipment_rentals", "Caution payée");
+  const [paying, setPaying] = useState(false);
+
+  const showQr = rental.status === "en_cours" || rental.status === "retour_en_cours";
+  const showDeposit =
+    canEdit && rental.status === "confirmee" && !rental.deposit_paid && Number(rental.deposit) > 0;
+
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/30 p-3">
+      <div className="min-w-0">
+        <p className="text-sm">
+          {eq ? <span className="font-medium">{eq.name}</span> : "Équipement"} ·{" "}
+          {frDate(rental.start_date)} → {frDate(rental.end_date)} ·{" "}
+          <span className="num font-semibold text-primary">{fcfa(Number(rental.total_price))}</span>
+        </p>
+        {rental.notes && <p className="mt-0.5 text-xs text-muted-foreground">{rental.notes}</p>}
+        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          <Badge variant="outline">{labelOf(EQUIPMENT_RENTAL_STATUSES, rental.status)}</Badge>
+          {rental.deposit_paid ? (
+            <Badge className="bg-success text-success-foreground">
+              <ShieldCheck className="mr-1 size-3" /> Caution payée
+            </Badge>
+          ) : (
+            Number(rental.deposit) > 0 && `Caution : ${fcfa(Number(rental.deposit))}`
+          )}
+        </p>
+        {showQr && rental.return_code && (
+          <div className="mt-2 flex items-center gap-3 rounded-md border border-border bg-card p-2">
+            <ReturnQr code={rental.return_code} />
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Code de remise à présenter
+              </p>
+              <p className="num font-mono text-lg font-bold tracking-widest">
+                {rental.return_code}
+              </p>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-xs"
+                onClick={() => {
+                  navigator.clipboard?.writeText(rental.return_code).catch(() => {});
+                  toast.success("Code copié");
+                }}
+              >
+                <Copy className="mr-1 size-3" /> Copier
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {showDeposit && (
+          <Button size="sm" variant="secondary" onClick={() => setPaying(true)}>
+            <ShieldCheck className="mr-1.5 size-4" /> Payer la caution
+          </Button>
+        )}
+        {canEdit && (rental.status === "demande" || rental.status === "confirmee") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => updateStatus.mutate({ id: rental.id, status: "annulee" })}
+          >
+            Annuler
+          </Button>
+        )}
+      </div>
+      <MobileMoneyDialog
+        projectId={projectId}
+        amount={Number(rental.deposit)}
+        {...(eq ? { beneficiary: eq.name } : {})}
+        open={paying}
+        onOpenChange={setPaying}
+        onConfirmed={() =>
+          markDepositPaid.mutate({ id: rental.id, values: { deposit_paid: true } })
+        }
+      />
+    </li>
+  );
+}
+
+function ReturnQr({ code }: { code: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    QRCode.toDataURL(`BATIBENIN:RETOUR:${code}`, { width: 96, margin: 1 })
+      .then((url) => {
+        if (active) setSrc(url);
+      })
+      .catch(() => setSrc(null));
+    return () => {
+      active = false;
+    };
+  }, [code]);
+  return (
+    <div className="grid size-24 shrink-0 place-items-center rounded-md border border-border bg-white p-1">
+      {src ? (
+        <img src={src} alt="QR de retour du matériel" className="size-full" />
+      ) : (
+        <span className="font-mono text-xs font-bold tracking-widest text-foreground">{code}</span>
+      )}
     </div>
   );
 }
