@@ -99,6 +99,7 @@ const NAV = [
   { to: "/rapports", labelKey: "nav.rapports", icon: BarChart3, feature: "rapports" },
   { to: "/recherche", labelKey: "nav.recherche", icon: Search, feature: "recherche" },
   { to: "/alertes", labelKey: "nav.alertes", icon: BellRing, feature: "alertes" },
+  { to: "/notifications", labelKey: "nav.notifications", icon: BellRing, feature: "alertes" },
   { to: "/assistant", labelKey: "nav.assistant", icon: Sparkles, feature: "assistant" },
   { to: "/audit", labelKey: "nav.audit", icon: ShieldCheck, feature: "audit" },
   { to: "/parametres", labelKey: "nav.parametres", icon: Settings, feature: "parametres" },

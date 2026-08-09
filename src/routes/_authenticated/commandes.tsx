@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CheckCircle2, Package, Receipt, RefreshCw, Smartphone, Share2, Truck } from "lucide-react";
+import {
+  CheckCircle2,
+  MessageSquareText,
+  Package,
+  Receipt,
+  RefreshCw,
+  Smartphone,
+  Share2,
+  Truck,
+} from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
@@ -144,6 +153,15 @@ function OrderDetail({ order }: { order: Order }) {
     toast.success("Lien de paiement partagé (WhatsApp) et copié");
   };
 
+  const shareSms = () => {
+    const ref = order.reference ?? order.id;
+    const url = `${window.location.origin}/paiement/${ref}`;
+    const text = `Paiement de votre commande chez BâtiBénin (${ref}) : ${fcfa(order.total)}. Réglez par mobile money ici : ${url}`;
+    window.open(`sms:?body=${encodeURIComponent(text)}`, "_blank", "noopener");
+    navigator.clipboard?.writeText(url).catch(() => {});
+    toast.success("Lien de paiement prêt à envoyer par SMS");
+  };
+
   const completed = order.status === "livree";
 
   return (
@@ -163,6 +181,9 @@ function OrderDetail({ order }: { order: Order }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={shareLink}>
           <Share2 className="size-4" /> Partager le lien de paiement
+        </Button>
+        <Button size="sm" variant="ghost" onClick={shareSms}>
+          <MessageSquareText className="size-4" /> Envoyer par SMS
         </Button>
       </div>
 

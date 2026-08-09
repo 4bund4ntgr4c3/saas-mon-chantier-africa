@@ -120,9 +120,11 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Cloche de notifications alimentée par les notifications persistées (canal `in_app`), marquées lues à l'ouverture
 - ✅ Câblage des événements : commande passée, paiement confirmé, livraison mise à jour, livraison de matériaux
 - ✅ Préférences de canaux Push/SMS/WhatsApp dans Paramètres + enregistrement du navigateur comme appareil web
+- ✅ Page « Mes notifications » (`/notifications`) : historique, filtres par type, marquer lu/non lu, supprimer, tout marquer lu
+- ✅ Push navigateur (Notification API) : autorisation depuis Paramètres + notification système sur nouveaux événements
+- ✅ Partage SMS du lien de paiement (à côté du partage WhatsApp)
 - ⬜ Push web réel (service worker) + push mobile
-- ⬜ SMS, WhatsApp (partage devis/commande/rapport, liens de paiement, suivi de livraison)
-- ⬜ Page dédiée « Mes notifications » (historique + filtres par canal/kind)
+- ⬜ SMS / WhatsApp transactionnels (devis, rapports, suivi de livraison) via fournisseur
 
 ## Vague 9 — Location de matériel ⬜
 

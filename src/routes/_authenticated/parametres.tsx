@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
+  BellRing,
   FileText,
   Globe,
   Languages,
@@ -44,6 +45,7 @@ import {
   useNotificationPreferences,
   useProfile,
   useProfileVerification,
+  useRegisterDeviceToken,
   useSaveRow,
   useSendNotificationEmail,
   useSubmitVerificationDocument,
@@ -339,7 +341,33 @@ function SettingsPage() {
   const { data: prefs } = useNotificationPreferences();
   const savePrefs = useUpdateNotificationPreferences();
   const sendEmail = useSendNotificationEmail();
+  const registerDevice = useRegisterDeviceToken();
   const { lang, setLang, country, setCountry, currencySymbol, currencyCode } = usePreferences();
+  const [permStatus, setPermStatus] = useState<NotificationPermission | "unsupported">(
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "unsupported",
+  );
+
+  async function enableBrowserNotifications() {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      toast.error("Votre navigateur ne prend pas en charge les notifications");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setPermStatus(permission);
+    if (permission === "granted") {
+      let token = window.localStorage.getItem("device_token_web");
+      if (!token) {
+        token = `web-${crypto.randomUUID()}`;
+        window.localStorage.setItem("device_token_web", token);
+      }
+      registerDevice.mutate({ token, platform: "web" });
+      toast.success("Notifications navigateur activées");
+    } else {
+      toast.error("Autorisation refusée — activez-la dans votre navigateur");
+    }
+  }
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -666,6 +694,37 @@ function SettingsPage() {
                   />
                 </div>
               ))}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
+              <div>
+                <p className="text-sm font-medium">Notifications navigateur</p>
+                <p className="text-xs text-muted-foreground">
+                  {permStatus === "granted"
+                    ? "Activées — les nouveaux événements s'affichent même fenêtre fermée."
+                    : permStatus === "denied"
+                      ? "Bloquées par le navigateur — autorisez-les dans les paramètres du site."
+                      : permStatus === "default"
+                        ? "Autorisez les notifications du navigateur pour ne rien manquer."
+                        : "Non prises en charge par ce navigateur."}
+                </p>
+              </div>
+              {permStatus === "granted" ? (
+                <Badge variant="secondary">
+                  <BellRing className="mr-1 size-3.5" /> Activé
+                </Badge>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={permStatus === "unsupported" || registerDevice.isPending}
+                  onClick={enableBrowserNotifications}
+                >
+                  <BellRing className="mr-1.5 size-4" />
+                  Activer
+                </Button>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

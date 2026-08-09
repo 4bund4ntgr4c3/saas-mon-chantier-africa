@@ -228,17 +228,28 @@ export function NotificationsBell() {
       });
   }, [alerts, lastSeen]);
 
-  // Toast des nouvelles notifications persistées non lues.
+  // Toast + notification navigateur des nouvelles notifications persistées non lues.
   useEffect(() => {
     if (!bootstrapped.current) {
       unreadNotifications.forEach((n) => toasted.current.add(n.id));
       return;
     }
+    const push = typeof window !== "undefined" && "Notification" in window;
     unreadNotifications
       .filter((n) => !toasted.current.has(n.id))
       .forEach((n) => {
         toasted.current.add(n.id);
         toast.success(n.title, { description: n.body ?? undefined });
+        if (push && Notification.permission === "granted") {
+          try {
+            new Notification(n.title, {
+              ...(n.body ? { body: n.body } : {}),
+              tag: n.id,
+            });
+          } catch {
+            // ignoré si l'API échoue
+          }
+        }
       });
   }, [unreadNotifications]);
 

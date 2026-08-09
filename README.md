@@ -31,7 +31,7 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 
 ### Alertes & notifications
 - Alertes métier (budget dépassant 80 %, échéances, paiements en retard, documents manquants), notifications e-mail (quotidiennes + digest hebdomadaire), préférences dans Paramètres
-- Notifications persistées multi-canal (in-app dans la cloche, push/SMS/WhatsApp configurables) : commandes, paiements, livraisons — canaux préférentiels dans Paramètres, appareils web enregistrés pour le push
+- Notifications persistées multi-canal (in-app dans la cloche, push navigateur, SMS/WhatsApp configurables) : commandes, paiements, livraisons — page « Mes notifications » avec historique et filtres, canaux préférentiels dans Paramètres, appareils web enregistrés pour le push
 
 ### Rapports & recherche
 - Rapports par mois/catégorie/fournisseur/commune/entreprise, budget prévu vs réalisé, coût moyen au m², exports PDF et Excel, recherche globale

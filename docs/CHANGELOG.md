@@ -6,6 +6,32 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.24 — Vague 8 : Notifications multi-canal (tranche 2 — page, push navigateur & SMS) (2026-08-09)
+
+### Page « Mes notifications » (`src/routes/_authenticated/notifications.tsx`)
+- ✅ Nouvelle route `/notifications` (feature `alertes`) : historique complet (200 dernières), filtres par `kind` + bascule « Non lues », bouton « Tout marquer lu »
+- ✅ Chaque ligne : icône par type, pastille non lue, badge type + date/heure, navigation vers le `link`, marquer lu/non lu, supprimer
+- ✅ Entrée de navigation ajoutée dans `app-shell` (`nav.notifications`, FR/EN)
+
+### Hooks (`src/lib/data.ts`)
+- ✅ `useMarkNotificationRead({ id, read })` — marque une notification lue ou non lue (guest + Supabase)
+- ✅ `useDeleteNotification()` (via `useDeleteRow("notifications")`)
+
+### Push navigateur (Notification API)
+- ✅ La cloche émet une **notification système** (`new Notification`) pour les nouveaux événements non lus quand l'autorisation est accordée
+- ✅ Paramètres : bloc « Notifications navigateur » — demande d'autorisation + enregistrement de l'appareil `web` (état Activé/Bloqué/en attente)
+
+### Partage par SMS (`commandes`)
+- ✅ Bouton « Envoyer par SMS » (lien `sms:` avec le texte du lien de paiement) à côté du partage WhatsApp existant
+
+### Divers
+- ✅ `frDateTime()` ajouté à `src/lib/format.ts` (date + heure)
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur · 33 tests OK
+
+---
+
 ## v0.23 — Vague 8 : Notifications multi-canal (tranche 1 — infrastructure & in-app) (2026-08-09)
 
 ### Migration

@@ -33,6 +33,7 @@ const dict = {
   "nav.alertes": ["Alertes", "Alerts"],
   "nav.assistant": ["Assistant IA", "AI Assistant"],
   "nav.audit": ["Journal d'audit", "Audit log"],
+  "nav.notifications": ["Notifications", "Notifications"],
   "nav.parametres": ["Paramètres", "Settings"],
   "admin.administration": ["Administration", "Administration"],
   "admin.utilisateurs": ["Utilisateurs", "Users"],

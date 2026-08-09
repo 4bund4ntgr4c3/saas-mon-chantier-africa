@@ -1421,6 +1421,35 @@ export function useRemoveDeviceToken() {
   });
 }
 
+/** Marque une notification lue ou non lue. */
+export function useMarkNotificationRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, read }: { id: string; read: boolean }) => {
+      if (isGuestMode()) {
+        demoUpdate("notifications", id, {
+          read_at: read ? new Date().toISOString() : null,
+        });
+        return;
+      }
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read_at: read ? new Date().toISOString() : null })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Supprime une notification persistée. */
+export function useDeleteNotification() {
+  return useDeleteRow("notifications");
+}
+
 /* ---------- Facturation client ---------- */
 
 export type Invoice = Tables["invoices"]["Row"];

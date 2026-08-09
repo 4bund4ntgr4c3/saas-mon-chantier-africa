@@ -33,6 +33,7 @@ import { Route as AuthenticatedLitigesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedMaBoutiqueRouteImport } from './routes/_authenticated/ma-boutique'
 import { Route as AuthenticatedMateriauxRouteImport } from './routes/_authenticated/materiaux'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authenticated/paiements'
 import { Route as AuthenticatedPanierRouteImport } from './routes/_authenticated/panier'
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
@@ -176,6 +177,12 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPaiementsRoute = AuthenticatedPaiementsRouteImport.update({
   id: '/paiements',
   path: '/paiements',
@@ -301,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/ma-boutique': typeof AuthenticatedMaBoutiqueRoute
   '/materiaux': typeof AuthenticatedMateriauxRoute
   '/messages': typeof AuthenticatedMessagesRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/panier': typeof AuthenticatedPanierRoute
   '/parametres': typeof AuthenticatedParametresRoute
@@ -345,6 +353,7 @@ export interface FileRoutesByTo {
   '/ma-boutique': typeof AuthenticatedMaBoutiqueRoute
   '/materiaux': typeof AuthenticatedMateriauxRoute
   '/messages': typeof AuthenticatedMessagesRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/paiements': typeof AuthenticatedPaiementsRoute
   '/panier': typeof AuthenticatedPanierRoute
   '/parametres': typeof AuthenticatedParametresRoute
@@ -391,6 +400,7 @@ export interface FileRoutesById {
   '/_authenticated/ma-boutique': typeof AuthenticatedMaBoutiqueRoute
   '/_authenticated/materiaux': typeof AuthenticatedMateriauxRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/paiements': typeof AuthenticatedPaiementsRoute
   '/_authenticated/panier': typeof AuthenticatedPanierRoute
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
@@ -437,6 +447,7 @@ export interface FileRouteTypes {
     | '/ma-boutique'
     | '/materiaux'
     | '/messages'
+    | '/notifications'
     | '/paiements'
     | '/panier'
     | '/parametres'
@@ -481,6 +492,7 @@ export interface FileRouteTypes {
     | '/ma-boutique'
     | '/materiaux'
     | '/messages'
+    | '/notifications'
     | '/paiements'
     | '/panier'
     | '/parametres'
@@ -526,6 +538,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ma-boutique'
     | '/_authenticated/materiaux'
     | '/_authenticated/messages'
+    | '/_authenticated/notifications'
     | '/_authenticated/paiements'
     | '/_authenticated/panier'
     | '/_authenticated/parametres'
@@ -727,6 +740,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/paiements': {
       id: '/_authenticated/paiements'
       path: '/paiements'
@@ -883,6 +903,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMaBoutiqueRoute: typeof AuthenticatedMaBoutiqueRoute
   AuthenticatedMateriauxRoute: typeof AuthenticatedMateriauxRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPaiementsRoute: typeof AuthenticatedPaiementsRoute
   AuthenticatedPanierRoute: typeof AuthenticatedPanierRoute
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
@@ -922,6 +943,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMaBoutiqueRoute: AuthenticatedMaBoutiqueRoute,
   AuthenticatedMateriauxRoute: AuthenticatedMateriauxRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPaiementsRoute: AuthenticatedPaiementsRoute,
   AuthenticatedPanierRoute: AuthenticatedPanierRoute,
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
