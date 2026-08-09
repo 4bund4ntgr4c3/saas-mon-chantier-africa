@@ -1,7 +1,14 @@
 import { useProfile } from "@/lib/data";
 
 /** Types de compte métier de l'application. */
-export type AccountType = "particulier" | "maitre_oeuvre" | "entreprise";
+export type AccountType =
+  | "particulier"
+  | "maitre_oeuvre"
+  | "entreprise"
+  | "artisan"
+  | "quincaillerie"
+  | "transporteur"
+  | "promoteur";
 
 export const ACCOUNT_TYPES: {
   value: AccountType;
@@ -22,6 +29,26 @@ export const ACCOUNT_TYPES: {
     value: "entreprise",
     label: "Entreprise / artisan",
     description: "J'exécute des travaux : devis, journal et dépenses de chantier.",
+  },
+  {
+    value: "artisan",
+    label: "Artisan",
+    description: "Maçon, électricien, plombier… je propose mes services sur le marketplace.",
+  },
+  {
+    value: "quincaillerie",
+    label: "Quincaillerie / vendeur",
+    description: "Je vends des matériaux et j'honore les commandes des chantiers.",
+  },
+  {
+    value: "transporteur",
+    label: "Transporteur",
+    description: "Je livre les matériaux jusqu'aux chantiers.",
+  },
+  {
+    value: "promoteur",
+    label: "Promoteur immobilier",
+    description: "Je gère des programmes et des opérations immobilières.",
   },
 ];
 
@@ -46,6 +73,7 @@ export type Feature =
   | "photos"
   | "taches"
   | "partage"
+  | "marketplace"
   | "rapports"
   | "recherche"
   | "alertes"
@@ -73,6 +101,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     photos: "full",
     taches: "full",
     partage: "full",
+    marketplace: "full",
     rapports: "full",
     recherche: "full",
     alertes: "full",
@@ -96,6 +125,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     photos: "full",
     taches: "full",
     partage: "full",
+    marketplace: "full",
     rapports: "full",
     recherche: "full",
     alertes: "full",
@@ -119,12 +149,109 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     photos: "full",
     taches: "full",
     partage: "none",
+    marketplace: "full",
     rapports: "none",
     recherche: "read",
     alertes: "none",
     calendrier: "read",
     parametres: "full",
     audit: "read",
+  },
+  artisan: {
+    "tableau-de-bord": "full",
+    projets: "read",
+    journal: "full",
+    documents: "read",
+    budget: "none",
+    depenses: "full",
+    devis: "full",
+    paiements: "none",
+    fournisseurs: "read",
+    entreprises: "none",
+    facturation: "none",
+    stock: "read",
+    photos: "full",
+    taches: "full",
+    partage: "none",
+    marketplace: "full",
+    rapports: "none",
+    recherche: "read",
+    alertes: "none",
+    calendrier: "read",
+    parametres: "full",
+    audit: "read",
+  },
+  quincaillerie: {
+    "tableau-de-bord": "full",
+    projets: "read",
+    journal: "read",
+    documents: "read",
+    budget: "none",
+    depenses: "full",
+    devis: "full",
+    paiements: "full",
+    fournisseurs: "full",
+    entreprises: "none",
+    facturation: "full",
+    stock: "full",
+    photos: "full",
+    taches: "full",
+    partage: "none",
+    marketplace: "full",
+    rapports: "none",
+    recherche: "read",
+    alertes: "read",
+    calendrier: "read",
+    parametres: "full",
+    audit: "read",
+  },
+  transporteur: {
+    "tableau-de-bord": "full",
+    projets: "read",
+    journal: "full",
+    documents: "read",
+    budget: "none",
+    depenses: "full",
+    devis: "read",
+    paiements: "none",
+    fournisseurs: "read",
+    entreprises: "none",
+    facturation: "none",
+    stock: "read",
+    photos: "full",
+    taches: "full",
+    partage: "none",
+    marketplace: "full",
+    rapports: "none",
+    recherche: "read",
+    alertes: "none",
+    calendrier: "read",
+    parametres: "full",
+    audit: "read",
+  },
+  promoteur: {
+    "tableau-de-bord": "full",
+    projets: "full",
+    journal: "full",
+    documents: "full",
+    budget: "full",
+    depenses: "full",
+    devis: "full",
+    paiements: "full",
+    fournisseurs: "full",
+    entreprises: "full",
+    facturation: "full",
+    stock: "full",
+    photos: "full",
+    taches: "full",
+    partage: "full",
+    marketplace: "full",
+    rapports: "full",
+    recherche: "full",
+    alertes: "full",
+    calendrier: "full",
+    parametres: "full",
+    audit: "full",
   },
 };
 

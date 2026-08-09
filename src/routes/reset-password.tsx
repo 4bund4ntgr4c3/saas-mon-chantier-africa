@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
@@ -60,7 +61,10 @@ function ResetPasswordPage() {
   }
 
   return (
-    <div className="grid-lines flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <div className="grid-lines relative flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="panel w-full max-w-md p-7">
         <div className="mb-6 flex items-center gap-2">
           <span className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">

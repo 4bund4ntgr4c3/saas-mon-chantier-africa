@@ -1,0 +1,126 @@
+# Stack & spécifications — BâtiBénin / Plateforme africaine de construction
+
+Document de référence **vivant** : versions exactes des outils, scripts, conventions, architecture et comportements clés. Mis à jour à chaque commit/push. Permet d'éviter de réimplémenter une fonctionnalité existante ou de la dégrader.
+
+---
+
+## 1. Stack (versions au 2026-08-09)
+
+| Couche | Technologie | Version |
+| --- | --- | --- |
+| Runtime | Node.js | ≥ 20 (via nvm) |
+| Framework | TanStack Start + TanStack Router | `@tanstack/react-start` 1.168.32 · `@tanstack/react-router` 1.170.18 |
+| UI | React + TypeScript | React 19.2.0 · TS 5.8.3 |
+| Styling | Tailwind CSS v4 + shadcn/ui (Radix) | `tailwindcss` 4.2.1 · `tw-animate-css` |
+| Requêtes | TanStack Query | 5.101.1 |
+| Backend / BDD | Supabase (PostgreSQL + Auth + Storage + Edge Functions) | `@supabase/supabase-js` 2.112.2 |
+| Formulaires | react-hook-form + zod | 7.71.2 · 3.24.2 |
+| Charts | recharts | 2.15.4 |
+| Exports | jspdf, jspdf-autotable, xlsx, html2canvas | 4.2.1 · 5.0.8 · 0.18.5 |
+| Notifications | Resend (Edge Function `email-notifications`) | — |
+| Emails / Auth | `@lovable.dev/cloud-auth-js` | 1.1.2 |
+| Déploiement | Vercel / Cloudflare Workers (preset `cloudflare-module`, Nitro) | `nitro` 3.0.260603-beta |
+| Lint / Format | ESLint 9 + Prettier 3 (plugins) | — |
+| Tests | Vitest 4.1.10 + jsdom 30 | — |
+
+## 2. Scripts (`npm run …`)
+
+| Script | Rôle |
+| --- | --- |
+| `dev` | Serveur de développement (`vite dev`) |
+| `build` | Build production (client + SSR + Nitro). **Régénère `routeTree.gen.ts`** |
+| `build:dev` | Build mode development |
+| `preview` | Prévisualisation du build (`vite preview`) |
+| `lint` | `eslint .` |
+| `format` | `prettier --write .` |
+| `test` | `vitest run` (une fois) |
+| `test:watch` | `vitest` (mode watch) |
+
+## 3. Architecture & conventions
+
+### Organisation
+- **Routing par fichiers** : `src/routes/**` (ex. `_authenticated/boutique.tsx`). Toute nouvelle route → le build régénère `routeTree.gen.ts`.
+- **Données** : `src/lib/data.ts` centralise tous les hooks (queries TanStack Query + mutations Supabase). **Ne pas disperser les requêtes SQL dans les pages.**
+- **Couches** : routes (UI) → `data.ts` (hooks) → `supabase` (client + types) ; `demo-store.ts` simule Supabase en mode invité.
+- **Préférences** : `src/context/preferences-context.tsx` (`usePreferences()` : `lang`, `country`, persistés localStorage `batibenin.lang` / `batibenin.country`).
+- **Composants UI** : `src/components/ui/**` (shadcn/Radix) ; composants métier dans `src/components/**`.
+
+### Contraintes TypeScript (critical)
+- `tsconfig` : **`exactOptionalPropertyTypes: true`** → une propriété optionnelle ne peut PAS être assignée `undefined` ; utiliser `prop?: T | undefined` ou renvoyer `null`.
+- Types de BDD générés dans `src/integrations/supabase/types.ts` (générateur `supabase gen types`).
+- `routeTree.gen.ts` ne doit **jamais** être édité à la main — il est régénéré par `npm run build`.
+- Workflow imposé après chaque modification : `npm run build` → `npx tsc --noEmit` → `npx eslint .` → `npm run test`.
+
+### Mode invité (démo)
+- `src/lib/guest-mode.ts` (`isGuestMode()`) + `src/lib/demo-store.ts` : une base démo en mémoire reproduit les tables Supabase (seed chantier, fournisseurs, dépenses, panier, commandes, prestataires, boutiques, produits).
+- Chaque hook de `data.ts` a une branche `isGuestMode()` pour fonctionner sans compte.
+- Inscription → seed d'un projet démo (signalé `demo_requests` pour la démo commerciale).
+
+### Gates de fonctionnalités & rôles
+- `src/components/feature-gate.tsx` : `<FeatureGate feature="…">` active/désactive des modules.
+- **Valeurs `Feature` existantes** (`src/lib/roles.ts` — ⚠️ ne pas en inventer) : `tableau-de-bord`, `projets`, `journal`, `documents`, `budget`, `depenses`, `devis`, `paiements`, `fournisseurs`, `entreprises`, `facturation`, `stock`, `photos`, `taches`, `partage`, `marketplace`, `rapports`, `recherche`, `alertes`, `calendrier`, `parametres`, `audit`.
+- ⚠️ Pas de valeur `messages` : la route `/messages` utilise `journal` ; `/plans` et `/documents` utilisent `documents` ; `/prestataires`, `/boutique`, `/panier`, `/commandes`, `/ma-boutique` utilisent `marketplace`.
+- Rôles : `src/lib/roles.ts` (`ACCOUNT_TYPES`) + `useIsAdmin()` (table `user_roles`).
+
+### Formatage & valeurs
+- `src/lib/format.ts` : `fcfa()` **résout la devise par pays** (XOF défaut, XAF pour `cg`, CDF pour `cd`) ; listes `ORDER_STATUSES`, `DELIVERY_STATUSES`, `PRODUCT_UNITS`, `DOCUMENT_CATEGORIES`, `QUOTE_STATUSES`, `PAYMENT_METHODS`, `RESERVE_STATUSES`, `RESERVE_PRIORITIES`, `PROVIDER_DOMAINS`, `PROJECT_STATUSES`.
+- i18n : `src/lib/i18n.ts` (`tr(lang, key)`, `I18nKey`) — **navigation/header traduits**, écrans en FR.
+- Géolocalisation : `src/lib/geo.ts` (`haversineKm`, `useGeolocation`) — utilisé par le comparateur « près de moi ».
+
+### Composants partagés réutilisés (ne pas dupliquer)
+- `ProductCard` / `QtyStepper` / `CloseButton` (`boutique.tsx`, exportés)
+- `StatusBadge` (`commandes.tsx`, importé par `ma-boutique.tsx` et `store-analytics.tsx`)
+- `PageHeader`, `FeatureGate`, `Badge`, `ProductDetailDialog` (`product-compare.tsx`), `StoreAnalytics`/`TopProducts`/`RecentSales`/`ProductMovement` (`store-analytics.tsx`), `ProjectMembersButton` (`project-members.tsx`), `ProjectInvitesButton` (`project-invites.tsx`)
+
+### UI — contraintes (déjà posées)
+- Variantes `Badge` limitées à `default/secondary/destructive/outline` (les badges custom utilisent des classes Tailwind).
+- Enum `document_category` : plan, permis_construire, acte_vente, facture, contrat, garantie, photo_chantier, autre.
+
+## 4. Base de données
+
+- Schéma PostgreSQL versionné dans `supabase/migrations/` (ordre chronologique par horodatage).
+- **État** : les migrations **ne sont pas encore appliquées** au projet Supabase (`zyiujrofyziewlpildyd`) — la CLI `supabase` n'est pas installée ; application manuelle via le SQL Editor du dashboard. Sans cela, les nouvelles tables ne fonctionnent qu'en mode invité (demo-store).
+- Buckets Storage : `documents` (plans, documents), `photos` (photos produits/chantier), `journal-photos`.
+- RLS activée partout ; pas de clef de service côté client (clef publishable).
+- Détails par table : voir `docs/schema-bdd.md`.
+
+### Liste des migrations
+| Fichier | Contenu |
+| --- | --- |
+| `20260807…` → `20260809…` | Schéma de base : comptes, projets, catégories, dépenses, fournisseurs, entreprises, devis, paiements, documents, journal, budget |
+| `20260810000000_64f2a1c9-email-notifications.sql` | Notifications e-mail + préférences |
+| `20260811000000_7a8e4d3f-features.sql` | Features, alertes |
+| `20260813000000_marketplace-prestataires.sql` | Prestataires + avis |
+| `20260814000000_marketplace-ecommerce.sql` | Marketplace e-commerce (boutiques, produits, panier, commandes, livraison) |
+| `20260814000001_chantier-avance.sql` | Réserves, plans, messages |
+| `20260814000002_roles-etendus.sql` | Rôles étendus (admin) |
+| `20260815000000_collaboration.sql` | **Vague 1** : organizations, organization_members, project_members |
+| `20260816000000_ecommerce.sql` | **Vague 2** : product_prices, product_inventory (+ trigger prix) |
+| `20260817000000_materiaux-inventaire.sql` | **Vague 3** : material_requirements, material_deliveries |
+
+## 5. Fonctionnalités livrées (map rapide → pour éviter de refaire)
+
+| Domaine | Pages / Routes | Hooks (`data.ts`) |
+| --- | --- | --- |
+| Chantier | projets, budget, depenses, devis, paiements, facturation, stock, taches, photos, journal, reserves, plans, documents, messages, calendrier, alertes | `useProjects`, `useCategories`, `useBudgetLines`, `useExpenses`, `usePayments`, `useQuotes`, `useInvoices`, `useMaterials`, `useTasks`, `useReserves`, `usePlans`, `useMessages`… |
+| Rapports | rapports, recherche | `useAllExpenses`, exports PDF/Excel |
+| Prestataires | prestataires | `useProviders`, `useProviderReviews` |
+| Marketplace | boutique, panier, commandes, ma-boutique | `useStores`, `useProducts`, `useProductCategories`, `useProductsByStore`, `useMyCart`, `useAddToCart`, `useCreateOrder`, `useOrders`, `useDeliveries`, `useDrivers`, `useProductImageUrls` |
+| E-commerce avancé (Vague 2) | boutique (fiche/comparateur), ma-boutique (analytics) | `useProductPrices`, `useProductInventory`, `useAddInventoryMovement`, `useCompareOffers`, `useStoreAnalytics` |
+| Collaboration (Vague 1) | header + cartes projets | `useProjectMembers`, `useMyProjectInvites`, `useAcceptProjectInvite`, `useAddProjectMember`, `useUpdateProjectMember`, `useRemoveProjectMember`, `useMyOrganizations` |
+| Matériaux & inventaire (Vague 3) | matériaux (nav, feature `stock`) | `useMaterialRequirements`, `useMaterialDeliveries`, `useAddMaterialRequirement`, `useUpdateMaterialRequirement`, `useAddMaterialDelivery` |
+| Admin | admin/, admin/utilisateurs, admin/demandes-demo, audit | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs` |
+| IA (règles) | tableau-de-bord (Conseiller) | — |
+
+## 6. Contrôles qualité (commandes)
+
+```sh
+npm run build      # génère routeTree.gen.ts + build complet
+npx tsc --noEmit   # 0 erreur attendue
+npx eslint .       # 0 erreur (18 warnings fast-refresh tolérés)
+npm run test       # 26 tests (format 16, i18n 3, guest-mode 3, geo 4)
+```
+
+## 7. Prochaines étapes
+
+Voir `docs/roadmap.md` — **Vague 4** (paiement mobile money MTN MoMo / Moov Money) à lancer ensuite.

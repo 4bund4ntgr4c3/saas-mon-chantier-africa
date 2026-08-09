@@ -1,29 +1,37 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  AlertTriangle,
   BarChart3,
   BellRing,
   Boxes,
   Building2,
   CalendarDays,
+  DraftingCompass,
   FileText,
   FolderOpen,
   Gauge,
   Hammer,
+  Handshake,
   HardHat,
   Images,
   Landmark,
   ListChecks,
   LogOut,
+  MessageSquare,
   NotebookPen,
+  Package,
   PiggyBank,
   Plus,
   Search,
   ShieldCheck,
   Settings,
   Receipt,
+  ShoppingCart,
   Store,
   Inbox,
+  Users,
   Wallet,
+  Truck,
 } from "lucide-react";
 import { type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,33 +50,60 @@ import { Badge } from "@/components/ui/badge";
 import { exitGuestMode, useGuestMode } from "@/lib/guest-mode";
 import { GuestBanner } from "@/components/guest-banner";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { ProjectInvitesButton } from "@/components/project-invites";
 import { QuickExpenseDialog } from "@/components/quick-expense";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { usePreferences } from "@/context/preferences-context";
+import { tr, type I18nKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/tableau-de-bord", label: "Tableau de bord", icon: Gauge, feature: "tableau-de-bord" },
-  { to: "/projets", label: "Projets", icon: HardHat, feature: "projets" },
-  { to: "/journal", label: "Journal de chantier", icon: NotebookPen, feature: "journal" },
-  { to: "/documents", label: "Documents", icon: FolderOpen, feature: "documents" },
-  { to: "/budget", label: "Budget", icon: PiggyBank, feature: "budget" },
-  { to: "/depenses", label: "Dépenses", icon: Receipt, feature: "depenses" },
-  { to: "/devis", label: "Devis", icon: FileText, feature: "devis" },
-  { to: "/paiements", label: "Paiements", icon: Wallet, feature: "paiements" },
-  { to: "/calendrier", label: "Échéances", icon: CalendarDays, feature: "calendrier" },
-  { to: "/fournisseurs", label: "Fournisseurs", icon: Store, feature: "fournisseurs" },
-  { to: "/entreprises", label: "Entreprises", icon: Building2, feature: "entreprises" },
-  { to: "/facturation", label: "Facturation", icon: Landmark, feature: "facturation" },
-  { to: "/stock", label: "Stock & matériaux", icon: Boxes, feature: "stock" },
-  { to: "/photos", label: "Photos", icon: Images, feature: "photos" },
-  { to: "/taches", label: "Tâches", icon: ListChecks, feature: "taches" },
-  { to: "/rapports", label: "Rapports", icon: BarChart3, feature: "rapports" },
-  { to: "/recherche", label: "Recherche", icon: Search, feature: "recherche" },
-  { to: "/alertes", label: "Alertes", icon: BellRing, feature: "alertes" },
-  { to: "/audit", label: "Journal d'audit", icon: ShieldCheck, feature: "audit" },
-  { to: "/parametres", label: "Paramètres", icon: Settings, feature: "parametres" },
-] as const satisfies readonly { to: string; label: string; icon: typeof Gauge; feature: Feature }[];
+  {
+    to: "/tableau-de-bord",
+    labelKey: "nav.tableau-de-bord",
+    icon: Gauge,
+    feature: "tableau-de-bord",
+  },
+  { to: "/projets", labelKey: "nav.projets", icon: HardHat, feature: "projets" },
+  { to: "/journal", labelKey: "nav.journal", icon: NotebookPen, feature: "journal" },
+  { to: "/reserves", labelKey: "nav.reserves", icon: AlertTriangle, feature: "journal" },
+  { to: "/messages", labelKey: "nav.messages", icon: MessageSquare, feature: "journal" },
+  { to: "/plans", labelKey: "nav.plans", icon: DraftingCompass, feature: "documents" },
+  { to: "/documents", labelKey: "nav.documents", icon: FolderOpen, feature: "documents" },
+  { to: "/budget", labelKey: "nav.budget", icon: PiggyBank, feature: "budget" },
+  { to: "/depenses", labelKey: "nav.depenses", icon: Receipt, feature: "depenses" },
+  { to: "/devis", labelKey: "nav.devis", icon: FileText, feature: "devis" },
+  { to: "/paiements", labelKey: "nav.paiements", icon: Wallet, feature: "paiements" },
+  { to: "/calendrier", labelKey: "nav.calendrier", icon: CalendarDays, feature: "calendrier" },
+  { to: "/fournisseurs", labelKey: "nav.fournisseurs", icon: Store, feature: "fournisseurs" },
+  { to: "/entreprises", labelKey: "nav.entreprises", icon: Building2, feature: "entreprises" },
+  { to: "/facturation", labelKey: "nav.facturation", icon: Landmark, feature: "facturation" },
+  { to: "/stock", labelKey: "nav.stock", icon: Boxes, feature: "stock" },
+  { to: "/materiaux", labelKey: "nav.materiaux", icon: Package, feature: "stock" },
+  { to: "/photos", labelKey: "nav.photos", icon: Images, feature: "photos" },
+  { to: "/taches", labelKey: "nav.taches", icon: ListChecks, feature: "taches" },
+  { to: "/prestataires", labelKey: "nav.prestataires", icon: Handshake, feature: "marketplace" },
+  { to: "/boutique", labelKey: "nav.boutique", icon: Store, feature: "marketplace" },
+  { to: "/panier", labelKey: "nav.panier", icon: ShoppingCart, feature: "marketplace" },
+  { to: "/commandes", labelKey: "nav.commandes", icon: Package, feature: "marketplace" },
+  { to: "/ma-boutique", labelKey: "nav.ma-boutique", icon: Truck, feature: "marketplace" },
+  { to: "/rapports", labelKey: "nav.rapports", icon: BarChart3, feature: "rapports" },
+  { to: "/recherche", labelKey: "nav.recherche", icon: Search, feature: "recherche" },
+  { to: "/alertes", labelKey: "nav.alertes", icon: BellRing, feature: "alertes" },
+  { to: "/audit", labelKey: "nav.audit", icon: ShieldCheck, feature: "audit" },
+  { to: "/parametres", labelKey: "nav.parametres", icon: Settings, feature: "parametres" },
+] as const satisfies readonly {
+  to: string;
+  labelKey: I18nKey;
+  icon: typeof Gauge;
+  feature: Feature;
+}[];
 
-const ADMIN_NAV = [{ to: "/admin/demandes-demo", label: "Demandes de démo", icon: Inbox }] as const;
+const ADMIN_NAV = [
+  { to: "/admin", labelKey: "admin.administration", icon: ShieldCheck },
+  { to: "/admin/utilisateurs", labelKey: "admin.utilisateurs", icon: Users },
+  { to: "/admin/demandes-demo", labelKey: "admin.demandes-demo", icon: Inbox },
+] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { projects, projectId, setProjectId } = useCurrentProject();
@@ -77,6 +112,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { type: accountType } = useAccountType();
   const guest = useGuestMode();
   const navigate = useNavigate();
+  const { lang } = usePreferences();
 
   async function signOut() {
     if (guest) {
@@ -87,7 +123,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   }
   const allowed = NAV.filter((item) => accessFor(accountType, item.feature) !== "none").map(
-    ({ to, label, icon }) => ({ to, label, icon }),
+    ({ to, labelKey, icon }) => ({ to, labelKey, icon }),
   );
   const nav = isAdmin ? [...allowed, ...ADMIN_NAV] : allowed;
 
@@ -120,7 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   )}
                 >
                   <item.icon className="size-4" />
-                  {item.label}
+                  {tr(lang, item.labelKey)}
                 </Link>
               );
             })}
@@ -130,7 +166,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="justify-start gap-3 text-sidebar-foreground/70"
             onClick={signOut}
           >
-            <LogOut className="size-4" /> {guest ? "Quitter l'aperçu" : "Se déconnecter"}
+            <LogOut className="size-4" />
+            {guest ? tr(lang, "shell.quitter-apercu") : tr(lang, "shell.deconnexion")}
           </Button>
         </aside>
 
@@ -142,11 +179,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="hidden text-xs uppercase tracking-widest text-muted-foreground sm:block">
-                Chantier
+                {tr(lang, "shell.chantier")}
               </span>
               <Select value={projectId ?? ""} onValueChange={setProjectId}>
                 <SelectTrigger className="w-[230px]">
-                  <SelectValue placeholder="Aucun projet" />
+                  <SelectValue placeholder={tr(lang, "shell.aucun-projet")} />
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
@@ -160,15 +197,22 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               <QuickExpenseDialog
                 trigger={
-                  <Button size="sm" variant="secondary" disabled={!projectId} title="Saisie rapide">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={!projectId}
+                    title={tr(lang, "shell.saisie-rapide")}
+                  >
                     <Plus className="mr-1.5 size-4" />
-                    <span className="hidden sm:inline">Dépense</span>
+                    <span className="hidden sm:inline">{tr(lang, "shell.depense")}</span>
                   </Button>
                 }
               />
               <NotificationsBell />
+              <ProjectInvitesButton />
+              <ThemeToggle />
               <Button asChild size="sm" variant="secondary">
-                <Link to="/projets">Gérer les projets</Link>
+                <Link to="/projets">{tr(lang, "shell.gerer-projets")}</Link>
               </Button>
               <Button size="sm" variant="ghost" className="lg:hidden" onClick={signOut}>
                 <LogOut className="size-4" />
@@ -188,7 +232,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   pathname.startsWith(item.to) && "bg-secondary text-foreground",
                 )}
               >
-                {item.label}
+                {tr(lang, item.labelKey)}
               </Link>
             ))}
           </nav>
@@ -221,15 +265,14 @@ export function PageHeader({
 }
 
 export function EmptyProjectNotice() {
+  const { lang } = usePreferences();
   return (
     <div className="panel grid place-items-center px-6 py-16 text-center">
       <HardHat className="mb-3 size-8 text-primary" />
-      <h2 className="font-display text-lg font-semibold">Aucun chantier sélectionné</h2>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        Créez d'abord un projet de construction pour commencer à suivre le budget et les dépenses.
-      </p>
+      <h2 className="font-display text-lg font-semibold">{tr(lang, "shell.empty-title")}</h2>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{tr(lang, "shell.empty-text")}</p>
       <Button asChild className="mt-5">
-        <Link to="/projets">Créer un projet</Link>
+        <Link to="/projets">{tr(lang, "shell.creer-projet")}</Link>
       </Button>
     </div>
   );

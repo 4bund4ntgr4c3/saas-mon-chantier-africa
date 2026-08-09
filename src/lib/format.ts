@@ -1,11 +1,26 @@
-export const XOF = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "XOF",
-  maximumFractionDigits: 0,
-});
+/** Résout la devise locale depuis la préférence pays (localStorage). */
+export function currencyConfig() {
+  const fallback = { symbol: "FCFA", code: "XOF" };
+  if (typeof window === "undefined") return fallback;
+  try {
+    const country = localStorage.getItem("batibenin.country") ?? "bj";
+    if (country === "cd") return { symbol: "FC", code: "CDF" };
+    if (country === "cg") return { symbol: "FCFA", code: "XAF" };
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export function fcfa(value: number | null | undefined) {
-  return XOF.format(Number(value ?? 0)).replace("XOF", "FCFA");
+  const { symbol, code } = currencyConfig();
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: code,
+    maximumFractionDigits: 0,
+  })
+    .format(Number(value ?? 0))
+    .replace(code, symbol);
 }
 
 export function compactFcfa(value: number | null | undefined) {
@@ -67,6 +82,22 @@ export const PROJECT_STATUSES = [
   { value: "termine", label: "Terminé" },
 ] as const;
 
+export const PROVIDER_DOMAINS = [
+  { value: "maconnerie", label: "Maçonnerie & gros œuvre" },
+  { value: "electricite", label: "Électricité" },
+  { value: "plomberie", label: "Plomberie & sanitaire" },
+  { value: "charpente", label: "Charpente & toiture" },
+  { value: "peinture", label: "Peinture & finitions" },
+  { value: "architecture", label: "Architecture & conception" },
+  { value: "ingenierie", label: "Ingénierie & bureau d'études" },
+  { value: "geometre", label: "Géomètre & topographie" },
+  { value: "fournisseurs", label: "Fournisseurs / quincaillerie" },
+  { value: "securite", label: "Sécurité & gardiennage" },
+  { value: "decoration", label: "Décoration & aménagement" },
+  { value: "vrd", label: "Terrassement & VRD" },
+  { value: "autre", label: "Autres services" },
+] as const;
+
 export const DOCUMENT_CATEGORIES = [
   { value: "plan", label: "Plans" },
   { value: "permis_construire", label: "Permis de construire" },
@@ -92,3 +123,53 @@ export function labelOf(
 ) {
   return list.find((i) => i.value === value)?.label ?? "—";
 }
+
+export const ORDER_STATUSES = [
+  { value: "creee", label: "Créée" },
+  { value: "paiement_en_attente", label: "Paiement en attente" },
+  { value: "payee", label: "Payée" },
+  { value: "preparation", label: "En préparation" },
+  { value: "prete", label: "Prête" },
+  { value: "en_livraison", label: "En livraison" },
+  { value: "livree", label: "Livrée" },
+  { value: "annulee", label: "Annulée" },
+  { value: "remboursee", label: "Remboursée" },
+  { value: "litige", label: "Litige" },
+] as const;
+
+export const DELIVERY_STATUSES = [
+  { value: "planifiee", label: "Planifiée" },
+  { value: "en_attente_transporteur", label: "En attente d'un transporteur" },
+  { value: "en_livraison", label: "En livraison" },
+  { value: "livree", label: "Livrée" },
+  { value: "annulee", label: "Annulée" },
+] as const;
+
+export const PRODUCT_UNITS = [
+  { value: "sac", label: "Sac" },
+  { value: "tonne", label: "Tonne" },
+  { value: "kg", label: "Kg" },
+  { value: "m3", label: "m³" },
+  { value: "m2", label: "m²" },
+  { value: "m", label: "Mètre" },
+  { value: "piece", label: "Pièce" },
+  { value: "barre", label: "Barre" },
+  { value: "carton", label: "Carton" },
+  { value: "palette", label: "Palette" },
+  { value: "litre", label: "Litre" },
+  { value: "bidon", label: "Bidon" },
+] as const;
+
+export const RESERVE_STATUSES = [
+  { value: "ouverte", label: "Ouverte" },
+  { value: "en_cours", label: "En cours" },
+  { value: "resolue", label: "Résolue" },
+  { value: "annulee", label: "Annulée" },
+] as const;
+
+export const RESERVE_PRIORITIES = [
+  { value: "basse", label: "Basse" },
+  { value: "moyenne", label: "Moyenne" },
+  { value: "haute", label: "Haute" },
+  { value: "critique", label: "Critique" },
+] as const;

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
 import { useDeleteRow, useDuplicateProject, useSaveRow, type Project } from "@/lib/data";
+import { ProjectMembersButton } from "@/components/project-members";
 import { fcfa, frDate, labelOf, num, PROJECT_STATUSES } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/projets")({
@@ -299,6 +300,7 @@ function ProjectsPage() {
                 >
                   {projectId === p.id ? "Chantier actif" : "Activer"}
                 </Button>
+                <ProjectMembersButton projectId={p.id} />
                 {canEdit && (
                   <>
                     <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(p.id)}>

@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { PreferencesProvider } from "../context/preferences-context";
 
 function NotFoundComponent() {
   return (
@@ -107,6 +108,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Fira+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "apple-touch-icon", href: "/icons/icon-192.svg" },
+      { name: "theme-color", content: "#0f766e" },
+    ],
+    scripts: [
+      {
+        children: `(function(){try{var t=localStorage.getItem("batibenin.theme");var dark;if(t==="light"||t==="dark"){dark=t==="dark";}else{dark=!window.matchMedia("(prefers-color-scheme: light)").matches;}document.documentElement.classList.toggle("dark",dark);}catch(e){}})();`,
+      },
+      {
+        children: `(function(){try{if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(function(){})}}catch(e){}})();`,
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -133,9 +145,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster />
-    </QueryClientProvider>
+    <PreferencesProvider>
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+        <Toaster />
+      </QueryClientProvider>
+    </PreferencesProvider>
   );
 }

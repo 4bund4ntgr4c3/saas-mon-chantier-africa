@@ -447,6 +447,131 @@ export type Database = {
           },
         ];
       };
+      material_deliveries: {
+        Row: {
+          created_at: string;
+          delivered_at: string | null;
+          id: string;
+          notes: string | null;
+          project_id: string;
+          quantity: number;
+          requirement_id: string | null;
+          status: string;
+          supplier_id: string | null;
+          unit_price: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          delivered_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          project_id: string;
+          quantity?: number;
+          requirement_id?: string | null;
+          status?: string;
+          supplier_id?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          delivered_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          project_id?: string;
+          quantity?: number;
+          requirement_id?: string | null;
+          status?: string;
+          supplier_id?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "material_deliveries_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "material_deliveries_requirement_id_fkey";
+            columns: ["requirement_id"];
+            isOneToOne: false;
+            referencedRelation: "material_requirements";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      material_requirements: {
+        Row: {
+          category: string | null;
+          created_at: string;
+          id: string;
+          name: string;
+          notes: string | null;
+          project_id: string;
+          quantity_consumed: number;
+          quantity_delivered: number;
+          quantity_needed: number;
+          quantity_ordered: number;
+          status: string;
+          supplier_id: string | null;
+          unit: string | null;
+          unit_price: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          category?: string | null;
+          created_at?: string;
+          id?: string;
+          name: string;
+          notes?: string | null;
+          project_id: string;
+          quantity_consumed?: number;
+          quantity_delivered?: number;
+          quantity_needed?: number;
+          quantity_ordered?: number;
+          status?: string;
+          supplier_id?: string | null;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          category?: string | null;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          notes?: string | null;
+          project_id?: string;
+          quantity_consumed?: number;
+          quantity_delivered?: number;
+          quantity_needed?: number;
+          quantity_ordered?: number;
+          status?: string;
+          supplier_id?: string | null;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "material_requirements_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       materials: {
         Row: {
           category: string | null;
@@ -1070,6 +1195,81 @@ export type Database = {
         };
         Relationships: [];
       };
+      organizations: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          id: string;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      organization_members: {
+        Row: {
+          created_at: string;
+          id: string;
+          organization_id: string;
+          role: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          role?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          role?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      project_members: {
+        Row: {
+          created_at: string;
+          email: string | null;
+          id: string;
+          project_id: string;
+          role: string;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          project_id: string;
+          role?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          project_id?: string;
+          role?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       user_roles: {
         Row: {
           created_at: string;
@@ -1091,6 +1291,952 @@ export type Database = {
         };
         Relationships: [];
       };
+      providers: {
+        Row: {
+          active: boolean;
+          category: string | null;
+          certifications: string | null;
+          city: string | null;
+          commune: string | null;
+          contact_name: string | null;
+          created_at: string;
+          email: string | null;
+          id: string;
+          name: string;
+          phone: string | null;
+          rating: number;
+          review_count: number;
+          services: string | null;
+          updated_at: string;
+          user_id: string | null;
+          verified: boolean;
+          website: string | null;
+          whatsapp: string | null;
+          years_experience: number | null;
+        };
+        Insert: {
+          active?: boolean;
+          category?: string | null;
+          certifications?: string | null;
+          city?: string | null;
+          commune?: string | null;
+          contact_name?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          name: string;
+          phone?: string | null;
+          rating?: number;
+          review_count?: number;
+          services?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+          verified?: boolean;
+          website?: string | null;
+          whatsapp?: string | null;
+          years_experience?: number | null;
+        };
+        Update: {
+          active?: boolean;
+          category?: string | null;
+          certifications?: string | null;
+          city?: string | null;
+          commune?: string | null;
+          contact_name?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          name?: string;
+          phone?: string | null;
+          rating?: number;
+          review_count?: number;
+          services?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+          verified?: boolean;
+          website?: string | null;
+          whatsapp?: string | null;
+          years_experience?: number | null;
+        };
+        Relationships: [];
+      };
+      provider_reviews: {
+        Row: {
+          comment: string | null;
+          created_at: string;
+          id: string;
+          provider_id: string;
+          rating: number;
+          user_id: string;
+        };
+        Insert: {
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          provider_id: string;
+          rating: number;
+          user_id?: string;
+        };
+        Update: {
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          provider_id?: string;
+          rating?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "provider_reviews_provider_id_fkey";
+            columns: ["provider_id"];
+            isOneToOne: false;
+            referencedRelation: "providers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cart_items: {
+        Row: {
+          cart_id: string;
+          created_at: string;
+          id: string;
+          product_id: string;
+          quantity: number;
+          unit_price: number;
+        };
+        Insert: {
+          cart_id: string;
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          quantity?: number;
+          unit_price?: number;
+        };
+        Update: {
+          cart_id?: string;
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          quantity?: number;
+          unit_price?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_cart_id_fkey";
+            columns: ["cart_id"];
+            isOneToOne: false;
+            referencedRelation: "carts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cart_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      carts: {
+        Row: {
+          created_at: string;
+          id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      deliveries: {
+        Row: {
+          confirmation_code: string | null;
+          created_at: string;
+          delivered_at: string | null;
+          driver_id: string | null;
+          fee: number;
+          from_address: string | null;
+          id: string;
+          lat: number | null;
+          lng: number | null;
+          order_id: string;
+          phone: string | null;
+          proof_photo: string | null;
+          scheduled_at: string | null;
+          signature_path: string | null;
+          status: string;
+          to_address: string | null;
+          updated_at: string;
+          user_id: string;
+          vehicle_id: string | null;
+          weight: number | null;
+        };
+        Insert: {
+          confirmation_code?: string | null;
+          created_at?: string;
+          delivered_at?: string | null;
+          driver_id?: string | null;
+          fee?: number;
+          from_address?: string | null;
+          id?: string;
+          lat?: number | null;
+          lng?: number | null;
+          order_id: string;
+          phone?: string | null;
+          proof_photo?: string | null;
+          scheduled_at?: string | null;
+          signature_path?: string | null;
+          status?: string;
+          to_address?: string | null;
+          updated_at?: string;
+          user_id: string;
+          vehicle_id?: string | null;
+          weight?: number | null;
+        };
+        Update: {
+          confirmation_code?: string | null;
+          created_at?: string;
+          delivered_at?: string | null;
+          driver_id?: string | null;
+          fee?: number;
+          from_address?: string | null;
+          id?: string;
+          lat?: number | null;
+          lng?: number | null;
+          order_id?: string;
+          phone?: string | null;
+          proof_photo?: string | null;
+          scheduled_at?: string | null;
+          signature_path?: string | null;
+          status?: string;
+          to_address?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          vehicle_id?: string | null;
+          weight?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_driver_id_fkey";
+            columns: ["driver_id"];
+            isOneToOne: false;
+            referencedRelation: "drivers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "deliveries_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "deliveries_vehicle_id_fkey";
+            columns: ["vehicle_id"];
+            isOneToOne: false;
+            referencedRelation: "vehicles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      drivers: {
+        Row: {
+          available: boolean;
+          capacity: number | null;
+          city: string | null;
+          created_at: string;
+          id: string;
+          name: string;
+          phone: string | null;
+          price_per_km: number;
+          rating: number;
+          review_count: number;
+          updated_at: string;
+          user_id: string;
+          vehicle_type: string | null;
+          verified: boolean;
+          whatsapp: string | null;
+          zone: string | null;
+        };
+        Insert: {
+          available?: boolean;
+          capacity?: number | null;
+          city?: string | null;
+          created_at?: string;
+          id?: string;
+          name: string;
+          phone?: string | null;
+          price_per_km?: number;
+          rating?: number;
+          review_count?: number;
+          updated_at?: string;
+          user_id: string;
+          vehicle_type?: string | null;
+          verified?: boolean;
+          whatsapp?: string | null;
+          zone?: string | null;
+        };
+        Update: {
+          available?: boolean;
+          capacity?: number | null;
+          city?: string | null;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          phone?: string | null;
+          price_per_km?: number;
+          rating?: number;
+          review_count?: number;
+          updated_at?: string;
+          user_id?: string;
+          vehicle_type?: string | null;
+          verified?: boolean;
+          whatsapp?: string | null;
+          zone?: string | null;
+        };
+        Relationships: [];
+      };
+      messages: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          is_read: boolean;
+          project_id: string | null;
+          recipient_id: string | null;
+          sender_id: string;
+          user_id: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          is_read?: boolean;
+          project_id?: string | null;
+          recipient_id?: string | null;
+          sender_id: string;
+          user_id: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          is_read?: boolean;
+          project_id?: string | null;
+          recipient_id?: string | null;
+          sender_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      order_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          order_id: string;
+          product_id: string | null;
+          quantity: number;
+          unit: string | null;
+          unit_price: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          order_id: string;
+          product_id?: string | null;
+          quantity?: number;
+          unit?: string | null;
+          unit_price?: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          order_id?: string;
+          product_id?: string | null;
+          quantity?: number;
+          unit?: string | null;
+          unit_price?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      orders: {
+        Row: {
+          city: string | null;
+          created_at: string;
+          delivery_address: string | null;
+          delivery_fee: number;
+          id: string;
+          lat: number | null;
+          lng: number | null;
+          notes: string | null;
+          ordered_at: string;
+          payment_method: string | null;
+          phone: string | null;
+          project_id: string | null;
+          reference: string | null;
+          status: string;
+          store_id: string;
+          subtotal: number;
+          total: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          city?: string | null;
+          created_at?: string;
+          delivery_address?: string | null;
+          delivery_fee?: number;
+          id?: string;
+          lat?: number | null;
+          lng?: number | null;
+          notes?: string | null;
+          ordered_at?: string;
+          payment_method?: string | null;
+          phone?: string | null;
+          project_id?: string | null;
+          reference?: string | null;
+          status?: string;
+          store_id: string;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          city?: string | null;
+          created_at?: string;
+          delivery_address?: string | null;
+          delivery_fee?: number;
+          id?: string;
+          lat?: number | null;
+          lng?: number | null;
+          notes?: string | null;
+          ordered_at?: string;
+          payment_method?: string | null;
+          phone?: string | null;
+          project_id?: string | null;
+          reference?: string | null;
+          status?: string;
+          store_id?: string;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "orders_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orders_store_id_fkey";
+            columns: ["store_id"];
+            isOneToOne: false;
+            referencedRelation: "stores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      plans: {
+        Row: {
+          annotations: Json;
+          created_at: string;
+          file_path: string;
+          id: string;
+          mime_type: string | null;
+          name: string;
+          project_id: string;
+          size_bytes: number | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          annotations?: Json;
+          created_at?: string;
+          file_path: string;
+          id?: string;
+          mime_type?: string | null;
+          name: string;
+          project_id: string;
+          size_bytes?: number | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          annotations?: Json;
+          created_at?: string;
+          file_path?: string;
+          id?: string;
+          mime_type?: string | null;
+          name?: string;
+          project_id?: string;
+          size_bytes?: number | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plans_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      product_categories: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          parent_id: string | null;
+          slug: string | null;
+          sort_order: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          parent_id?: string | null;
+          slug?: string | null;
+          sort_order?: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          parent_id?: string | null;
+          slug?: string | null;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "product_categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      product_inventory: {
+        Row: {
+          created_at: string;
+          id: string;
+          note: string | null;
+          product_id: string;
+          quantity_delta: number;
+          reason: string;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          product_id: string;
+          quantity_delta: number;
+          reason?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          product_id?: string;
+          quantity_delta?: number;
+          reason?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_inventory_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      product_prices: {
+        Row: {
+          changed_at: string;
+          changed_by: string | null;
+          compare_price: number | null;
+          id: string;
+          note: string | null;
+          price: number;
+          product_id: string;
+        };
+        Insert: {
+          changed_at?: string;
+          changed_by?: string | null;
+          compare_price?: number | null;
+          id?: string;
+          note?: string | null;
+          price: number;
+          product_id: string;
+        };
+        Update: {
+          changed_at?: string;
+          changed_by?: string | null;
+          compare_price?: number | null;
+          id?: string;
+          note?: string | null;
+          price?: number;
+          product_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_prices_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      products: {
+        Row: {
+          active: boolean;
+          brand: string | null;
+          category_id: string | null;
+          compare_price: number | null;
+          created_at: string;
+          delivery_available: boolean;
+          description: string | null;
+          features: string | null;
+          id: string;
+          images: string[];
+          min_order_quantity: number;
+          name: string;
+          price: number;
+          reference: string | null;
+          stock: number;
+          store_id: string;
+          unit: string | null;
+          updated_at: string;
+          user_id: string;
+          warranty: string | null;
+        };
+        Insert: {
+          active?: boolean;
+          brand?: string | null;
+          category_id?: string | null;
+          compare_price?: number | null;
+          created_at?: string;
+          delivery_available?: boolean;
+          description?: string | null;
+          features?: string | null;
+          id?: string;
+          images?: string[];
+          min_order_quantity?: number;
+          name: string;
+          price?: number;
+          reference?: string | null;
+          stock?: number;
+          store_id: string;
+          unit?: string | null;
+          updated_at?: string;
+          user_id: string;
+          warranty?: string | null;
+        };
+        Update: {
+          active?: boolean;
+          brand?: string | null;
+          category_id?: string | null;
+          compare_price?: number | null;
+          created_at?: string;
+          delivery_available?: boolean;
+          description?: string | null;
+          features?: string | null;
+          id?: string;
+          images?: string[];
+          min_order_quantity?: number;
+          name?: string;
+          price?: number;
+          reference?: string | null;
+          stock?: number;
+          store_id?: string;
+          unit?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          warranty?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "product_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "products_store_id_fkey";
+            columns: ["store_id"];
+            isOneToOne: false;
+            referencedRelation: "stores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profile_verifications: {
+        Row: {
+          created_at: string;
+          id: string;
+          level: string;
+          premium: boolean;
+          updated_at: string;
+          user_id: string;
+          verified_business: boolean;
+          verified_documents: boolean;
+          verified_identity: boolean;
+          verified_at: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          level?: string;
+          premium?: boolean;
+          updated_at?: string;
+          user_id: string;
+          verified_business?: boolean;
+          verified_documents?: boolean;
+          verified_identity?: boolean;
+          verified_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          level?: string;
+          premium?: boolean;
+          updated_at?: string;
+          user_id?: string;
+          verified_business?: boolean;
+          verified_documents?: boolean;
+          verified_identity?: boolean;
+          verified_at?: string | null;
+        };
+        Relationships: [];
+      };
+      reserves: {
+        Row: {
+          assigned_to: string | null;
+          category_id: string | null;
+          created_at: string;
+          description: string | null;
+          due_date: string | null;
+          id: string;
+          location: string | null;
+          photo_path: string | null;
+          priority: string;
+          project_id: string;
+          resolved_at: string | null;
+          status: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          assigned_to?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          id?: string;
+          location?: string | null;
+          photo_path?: string | null;
+          priority?: string;
+          project_id: string;
+          resolved_at?: string | null;
+          status?: string;
+          title: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          assigned_to?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          id?: string;
+          location?: string | null;
+          photo_path?: string | null;
+          priority?: string;
+          project_id?: string;
+          resolved_at?: string | null;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reserves_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reserves_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      stores: {
+        Row: {
+          active: boolean;
+          address: string | null;
+          city: string | null;
+          commune: string | null;
+          created_at: string;
+          delivery_available: boolean;
+          delivery_zone: string | null;
+          description: string | null;
+          email: string | null;
+          id: string;
+          lat: number | null;
+          lng: number | null;
+          logo_path: string | null;
+          name: string;
+          opening_hours: string | null;
+          phone: string | null;
+          rating: number;
+          review_count: number;
+          slug: string | null;
+          updated_at: string;
+          user_id: string;
+          verified: boolean;
+          whatsapp: string | null;
+        };
+        Insert: {
+          active?: boolean;
+          address?: string | null;
+          city?: string | null;
+          commune?: string | null;
+          created_at?: string;
+          delivery_available?: boolean;
+          delivery_zone?: string | null;
+          description?: string | null;
+          email?: string | null;
+          id?: string;
+          lat?: number | null;
+          lng?: number | null;
+          logo_path?: string | null;
+          name: string;
+          opening_hours?: string | null;
+          phone?: string | null;
+          rating?: number;
+          review_count?: number;
+          slug?: string | null;
+          updated_at?: string;
+          user_id: string;
+          verified?: boolean;
+          whatsapp?: string | null;
+        };
+        Update: {
+          active?: boolean;
+          address?: string | null;
+          city?: string | null;
+          commune?: string | null;
+          created_at?: string;
+          delivery_available?: boolean;
+          delivery_zone?: string | null;
+          description?: string | null;
+          email?: string | null;
+          id?: string;
+          lat?: number | null;
+          lng?: number | null;
+          logo_path?: string | null;
+          name?: string;
+          opening_hours?: string | null;
+          phone?: string | null;
+          rating?: number;
+          review_count?: number;
+          slug?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          verified?: boolean;
+          whatsapp?: string | null;
+        };
+        Relationships: [];
+      };
+      vehicles: {
+        Row: {
+          capacity: number | null;
+          created_at: string;
+          driver_id: string | null;
+          id: string;
+          photo_path: string | null;
+          plate: string | null;
+          type: string | null;
+          user_id: string;
+        };
+        Insert: {
+          capacity?: number | null;
+          created_at?: string;
+          driver_id?: string | null;
+          id?: string;
+          photo_path?: string | null;
+          plate?: string | null;
+          type?: string | null;
+          user_id: string;
+        };
+        Update: {
+          capacity?: number | null;
+          created_at?: string;
+          driver_id?: string | null;
+          id?: string;
+          photo_path?: string | null;
+          plate?: string | null;
+          type?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_driver_id_fkey";
+            columns: ["driver_id"];
+            isOneToOne: false;
+            referencedRelation: "drivers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1100,8 +2246,17 @@ export type Database = {
       get_shared_project: { Args: { p_token: string }; Returns: string };
     };
     Enums: {
-      account_type: "particulier" | "maitre_oeuvre" | "entreprise";
+      account_type:
+        | "particulier"
+        | "maitre_oeuvre"
+        | "entreprise"
+        | "artisan"
+        | "quincaillerie"
+        | "transporteur"
+        | "promoteur";
       app_role: "admin" | "user";
+      delivery_status:
+        "planifiee" | "en_attente_transporteur" | "en_livraison" | "livree" | "annulee";
       demo_request_status: "nouvelle" | "contactee" | "convertie" | "refusee";
       document_category:
         | "plan"
@@ -1113,10 +2268,23 @@ export type Database = {
         | "photo_chantier"
         | "autre";
       invoice_status: "emise" | "partielle" | "payee" | "annulee";
+      order_status:
+        | "creee"
+        | "paiement_en_attente"
+        | "payee"
+        | "preparation"
+        | "prete"
+        | "en_livraison"
+        | "livree"
+        | "annulee"
+        | "remboursee"
+        | "litige";
       payment_method: "especes" | "mtn_momo" | "moov_money" | "virement" | "cheque";
       payment_type: "comptant" | "acompte" | "partiel" | "solde";
       project_status: "planifie" | "en_cours" | "suspendu" | "termine";
       quote_status: "en_attente" | "accepte" | "rejete" | "converti";
+      reserve_priority: "basse" | "moyenne" | "haute" | "critique";
+      reserve_status: "ouverte" | "en_cours" | "resolue" | "annulee";
       task_priority: "basse" | "moyenne" | "haute";
       task_status: "a_faire" | "en_cours" | "terminee" | "annulee";
     };
@@ -1240,8 +2408,23 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      account_type: ["particulier", "maitre_oeuvre", "entreprise"],
+      account_type: [
+        "particulier",
+        "maitre_oeuvre",
+        "entreprise",
+        "artisan",
+        "quincaillerie",
+        "transporteur",
+        "promoteur",
+      ],
       app_role: ["admin", "user"],
+      delivery_status: [
+        "planifiee",
+        "en_attente_transporteur",
+        "en_livraison",
+        "livree",
+        "annulee",
+      ],
       demo_request_status: ["nouvelle", "contactee", "convertie", "refusee"],
       document_category: [
         "plan",
@@ -1253,10 +2436,24 @@ export const Constants = {
         "photo_chantier",
         "autre",
       ],
+      order_status: [
+        "creee",
+        "paiement_en_attente",
+        "payee",
+        "preparation",
+        "prete",
+        "en_livraison",
+        "livree",
+        "annulee",
+        "remboursee",
+        "litige",
+      ],
       payment_method: ["especes", "mtn_momo", "moov_money", "virement", "cheque"],
       payment_type: ["comptant", "acompte", "partiel", "solde"],
       project_status: ["planifie", "en_cours", "suspendu", "termine"],
       quote_status: ["en_attente", "accepte", "rejete", "converti"],
+      reserve_priority: ["basse", "moyenne", "haute", "critique"],
+      reserve_status: ["ouverte", "en_cours", "resolue", "annulee"],
     },
   },
 } as const;

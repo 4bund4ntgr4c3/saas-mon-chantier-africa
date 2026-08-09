@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Mail, Pencil, Plus, Send, Trash2 } from "lucide-react";
+import { Globe, Languages, Mail, Pencil, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
 import { RecordDialog, toNumber, type Field, type Values } from "@/components/record-form";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { COUNTRIES, LANGS, usePreferences } from "@/context/preferences-context";
 import {
   Select,
   SelectContent,
@@ -90,6 +91,7 @@ const FEATURE_LABELS: [Feature, string][] = [
   ["photos", "Photos de chantier"],
   ["taches", "Tâches & planning"],
   ["partage", "Partage"],
+  ["marketplace", "Marketplace de prestataires"],
 ];
 
 type PrefKey =
@@ -158,6 +160,7 @@ function SettingsPage() {
   const { data: prefs } = useNotificationPreferences();
   const savePrefs = useUpdateNotificationPreferences();
   const sendEmail = useSendNotificationEmail();
+  const { lang, setLang, country, setCountry, currencySymbol, currencyCode } = usePreferences();
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -360,6 +363,64 @@ function SettingsPage() {
           </form>
         </section>
       </div>
+
+      <section className="mt-8">
+        <h2 className="mb-3 font-display text-base font-semibold">Préférences</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="panel p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Langue de l'application</p>
+                <p className="text-xs text-muted-foreground">Français ou English.</p>
+              </div>
+              <Languages className="size-4 shrink-0 text-muted-foreground" />
+            </div>
+            <div className="mt-3">
+              <Select value={lang} onValueChange={(v) => setLang(v as "fr" | "en")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGS.map((l) => (
+                    <SelectItem key={l.value} value={l.value}>
+                      {l.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="panel p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Pays / devise</p>
+                <p className="text-xs text-muted-foreground">
+                  Affichage des montants en {currencySymbol} ({currencyCode}).
+                </p>
+              </div>
+              <Globe className="size-4 shrink-0 text-muted-foreground" />
+            </div>
+            <div className="mt-3">
+              <Select
+                value={country}
+                onValueChange={(v) => setCountry(v as (typeof COUNTRIES)[number]["value"])}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label} — {c.currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="mt-8">
         <h2 className="mb-3 font-display text-base font-semibold">Notifications e-mail</h2>

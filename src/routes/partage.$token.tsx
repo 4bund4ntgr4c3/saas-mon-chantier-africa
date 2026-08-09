@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Camera, Hammer } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
 import { fcfa, frDate, num, PROJECT_STATUSES, labelOf } from "@/lib/format";
 
@@ -116,7 +117,10 @@ function SharedProjectPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-secondary/30 px-4 py-5 md:px-8">
+      <header className="relative border-b border-border bg-secondary/30 px-4 py-5 md:px-8">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 md:right-8">
+          <ThemeToggle />
+        </div>
         <div className="mx-auto max-w-4xl">
           <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
             <Hammer className="size-3.5 text-primary" /> BâtiBénin · chantier partagé

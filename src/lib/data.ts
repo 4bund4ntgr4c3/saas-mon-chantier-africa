@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isGuestMode } from "@/lib/guest-mode";
 import {
   DEFAULT_BUDGET_SPLIT,
+  DEMO_USER,
   demoDelete,
   demoDuplicateProject,
   demoInsert,
@@ -12,7 +13,8 @@ import {
   demoUpdate,
   type DemoTableName,
 } from "@/lib/demo-store";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
+import { haversineKm } from "@/lib/geo";
 
 type Tables = Database["public"]["Tables"];
 export type Project = Tables["projects"]["Row"];
@@ -360,8 +362,31 @@ type TableName =
   | "invoices"
   | "invoice_payments"
   | "materials"
+  | "material_requirements"
+  | "material_deliveries"
   | "tasks"
-  | "photos";
+  | "photos"
+  | "providers"
+  | "provider_reviews"
+  | "stores"
+  | "product_categories"
+  | "product_prices"
+  | "product_inventory"
+  | "products"
+  | "carts"
+  | "cart_items"
+  | "orders"
+  | "order_items"
+  | "deliveries"
+  | "drivers"
+  | "vehicles"
+  | "reserves"
+  | "plans"
+  | "messages"
+  | "profile_verifications"
+  | "organizations"
+  | "organization_members"
+  | "project_members";
 
 const RELATED: Record<TableName, string[]> = {
   projects: ["projects"],
@@ -378,8 +403,31 @@ const RELATED: Record<TableName, string[]> = {
   invoices: ["invoices", "invoice_payments"],
   invoice_payments: ["invoice_payments", "invoices"],
   materials: ["materials"],
+  material_requirements: ["material_requirements", "materials"],
+  material_deliveries: ["material_deliveries", "material_requirements", "materials"],
   tasks: ["tasks"],
   photos: ["photos"],
+  providers: ["providers", "provider_reviews"],
+  provider_reviews: ["provider_reviews", "providers"],
+  stores: ["stores", "products"],
+  product_categories: ["product_categories"],
+  product_prices: ["product_prices", "products"],
+  product_inventory: ["product_inventory", "products"],
+  products: ["products"],
+  carts: ["carts", "cart_items"],
+  cart_items: ["cart_items", "carts"],
+  orders: ["orders", "order_items", "deliveries"],
+  order_items: ["order_items", "orders"],
+  deliveries: ["deliveries", "orders"],
+  drivers: ["drivers", "vehicles"],
+  vehicles: ["vehicles", "drivers"],
+  reserves: ["reserves"],
+  plans: ["plans"],
+  messages: ["messages"],
+  profile_verifications: ["profile_verifications"],
+  organizations: ["organizations", "organization_members"],
+  organization_members: ["organization_members", "organizations"],
+  project_members: ["project_members"],
 };
 
 export type Profile = Tables["profiles"]["Row"];
@@ -402,6 +450,26 @@ export function useProfile() {
       return { ...(data as Profile | null), email: auth.user.email ?? null } as Profile & {
         email: string | null;
       };
+    },
+  });
+}
+
+/** Résout le nom d'un utilisateur par son id (pour les messages). */
+export function useProfileById(userId: string | null) {
+  return useQuery({
+    queryKey: ["profile", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      if (isGuestMode()) {
+        return demoRows<Profile>("profiles").find((p) => p.id === userId) ?? null;
+      }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userId!)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data as Pick<Profile, "full_name"> | null;
     },
   });
 }
@@ -697,6 +765,121 @@ export function useDeleteDemoRequest() {
   });
 }
 
+/* ---------- Back-office : utilisateurs & rôles ---------- */
+
+export type AdminUser = Profile & { email: string | null; is_admin: boolean };
+
+/** Liste les comptes utilisateurs pour l'administration. */
+export function useAdminUsers() {
+  return useQuery({
+    queryKey: ["admin_users"],
+    queryFn: async () => {
+      if (isGuestMode()) {
+        const p = demoRows<Profile & { email: string | null }>("profiles") ?? [];
+        return p.map((u) => ({ ...u, is_admin: false }));
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      const { data: roles, error: rolesErr } = await supabase
+        .from("user_roles")
+        .select("user_id, role");
+      if (rolesErr) throw new Error(rolesErr.message);
+      const adminIds = new Set(
+        (roles ?? []).filter((r) => r.role === "admin").map((r) => r.user_id),
+      );
+      return (profiles ?? []).map((u) => ({
+        ...u,
+        email: u.id === auth.user?.id ? (auth.user.email ?? null) : null,
+        is_admin: adminIds.has(u.id),
+      }));
+    },
+  });
+}
+
+/** Compteurs globaux pour le tableau de bord d'administration. */
+export function useAdminStats() {
+  return useQuery({
+    queryKey: ["admin_stats"],
+    queryFn: async () => {
+      if (isGuestMode()) return { users: 1, projects: 1, stores: 2, orders: 0, reserves: 3 };
+      const count = async (table: TableName) => {
+        const { count, error } = await supabase
+          .from(table)
+          .select("*", { count: "exact", head: true });
+        if (error) return 0;
+        return count ?? 0;
+      };
+      const [users, projects, stores, orders, providers, reserves] = await Promise.all([
+        count("profiles"),
+        count("projects"),
+        count("stores"),
+        count("orders"),
+        count("providers"),
+        count("reserves"),
+      ]);
+      return { users, projects, stores, orders, providers, reserves };
+    },
+  });
+}
+
+/** Modifie le type de compte d'un utilisateur (back-office). */
+export function useSetAccountType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, accountType }: { userId: string; accountType: string }) => {
+      if (isGuestMode()) {
+        demoUpdate("profiles", userId, { account_type: accountType });
+        return;
+      }
+      const { error } = await supabase
+        .from("profiles")
+        .update({ account_type: accountType as Profile["account_type"] })
+        .eq("id", userId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin_users"] });
+      toast.success("Type de compte mis à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Ajoute ou retire le rôle administrateur à un utilisateur. */
+export function useToggleAdmin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, makeAdmin }: { userId: string; makeAdmin: boolean }) => {
+      if (isGuestMode()) return;
+      if (makeAdmin) {
+        const { error } = await supabase.from("user_roles").insert({
+          user_id: userId,
+          role: "admin",
+        });
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", userId)
+          .eq("role", "admin");
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin_users"] });
+      qc.invalidateQueries({ queryKey: ["is_admin"] });
+      toast.success("Rôle administrateur mis à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 /* ---------- Notifications e-mail ---------- */
 
 export type NotificationPreferences = Tables["notification_preferences"]["Row"];
@@ -870,6 +1053,8 @@ export function useAddInvoicePayment() {
 /* ---------- Stock / matériaux ---------- */
 
 export type Material = Tables["materials"]["Row"];
+export type MaterialRequirement = Tables["material_requirements"]["Row"];
+export type MaterialDelivery = Tables["material_deliveries"]["Row"];
 
 export function useMaterials(projectId: string | null) {
   return useQuery({
@@ -883,6 +1068,196 @@ export function useMaterials(projectId: string | null) {
         : unwrap<Material[]>(
             supabase.from("materials").select("*").eq("project_id", projectId!).order("name"),
           ),
+  });
+}
+
+/** Besoins en matériaux d'un chantier (prévu / commandé / livré / consommé). */
+export function useMaterialRequirements(projectId: string | null) {
+  return useQuery({
+    queryKey: ["material_requirements", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<MaterialRequirement>("material_requirements").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<MaterialRequirement[]>(
+            supabase
+              .from("material_requirements")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("name"),
+          ),
+  });
+}
+
+/** Livraisons de matériaux d'un chantier. */
+export function useMaterialDeliveries(projectId: string | null) {
+  return useQuery({
+    queryKey: ["material_deliveries", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<MaterialDelivery>("material_deliveries").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<MaterialDelivery[]>(
+            supabase
+              .from("material_deliveries")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("delivered_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Crée une livraison et met à jour les quantités du besoin associé. */
+export function useAddMaterialDelivery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      project_id: string;
+      requirement_id?: string | null;
+      supplier_id?: string | null;
+      quantity: number;
+      unit_price?: number;
+      delivered_at?: string | null;
+      status?: string;
+      notes?: string | null;
+    }) => {
+      if (isGuestMode()) {
+        const id = demoInsert("material_deliveries", {
+          ...values,
+          status: values.status ?? "livree",
+        });
+        if (values.requirement_id) {
+          const req = demoRows<MaterialRequirement>("material_requirements").find(
+            (r) => r.id === values.requirement_id,
+          );
+          if (req) {
+            const delivered = Number(req.quantity_delivered) + Number(values.quantity);
+            demoUpdate("material_requirements", req.id, {
+              quantity_delivered: delivered,
+              status: delivered >= Number(req.quantity_needed) ? "livre" : "partiel",
+            });
+          }
+        }
+        return id;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { data, error } = await supabase
+        .from("material_deliveries")
+        .insert({ ...values, user_id: auth.user.id })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      if (values.requirement_id) {
+        const req = await unwrap<MaterialRequirement | null>(
+          supabase
+            .from("material_requirements")
+            .select("*")
+            .eq("id", values.requirement_id)
+            .maybeSingle(),
+        );
+        if (req) {
+          const delivered = Number(req.quantity_delivered) + Number(values.quantity);
+          const { error: upErr } = await supabase
+            .from("material_requirements")
+            .update({
+              quantity_delivered: delivered,
+              status: delivered >= Number(req.quantity_needed) ? "livre" : "partiel",
+            })
+            .eq("id", req.id);
+          if (upErr) throw new Error(upErr.message);
+        }
+      }
+      return data?.id;
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["material_deliveries", v.project_id] });
+      qc.invalidateQueries({ queryKey: ["material_requirements", v.project_id] });
+      toast.success("Livraison enregistrée");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Met à jour un besoin en matériaux (quantités, statut, fournisseur…). */
+export function useUpdateMaterialRequirement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      id: string;
+      projectId: string;
+      patch: Record<string, unknown>;
+    }) => {
+      if (isGuestMode()) {
+        demoUpdate("material_requirements", values.id, values.patch);
+        return;
+      }
+      const { error } = await supabase
+        .from("material_requirements")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(values.patch as any)
+        .eq("id", values.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["material_requirements", v.projectId] });
+      qc.invalidateQueries({ queryKey: ["materials"] });
+      toast.success("Besoin mis à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Crée un besoin en matériaux pour un chantier. */
+export function useAddMaterialRequirement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      project_id: string;
+      name: string;
+      category?: string | null;
+      unit?: string | null;
+      quantity_needed?: number;
+      unit_price?: number;
+      supplier_id?: string | null;
+      notes?: string | null;
+    }) => {
+      if (isGuestMode()) {
+        return demoInsert("material_requirements", {
+          ...values,
+          quantity_ordered: 0,
+          quantity_delivered: 0,
+          quantity_consumed: 0,
+          status: "besoin",
+        });
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { data, error } = await supabase
+        .from("material_requirements")
+        .insert({
+          ...values,
+          quantity_ordered: 0,
+          quantity_delivered: 0,
+          quantity_consumed: 0,
+          status: "besoin",
+          user_id: auth.user.id,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return data?.id;
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["material_requirements", v.project_id] });
+      qc.invalidateQueries({ queryKey: ["materials"] });
+      toast.success("Besoin en matériaux ajouté");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
@@ -1063,6 +1438,1204 @@ export function useRevokeShareLink() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Lien de partage révoqué");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Marketplace de prestataires ---------- */
+
+export type Provider = Tables["providers"]["Row"];
+export type ProviderReview = Tables["provider_reviews"]["Row"];
+
+export function useProviders() {
+  return useQuery({
+    queryKey: ["providers"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Provider>("providers")
+        : unwrap<Provider[]>(
+            supabase
+              .from("providers")
+              .select("*")
+              .eq("active", true)
+              .order("verified", { ascending: false })
+              .order("rating", { ascending: false }),
+          ),
+  });
+}
+
+/** Crée/modifie un prestataire du marketplace (le user_id est ajouté à la création). */
+export function useSaveProvider(successMessage = "Prestataire enregistré") {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, values }: { id?: string; values: Record<string, unknown> }) => {
+      if (isGuestMode()) {
+        if (id) demoUpdate("providers", id, values);
+        else demoInsert("providers", values);
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      if (id) {
+        const { error } = await supabase
+          .from("providers")
+          .update(values as Tables["providers"]["Update"])
+          .eq("id", id)
+          .eq("user_id", auth.user.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from("providers")
+          .insert({ ...values, user_id: auth.user.id } as Tables["providers"]["Insert"]);
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["providers"] });
+      toast.success(successMessage);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useProviderReviews(providerId: string | null) {
+  return useQuery({
+    queryKey: ["provider_reviews", providerId],
+    enabled: !!providerId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<ProviderReview>("provider_reviews").filter(
+            (r) => (r as { provider_id: string }).provider_id === providerId,
+          )
+        : unwrap<ProviderReview[]>(
+            supabase
+              .from("provider_reviews")
+              .select("*")
+              .eq("provider_id", providerId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Ajoute un avis puis met à jour la note moyenne du prestataire. */
+export function useAddProviderReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { providerId: string; rating: number; comment?: string | null }) => {
+      if (isGuestMode()) {
+        demoInsert("provider_reviews", {
+          provider_id: values.providerId,
+          rating: values.rating,
+          comment: values.comment ?? null,
+        });
+        const providers = demoRows<Provider>("providers");
+        const p = providers.find((r) => r.id === values.providerId);
+        if (p) {
+          const reviews = demoRows<ProviderReview>("provider_reviews").filter(
+            (r) => r.provider_id === values.providerId,
+          );
+          const avg =
+            reviews.reduce((s, r) => s + Number(r.rating), 0) / Math.max(1, reviews.length);
+          demoUpdate("providers", p.id, {
+            rating: Math.round(avg * 100) / 100,
+            review_count: reviews.length,
+          });
+        }
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error: revErr } = await supabase.from("provider_reviews").insert({
+        provider_id: values.providerId,
+        rating: values.rating,
+        comment: values.comment ?? null,
+        user_id: auth.user.id,
+      });
+      if (revErr) throw new Error(revErr.message);
+
+      const { data: rows, error: listErr } = await supabase
+        .from("provider_reviews")
+        .select("rating")
+        .eq("provider_id", values.providerId);
+      if (listErr) throw new Error(listErr.message);
+      const all = (rows ?? []).map((r) => Number(r.rating));
+      const avg = all.reduce((s, r) => s + r, 0) / Math.max(1, all.length);
+      const { error: updErr } = await supabase
+        .from("providers")
+        .update({ rating: Math.round(avg * 100) / 100, review_count: all.length })
+        .eq("id", values.providerId);
+      if (updErr) throw new Error(updErr.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["provider_reviews"] });
+      qc.invalidateQueries({ queryKey: ["providers"] });
+      toast.success("Avis publié, merci !");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Marketplace e-commerce ---------- */
+
+export type Store = Tables["stores"]["Row"];
+export type ProductCategory = Tables["product_categories"]["Row"];
+export type Product = Tables["products"]["Row"];
+export type Cart = Tables["carts"]["Row"];
+export type CartItem = Tables["cart_items"]["Row"];
+export type Order = Tables["orders"]["Row"];
+export type OrderItem = Tables["order_items"]["Row"];
+export type Delivery = Tables["deliveries"]["Row"];
+export type Driver = Tables["drivers"]["Row"];
+export type Vehicle = Tables["vehicles"]["Row"];
+
+export function useStores() {
+  return useQuery({
+    queryKey: ["stores"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Store>("stores")
+        : unwrap<Store[]>(supabase.from("stores").select("*").eq("active", true).order("name")),
+  });
+}
+
+export function useProductCategories() {
+  return useQuery({
+    queryKey: ["product_categories"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<ProductCategory>("product_categories")
+        : unwrap<ProductCategory[]>(
+            supabase.from("product_categories").select("*").order("sort_order"),
+          ),
+  });
+}
+
+/** Produits du catalogue, avec catégorie et boutique associées. */
+export function useProducts() {
+  return useQuery({
+    queryKey: ["products"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Product>("products")
+        : unwrap<Product[]>(supabase.from("products").select("*").eq("active", true).order("name")),
+  });
+}
+
+export function useProductsByStore(storeId: string | null) {
+  return useQuery({
+    queryKey: ["products", storeId],
+    enabled: !!storeId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Product>("products").filter(
+            (p) => (p as { store_id: string }).store_id === storeId,
+          )
+        : unwrap<Product[]>(
+            supabase
+              .from("products")
+              .select("*")
+              .eq("store_id", storeId!)
+              .eq("active", true)
+              .order("name"),
+          ),
+  });
+}
+
+export function useMyCart() {
+  return useQuery({
+    queryKey: ["cart"],
+    queryFn: async () => {
+      if (isGuestMode()) {
+        return {
+          cart: demoRows<Cart>("carts")[0] ?? null,
+          items: demoRows<CartItem>("cart_items"),
+        };
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return { cart: null, items: [] as CartItem[] };
+      const { data: cart, error: cartErr } = await supabase
+        .from("carts")
+        .select("*")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+      if (cartErr) throw new Error(cartErr.message);
+      if (!cart) return { cart: null, items: [] as CartItem[] };
+      const { data: items, error: itemsErr } = await supabase
+        .from("cart_items")
+        .select("*")
+        .eq("cart_id", cart.id);
+      if (itemsErr) throw new Error(itemsErr.message);
+      return { cart, items: (items ?? []) as CartItem[] };
+    },
+  });
+}
+
+export function useOrders() {
+  return useQuery({
+    queryKey: ["orders"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Order>("orders")
+        : unwrap<Order[]>(
+            supabase.from("orders").select("*").order("ordered_at", { ascending: false }),
+          ),
+  });
+}
+
+export function useDeliveries() {
+  return useQuery({
+    queryKey: ["deliveries"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Delivery>("deliveries")
+        : unwrap<Delivery[]>(
+            supabase.from("deliveries").select("*").order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+export function useOrderItems(orderId: string | null) {
+  return useQuery({
+    queryKey: ["order_items", orderId],
+    enabled: !!orderId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<OrderItem>("order_items").filter(
+            (i) => (i as { order_id: string }).order_id === orderId,
+          )
+        : unwrap<OrderItem[]>(
+            supabase.from("order_items").select("*").eq("order_id", orderId!).order("created_at"),
+          ),
+  });
+}
+
+export function useDrivers() {
+  return useQuery({
+    queryKey: ["drivers"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Driver>("drivers")
+        : unwrap<Driver[]>(
+            supabase
+              .from("drivers")
+              .select("*")
+              .eq("available", true)
+              .order("rating", { ascending: false }),
+          ),
+  });
+}
+
+/* ---------- E-commerce avancé : prix, inventaire, comparateur, analytics ---------- */
+
+export type ProductPrice = Tables["product_prices"]["Row"];
+export type ProductInventory = Tables["product_inventory"]["Row"];
+
+/** Historique des prix d'un produit (via trigger sur products.price). */
+export function useProductPrices(productId: string | null) {
+  return useQuery({
+    queryKey: ["product_prices", productId],
+    enabled: !!productId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<ProductPrice>("product_prices").filter(
+            (p) => (p as { product_id: string }).product_id === productId,
+          )
+        : unwrap<ProductPrice[]>(
+            supabase
+              .from("product_prices")
+              .select("*")
+              .eq("product_id", productId!)
+              .order("changed_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Mouvements de stock d'un produit. */
+export function useProductInventory(productId: string | null) {
+  return useQuery({
+    queryKey: ["product_inventory", productId],
+    enabled: !!productId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<ProductInventory>("product_inventory").filter(
+            (p) => (p as { product_id: string }).product_id === productId,
+          )
+        : unwrap<ProductInventory[]>(
+            supabase
+              .from("product_inventory")
+              .select("*")
+              .eq("product_id", productId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Ajoute un mouvement de stock (restock/adjustment/return…). */
+export function useAddInventoryMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      product_id: string;
+      quantity_delta: number;
+      reason: string;
+      note?: string | null;
+    }) => {
+      if (isGuestMode()) {
+        demoInsert("product_inventory", values);
+        const product = demoRows<Product>("products").find((p) => p.id === values.product_id);
+        if (product) {
+          demoUpdate("products", product.id, {
+            stock: Number(product.stock) + values.quantity_delta,
+          });
+        }
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase.from("product_inventory").insert({
+        ...values,
+        user_id: auth.user.id,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["product_inventory", vars.product_id] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["stores"] });
+      toast.success("Stock mis à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Offre d'une boutique pour le comparateur. */
+export type CompareOffer = {
+  product: Product;
+  store: Store | null;
+  distanceKm: number | null;
+  savings: number;
+  inStock: boolean;
+};
+
+/**
+ * Comparateur de prix : regroupe les produits de la même catégorie portant le
+ * même nom (normalisé) vendus par d'autres boutiques. `position` = lat/lng de
+ * l'utilisateur pour calculer la distance (null si inconnue).
+ */
+export function useCompareOffers(
+  productId: string | null,
+  position?: { lat: number; lng: number },
+) {
+  return useQuery({
+    queryKey: ["compare_offers", productId, position?.lat, position?.lng],
+    enabled: !!productId,
+    queryFn: async () => {
+      if (!productId) return [] as CompareOffer[];
+      let ref: Product | null;
+      if (isGuestMode()) {
+        ref = demoRows<Product>("products").find((p) => p.id === productId) ?? null;
+      } else {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("id", productId)
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        ref = (data ?? null) as Product | null;
+      }
+      if (!ref) return [] as CompareOffer[];
+      const norm = (s: string) =>
+        s
+          .toLowerCase()
+          .replace(/[^\p{L}\p{N}]+/gu, "")
+          .trim();
+      const candidates = isGuestMode()
+        ? demoRows<Product>("products")
+        : await unwrap<Product[]>(supabase.from("products").select("*").eq("active", true));
+      const stores = isGuestMode()
+        ? demoRows<Store>("stores")
+        : await unwrap<Store[]>(supabase.from("stores").select("*"));
+      const storeById = new Map(stores.map((s) => [s.id, s]));
+      return candidates
+        .filter(
+          (p) =>
+            p.id !== ref.id &&
+            p.active &&
+            p.category_id === ref.category_id &&
+            norm(p.name) === norm(ref.name),
+        )
+        .map((p) => {
+          const store = storeById.get(p.store_id) ?? null;
+          const distanceKm =
+            position && store?.lat != null && store.lng != null
+              ? haversineKm(position.lat, position.lng, store.lat, store.lng)
+              : null;
+          return {
+            product: p,
+            store,
+            distanceKm,
+            savings: Number(ref.price) - Number(p.price),
+            inStock: Number(p.stock) > 0,
+          } satisfies CompareOffer;
+        })
+        .sort((a, b) => Number(a.product.price) - Number(b.product.price));
+    },
+  });
+}
+
+/** KPIs du vendeur : commandes, CA, panier moyen, produits les plus vendus. */
+export type StoreAnalytics = {
+  orderCount: number;
+  revenue: number;
+  avgOrderValue: number;
+  productCount: number;
+  outOfStockCount: number;
+  topProducts: { name: string; unit: string | null; quantity: number; revenue: number }[];
+  recentOrders: Order[];
+};
+
+export function useStoreAnalytics(storeId: string | null) {
+  return useQuery({
+    queryKey: ["store_analytics", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      if (!storeId) return null as StoreAnalytics | null;
+      if (isGuestMode()) {
+        const orders = demoRows<Order>("orders").filter((o) => o.store_id === storeId);
+        const items = demoRows<OrderItem>("order_items");
+        const products = demoRows<Product>("products").filter(
+          (p) => p.store_id === storeId && p.active,
+        );
+        return computeStoreAnalytics(storeId, orders, items, products);
+      }
+      const { data: orders, error: oErr } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("store_id", storeId)
+        .order("ordered_at", { ascending: false });
+      if (oErr) throw new Error(oErr.message);
+      const { data: items, error: iErr } = await supabase.from("order_items").select("*");
+      if (iErr) throw new Error(iErr.message);
+      const { data: products, error: pErr } = await supabase
+        .from("products")
+        .select("*")
+        .eq("store_id", storeId)
+        .eq("active", true);
+      if (pErr) throw new Error(pErr.message);
+      return computeStoreAnalytics(
+        storeId,
+        (orders ?? []) as Order[],
+        (items ?? []) as OrderItem[],
+        (products ?? []) as Product[],
+      );
+    },
+  });
+}
+
+function computeStoreAnalytics(
+  storeId: string,
+  orders: Order[],
+  items: OrderItem[],
+  products: Product[],
+): StoreAnalytics {
+  const orderIds = new Set(orders.map((o) => o.id));
+  const validOrders = orders.filter((o) => orderIds.has(o.id));
+  const revenue = validOrders.reduce((sum, o) => sum + Number(o.total ?? 0), 0);
+  const qtyById = new Map<string, { qty: number; rev: number }>();
+  for (const it of items) {
+    if (!orderIds.has(it.order_id)) continue;
+    const acc = qtyById.get(it.product_id ?? it.name) ?? { qty: 0, rev: 0 };
+    acc.qty += Number(it.quantity ?? 0);
+    acc.rev += Number(it.quantity ?? 0) * Number(it.unit_price ?? 0);
+    qtyById.set(it.product_id ?? it.name, acc);
+  }
+  const productName = (key: string) => products.find((p) => p.id === key)?.name ?? key;
+  const topProducts = [...qtyById.entries()]
+    .map(([key, v]) => ({
+      name: productName(key),
+      unit: products.find((p) => p.id === key)?.unit ?? null,
+      quantity: v.qty,
+      revenue: v.rev,
+    }))
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 5);
+  return {
+    orderCount: validOrders.length,
+    revenue,
+    avgOrderValue: validOrders.length ? revenue / validOrders.length : 0,
+    productCount: products.length,
+    outOfStockCount: products.filter((p) => Number(p.stock) <= 0).length,
+    topProducts,
+    recentOrders: validOrders.slice(0, 5),
+  };
+}
+
+/* ---------- Chantier avancé : réserves, plans, messages ---------- */
+
+export type Reserve = Tables["reserves"]["Row"];
+export type Plan = Tables["plans"]["Row"];
+export type Message = Tables["messages"]["Row"];
+
+export function useReserves(projectId: string | null) {
+  return useQuery({
+    queryKey: ["reserves", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Reserve>("reserves").filter(
+            (r) => (r as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<Reserve[]>(
+            supabase
+              .from("reserves")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+export function usePlans(projectId: string | null) {
+  return useQuery({
+    queryKey: ["plans", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Plan>("plans").filter(
+            (p) => (p as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<Plan[]>(
+            supabase
+              .from("plans")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+export function usePlanUrls(paths: string[]) {
+  return useQuery({
+    queryKey: ["plans-urls", paths],
+    enabled: paths.length > 0,
+    queryFn: async () => {
+      if (isGuestMode()) return {};
+      const urls: Record<string, string> = {};
+      for (const p of paths) {
+        const { data, error } = await supabase.storage.from("documents").createSignedUrl(p, 3600);
+        if (!error) urls[p] = data.signedUrl;
+      }
+      return urls;
+    },
+  });
+}
+
+export function useMessages(projectId: string | null) {
+  return useQuery({
+    queryKey: ["messages", projectId],
+    enabled: !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Message>("messages").filter(
+            (m) => (m as { project_id: string }).project_id === projectId,
+          )
+        : unwrap<Message[]>(
+            supabase
+              .from("messages")
+              .select("*")
+              .eq("project_id", projectId!)
+              .order("created_at", { ascending: true }),
+          ),
+  });
+}
+
+/** Envoie un message dans un projet de chantier. */
+export function useSendMessage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      project_id: string;
+      recipient_id?: string | null;
+      body: string;
+    }) => {
+      if (isGuestMode()) {
+        demoInsert("messages", { ...values, sender_id: DEMO_USER, is_read: false });
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase.from("messages").insert({
+        ...values,
+        user_id: auth.user.id,
+        sender_id: auth.user.id,
+        is_read: false,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["messages", v.project_id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Panier & commandes ---------- */
+
+export function useProductImageUrls(paths: string[]) {
+  return useQuery({
+    queryKey: ["product-images", paths],
+    enabled: paths.length > 0,
+    queryFn: async () => {
+      if (isGuestMode()) return {};
+      const urls: Record<string, string> = {};
+      for (const p of paths) {
+        const { data, error } = await supabase.storage.from(PHOTOS_BUCKET).createSignedUrl(p, 3600);
+        if (!error) urls[p] = data.signedUrl;
+      }
+      return urls;
+    },
+  });
+}
+
+/** Récupère (ou crée) le panier de l'utilisateur et renvoie son id. */
+async function ensureCartId(): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new Error("Session expirée");
+  const { data: existing } = await supabase
+    .from("carts")
+    .select("id")
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+  if (existing) return existing.id;
+  const { data, error } = await supabase
+    .from("carts")
+    .insert({ user_id: auth.user.id })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data!.id;
+}
+
+/** Ajoute un produit au panier (incrémente la quantité si déjà présent). */
+export function useAddToCart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { productId: string; quantity?: number; unitPrice: number }) => {
+      const qty = values.quantity ?? 1;
+      if (isGuestMode()) {
+        const existing = demoRows<CartItem>("cart_items").find(
+          (i) => i.product_id === values.productId,
+        );
+        if (existing) {
+          demoUpdate("cart_items", existing.id, { quantity: Number(existing.quantity) + qty });
+        } else {
+          demoInsert("cart_items", {
+            product_id: values.productId,
+            quantity: qty,
+            unit_price: values.unitPrice,
+            cart_id: "demo-cart",
+          });
+        }
+        return;
+      }
+      const cartId = await ensureCartId();
+      const { data: existing } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("cart_id", cartId)
+        .eq("product_id", values.productId)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabase
+          .from("cart_items")
+          .update({ quantity: Number(existing.quantity) + qty })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase.from("cart_items").insert({
+          cart_id: cartId,
+          product_id: values.productId,
+          quantity: qty,
+          unit_price: values.unitPrice,
+        });
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["cart"] });
+      toast.success("Ajouté au panier");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Met à jour la quantité d'une ligne du panier. */
+export function useUpdateCartItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { id: string; quantity: number }) => {
+      if (isGuestMode()) {
+        demoUpdate("cart_items", values.id, { quantity: values.quantity });
+        return;
+      }
+      const { error } = await supabase
+        .from("cart_items")
+        .update({ quantity: values.quantity })
+        .eq("id", values.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cart"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Retire une ligne du panier. */
+export function useRemoveCartItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (isGuestMode()) {
+        demoDelete("cart_items", id);
+        return;
+      }
+      const { error } = await supabase.from("cart_items").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cart"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export type OrderPayload = {
+  storeId: string;
+  projectId: string | null;
+  items: {
+    productId: string;
+    name: string;
+    unit: string | null;
+    quantity: number;
+    unitPrice: number;
+  }[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  paymentMethod: string | null;
+  deliveryAddress?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+  delivery?: {
+    driverId: string | null;
+    scheduledAt?: string | null;
+    fee: number;
+  } | null;
+};
+
+/** Crée une commande + ses lignes + une éventuelle livraison, puis vide le panier. */
+export function useCreateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: OrderPayload) => {
+      if (isGuestMode()) {
+        const orderId = crypto.randomUUID();
+        demoInsert("orders", {
+          id: orderId,
+          store_id: payload.storeId,
+          project_id: payload.projectId,
+          status: "creee",
+          subtotal: payload.subtotal,
+          delivery_fee: payload.deliveryFee,
+          total: payload.total,
+          payment_method: payload.paymentMethod,
+          delivery_address: payload.deliveryAddress ?? null,
+          city: payload.city ?? null,
+          phone: payload.phone ?? null,
+          notes: payload.notes ?? null,
+          ordered_at: new Date().toISOString(),
+        });
+        payload.items.forEach((it) =>
+          demoInsert("order_items", {
+            order_id: orderId,
+            product_id: it.productId,
+            name: it.name,
+            unit: it.unit,
+            quantity: it.quantity,
+            unit_price: it.unitPrice,
+          }),
+        );
+        if (payload.delivery) {
+          demoInsert("deliveries", {
+            order_id: orderId,
+            driver_id: payload.delivery.driverId,
+            status: "planifiee",
+            scheduled_at: payload.delivery.scheduledAt ?? null,
+            fee: payload.delivery.fee,
+            to_address: payload.deliveryAddress ?? null,
+            phone: payload.phone ?? null,
+          });
+        }
+        demoRows<CartItem>("cart_items").forEach((i) => demoDelete("cart_items", i.id));
+        return orderId;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+
+      const reference = `CMD-${Date.now().toString(36).toUpperCase()}`;
+      const { data: order, error: orderErr } = await supabase
+        .from("orders")
+        .insert({
+          user_id: auth.user.id,
+          store_id: payload.storeId,
+          project_id: payload.projectId,
+          status: "creee",
+          reference,
+          subtotal: payload.subtotal,
+          delivery_fee: payload.deliveryFee,
+          total: payload.total,
+          payment_method: payload.paymentMethod,
+          delivery_address: payload.deliveryAddress ?? null,
+          city: payload.city ?? null,
+          phone: payload.phone ?? null,
+          notes: payload.notes ?? null,
+        })
+        .select("id")
+        .single();
+      if (orderErr) throw new Error(orderErr.message);
+
+      for (const it of payload.items) {
+        const { error: itemErr } = await supabase.from("order_items").insert({
+          order_id: order.id!,
+          product_id: it.productId,
+          name: it.name,
+          unit: it.unit,
+          quantity: it.quantity,
+          unit_price: it.unitPrice,
+        });
+        if (itemErr) throw new Error(itemErr.message);
+      }
+
+      if (payload.delivery) {
+        const { error: delErr } = await supabase.from("deliveries").insert({
+          order_id: order.id!,
+          driver_id: payload.delivery.driverId,
+          user_id: auth.user.id,
+          status: "planifiee",
+          scheduled_at: payload.delivery.scheduledAt ?? null,
+          fee: payload.delivery.fee,
+          to_address: payload.deliveryAddress ?? null,
+          phone: payload.phone ?? null,
+        });
+        if (delErr) throw new Error(delErr.message);
+      }
+
+      // vide le panier
+      const { data: cart } = await supabase
+        .from("carts")
+        .select("id")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+      if (cart) {
+        await supabase.from("cart_items").delete().eq("cart_id", cart.id);
+        await supabase.from("carts").delete().eq("id", cart.id);
+      }
+
+      return order.id!;
+    },
+    onSuccess: () => {
+      ["orders", "cart", "deliveries", "order_items", "products"].forEach((k) =>
+        qc.invalidateQueries({ queryKey: [k] }),
+      );
+      toast.success("Commande passée !");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Met à jour le statut d'une commande (côté vendeur : préparation, prête, en livraison, livrée…). */
+export function useUpdateOrderStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { id: string; status: string }) => {
+      if (isGuestMode()) {
+        demoUpdate("orders", values.id, { status: values.status });
+        return;
+      }
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: values.status })
+        .eq("id", values.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Statut mis à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Met à jour le statut d'une livraison (transporteur ou vendeur). */
+export function useUpdateDeliveryStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { id: string; status: string }) => {
+      if (isGuestMode()) {
+        demoUpdate("deliveries", values.id, { status: values.status });
+        return;
+      }
+      const { error } = await supabase
+        .from("deliveries")
+        .update({ status: values.status })
+        .eq("id", values.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["deliveries"] });
+      toast.success("Livraison mise à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Plans de chantier ---------- */
+
+/** Téléverse des plans dans le dossier documents et renvoie leurs chemins. */
+export async function uploadPlanFiles(files: File[], projectId: string) {
+  if (isGuestMode()) return [];
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new Error("Session expirée");
+  const paths: string[] = [];
+  for (const file of files) {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+    const path = `plans/${auth.user.id}/${projectId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(DOCUMENTS_BUCKET)
+      .upload(path, file, { contentType: file.type || "application/octet-stream" });
+    if (error) throw new Error(error.message);
+    paths.push(path);
+  }
+  return paths;
+}
+
+export type NewPlan = {
+  project_id: string;
+  name: string;
+  file_path: string;
+  size_bytes?: number | null;
+  mime_type?: string | null;
+  annotations?: Json;
+};
+
+/** Ajoute un ou plusieurs plans. */
+export function useAddPlans() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (plans: NewPlan[]) => {
+      if (isGuestMode()) {
+        plans.forEach((p) => demoInsert("plans", p));
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase.from("plans").insert(
+        plans.map((p) => ({
+          ...p,
+          user_id: auth.user!.id,
+          annotations: p.annotations ?? {},
+        })),
+      );
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, plans) => {
+      const pids = plans.map((p) => p.project_id);
+      pids.forEach((pid) => qc.invalidateQueries({ queryKey: ["plans", pid] }));
+      toast.success("Plan(s) ajouté(s)");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Supprime un plan (+ fichier stockage). */
+export function useDeletePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, file_path }: { id: string; file_path: string }) => {
+      if (isGuestMode()) {
+        demoDelete("plans", id);
+        return;
+      }
+      await supabase.storage.from(DOCUMENTS_BUCKET).remove([file_path]);
+      const { error } = await supabase.from("plans").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["plans"] });
+      toast.success("Plan supprimé");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Collaboration & multi-tenant ---------- */
+
+export type ProjectMember = Tables["project_members"]["Row"];
+export type Organization = Tables["organizations"]["Row"];
+export type OrganizationMember = Tables["organization_members"]["Row"];
+
+/** Membre d'un chantier, avec le nom du profil associé (pour l'affichage). */
+export type ProjectMemberWithProfile = ProjectMember & { profile_full_name: string | null };
+
+/** Membres d'un chantier (avec noms). Invitation par email → lookup via profiles. */
+export function useProjectMembers(projectId: string | null) {
+  return useQuery({
+    queryKey: ["project_members", projectId],
+    enabled: !!projectId,
+    queryFn: async () => {
+      if (isGuestMode()) return [] as ProjectMemberWithProfile[];
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("*, profiles(full_name)")
+        .eq("project_id", projectId!);
+      if (error) throw new Error(error.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        profile_full_name: (r.profiles as any)?.full_name ?? null,
+      })) as ProjectMemberWithProfile[];
+    },
+  });
+}
+
+/** Invitations reçues par l'utilisateur courant (par email, pas encore acceptées). */
+export function useMyProjectInvites() {
+  return useQuery({
+    queryKey: ["my_project_invites"],
+    queryFn: async () => {
+      if (isGuestMode()) return [] as ProjectMemberWithProfile[];
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user?.email) return [] as ProjectMemberWithProfile[];
+      const { data, error } = await supabase
+        .from("project_members")
+        .select("*, projects(name)")
+        .is("user_id", null)
+        .eq("email", auth.user.email);
+      if (error) throw new Error(error.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        profile_full_name: (r.projects as any)?.name ?? null,
+      })) as ProjectMemberWithProfile[];
+    },
+  });
+}
+
+/** Accepte une invitation de chantier : rattache le compte à l'invitation. */
+export function useAcceptProjectInvite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, userId }: { id: string; userId: string }) => {
+      if (isGuestMode()) return;
+      const { error } = await supabase
+        .from("project_members")
+        .update({ user_id: userId, email: null })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my_project_invites"] });
+      qc.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Invitation acceptée");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Organisations de l'utilisateur courant. */
+export function useMyOrganizations() {
+  return useQuery({
+    queryKey: ["my_organizations"],
+    queryFn: async () => {
+      if (isGuestMode()) return [] as Organization[];
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return [] as Organization[];
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("*")
+        .or(`created_by.eq.${auth.user.id},organization_members.user_id.eq.${auth.user.id}`);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as Organization[];
+    },
+  });
+}
+
+/** Ajoute un membre à un chantier (owner du projet uniquement). */
+export function useAddProjectMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      email,
+      role,
+    }: {
+      projectId: string;
+      email: string;
+      role: "owner" | "editor" | "viewer";
+    }) => {
+      if (isGuestMode()) return;
+      const { error } = await supabase.from("project_members").insert({
+        project_id: projectId,
+        email: email.trim().toLowerCase(),
+        role,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["project_members", vars.projectId] });
+      toast.success("Invitation envoyée par e-mail");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Change le rôle d'un membre ou le retire d'un chantier. */
+export function useUpdateProjectMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      projectId,
+      role,
+    }: {
+      id: string;
+      projectId: string;
+      role: "owner" | "editor" | "viewer";
+    }) => {
+      if (isGuestMode()) return;
+      const { error } = await supabase.from("project_members").update({ role }).eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["project_members", vars.projectId] });
+      toast.success("Rôle mis à jour");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useRemoveProjectMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId }: { id: string; projectId: string }) => {
+      if (isGuestMode()) return;
+      const { error } = await supabase.from("project_members").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["project_members", vars.projectId] });
+      toast.success("Membre retiré");
     },
     onError: (e: Error) => toast.error(e.message),
   });

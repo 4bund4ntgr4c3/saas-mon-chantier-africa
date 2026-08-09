@@ -74,7 +74,14 @@ type Ctx = {
   expenses: { category_id: string | null; amount: number }[];
   budgetLines: { category_id: string; planned_amount: number }[];
   payments: { amount: number; due_date: string | null; project_id: string }[];
-  quotes: { label: string; amount: number; status: string; valid_until: string | null; reference: string | null; project_id: string }[];
+  quotes: {
+    label: string;
+    amount: number;
+    status: string;
+    valid_until: string | null;
+    reference: string | null;
+    project_id: string;
+  }[];
   documents: { category: string; project_id: string }[];
 };
 
@@ -96,11 +103,26 @@ async function loadCtx(userId: string): Promise<Ctx> {
   if (ids.length === 0) return { ...empty, projects: projects ?? [] };
 
   const { data: categories } = await db.from("categories").select("id, name");
-  const { data: expenses } = await db.from("expenses").select("category_id, amount").in("project_id", ids);
-  const { data: budgetLines } = await db.from("budget_lines").select("category_id, planned_amount").in("project_id", ids);
-  const { data: payments } = await db.from("payments").select("amount, due_date, project_id").in("project_id", ids);
-  const { data: quotes } = await db.from("quotes").select("label, amount, status, valid_until, reference, project_id").in("project_id", ids);
-  const { data: documents } = await db.from("documents").select("category, project_id").in("project_id", ids);
+  const { data: expenses } = await db
+    .from("expenses")
+    .select("category_id, amount")
+    .in("project_id", ids);
+  const { data: budgetLines } = await db
+    .from("budget_lines")
+    .select("category_id, planned_amount")
+    .in("project_id", ids);
+  const { data: payments } = await db
+    .from("payments")
+    .select("amount, due_date, project_id")
+    .in("project_id", ids);
+  const { data: quotes } = await db
+    .from("quotes")
+    .select("label, amount, status, valid_until, reference, project_id")
+    .in("project_id", ids);
+  const { data: documents } = await db
+    .from("documents")
+    .select("category, project_id")
+    .in("project_id", ids);
 
   return {
     projects: projects ?? [],
@@ -189,7 +211,9 @@ function collectAlerts(ctx: Ctx, enabled: Set<string>): Item[] {
       presentByProject.set(d.project_id, set);
     }
     for (const proj of ctx.projects) {
-      const missing = required.filter((c) => !(presentByProject.get(proj.id) ?? new Set<string>()).has(c));
+      const missing = required.filter(
+        (c) => !(presentByProject.get(proj.id) ?? new Set<string>()).has(c),
+      );
       if (missing.length > 0) {
         items.push({
           title: `${missing.length} pièce(s) réglementaire(s) manquante(s) — ${proj.name}`,
@@ -227,7 +251,7 @@ function buildHtml(heading: string, intro: string, items: Item[]): string {
     <div style="font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px;">
       <h2 style="margin: 0 0 8px; color: #0f172a;">${escapeHtml(heading)}</h2>
       <p style="margin: 0 0 20px; color: #4b5563;">${escapeHtml(intro)}</p>
-      ${items.length > 0 ? `<ul style="list-style: none; margin: 0; padding: 0;">${list}</ul>` : "<p style=\"color: #9ca3af;\">Aucune alerte en cours.</p>"}
+      ${items.length > 0 ? `<ul style="list-style: none; margin: 0; padding: 0;">${list}</ul>` : '<p style="color: #9ca3af;">Aucune alerte en cours.</p>'}
       <p style="margin-top: 24px;">
         <a href="${escapeHtml(appUrl)}" style="display: inline-block; background: #f59e0b; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600;">Ouvrir BâtiBénin</a>
       </p>
@@ -281,7 +305,10 @@ async function maybeAlreadySent(userId: string, kind: "alerts" | "digest"): Prom
 async function logSend(userId: string, kind: string, items: number) {
   await db.from("email_log").insert({ user_id: userId, kind, items });
   if (kind === "digest") {
-    await db.from("notification_preferences").update({ last_digest_at: new Date().toISOString() }).eq("user_id", userId);
+    await db
+      .from("notification_preferences")
+      .update({ last_digest_at: new Date().toISOString() })
+      .eq("user_id", userId);
   }
 }
 
@@ -310,7 +337,8 @@ const DEFAULT_PREFS: Prefs = {
 /** Envoie les alertes d'un utilisateur (dédupliquées quotidiennement). */
 async function runAlerts(userId: string, email: string, prefs: Prefs, force: boolean) {
   if (!prefs.alerts_enabled) return { skipped: true, reason: "disabled" };
-  if (!force && (await maybeAlreadySent(userId, "alerts"))) return { skipped: true, reason: "dedupe" };
+  if (!force && (await maybeAlreadySent(userId, "alerts")))
+    return { skipped: true, reason: "dedupe" };
   const enabled = new Set<string>();
   if (prefs.alert_due_payments) enabled.add("alert_due_payments");
   if (prefs.alert_late_payments) enabled.add("alert_late_payments");
@@ -324,7 +352,11 @@ async function runAlerts(userId: string, email: string, prefs: Prefs, force: boo
   const sent = await sendEmail(
     email,
     `BâtiBénin — ${items.length} alerte(s) sur vos chantiers`,
-    buildHtml("Alertes sur vos chantiers", "Voici ce qui demande votre attention aujourd'hui :", items),
+    buildHtml(
+      "Alertes sur vos chantiers",
+      "Voici ce qui demande votre attention aujourd'hui :",
+      items,
+    ),
   );
   if (sent) await logSend(userId, "alerts", items.length);
   return { sent, items: items.length };
@@ -333,20 +365,28 @@ async function runAlerts(userId: string, email: string, prefs: Prefs, force: boo
 /** Envoie le digest hebdomadaire (au plus une fois / 7 j). */
 async function runDigest(userId: string, email: string, prefs: Prefs, force: boolean) {
   if (!prefs.weekly_digest) return { skipped: true, reason: "disabled" };
-  if (!force && (await maybeAlreadySent(userId, "digest"))) return { skipped: true, reason: "dedupe" };
+  if (!force && (await maybeAlreadySent(userId, "digest")))
+    return { skipped: true, reason: "dedupe" };
   const ctx = await loadCtx(userId);
-  const items = collectAlerts(ctx, new Set([
-    "alert_due_payments",
-    "alert_late_payments",
-    "alert_budget",
-    "alert_documents",
-    "alert_projects",
-    "alert_quotes",
-  ]));
+  const items = collectAlerts(
+    ctx,
+    new Set([
+      "alert_due_payments",
+      "alert_late_payments",
+      "alert_budget",
+      "alert_documents",
+      "alert_projects",
+      "alert_quotes",
+    ]),
+  );
   const sent = await sendEmail(
     email,
     "Votre récapitulatif hebdomadaire BâtiBénin",
-    buildHtml("Récapitulatif hebdomadaire", `Points d'attention de vos chantiers au ${frDate(today())} :`, items),
+    buildHtml(
+      "Récapitulatif hebdomadaire",
+      `Points d'attention de vos chantiers au ${frDate(today())} :`,
+      items,
+    ),
   );
   if (sent) await logSend(userId, "digest", items.length);
   return { sent, items: items.length };
@@ -382,7 +422,15 @@ Deno.serve(async (req) => {
     const { data: user } = await db.auth.admin.getUserById(caller);
     const email = user?.user?.email;
     if (!email) return json({ ok: false, error: "no_email" }, { status: 400 });
-    const sent = await sendEmail(email, "Test BâtiBénin — Notifications e-mail", buildHtml("E-mail de test", "Si vous lisez ce message, vos notifications e-mail BâtiBénin fonctionnent.", []));
+    const sent = await sendEmail(
+      email,
+      "Test BâtiBénin — Notifications e-mail",
+      buildHtml(
+        "E-mail de test",
+        "Si vous lisez ce message, vos notifications e-mail BâtiBénin fonctionnent.",
+        [],
+      ),
+    );
     return json({ ok: true, sent, skipped: !sent });
   }
 
@@ -393,7 +441,11 @@ Deno.serve(async (req) => {
     const summary = { users: users.users.length, alerts_sent: 0, digests_sent: 0, skipped: 0 };
     for (const u of users.users) {
       if (!u.email) continue;
-      const { data: prefsRow } = await db.from("notification_preferences").select("*").eq("user_id", u.id).maybeSingle();
+      const { data: prefsRow } = await db
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", u.id)
+        .maybeSingle();
       const prefs: Prefs = prefsRow ? { ...DEFAULT_PREFS, ...prefsRow } : DEFAULT_PREFS;
       const email = prefs.email || u.email;
       const a = await runAlerts(u.id, email, prefs, false);
@@ -412,7 +464,11 @@ Deno.serve(async (req) => {
   const { data: user } = await db.auth.admin.getUserById(userId);
   const email = user?.user?.email;
   if (!email) return json({ ok: false, error: "no_email" }, { status: 400 });
-  const { data: prefsRow } = await db.from("notification_preferences").select("*").eq("user_id", userId).maybeSingle();
+  const { data: prefsRow } = await db
+    .from("notification_preferences")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
   const prefs: Prefs = prefsRow ? { ...DEFAULT_PREFS, ...prefsRow } : DEFAULT_PREFS;
   const result = await runAlerts(userId, prefs.email || email, prefs, force);
   return json({ ok: true, ...result });

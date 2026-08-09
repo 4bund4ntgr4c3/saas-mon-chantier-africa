@@ -34,6 +34,7 @@ import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { StartupChecklist } from "@/components/startup-checklist";
 import { QuickExpenseDialog } from "@/components/quick-expense";
 import { ShareProjectButton } from "@/components/share-project";
+import { AiConseiller } from "@/components/ai-conseiller";
 
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -427,6 +428,10 @@ function Dashboard() {
           </ul>
         </div>
       )}
+
+      <div className="mt-3">
+        <AiConseiller projectId={projectId} />
+      </div>
 
       <div data-tour="charts" className="mt-3 grid gap-3 lg:grid-cols-2">
         <div className="panel p-4">
