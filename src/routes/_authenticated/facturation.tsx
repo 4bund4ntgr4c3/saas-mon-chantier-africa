@@ -12,6 +12,7 @@ import { useCurrentProject } from "@/context/project-context";
 import {
   useAddInvoicePayment,
   useDeleteRow,
+  useInvoiceItems,
   useInvoicePayments,
   useInvoices,
   useSaveRow,
@@ -283,6 +284,8 @@ function FacturationPage() {
                     </ul>
                   </div>
                 )}
+
+                <InvoiceItemsList invoiceId={inv.id} />
               </li>
             );
           })}
@@ -302,6 +305,35 @@ function FacturationPage() {
         }}
       />
     </>
+  );
+}
+
+function InvoiceItemsList({ invoiceId }: { invoiceId: string }) {
+  const { data: items = [] } = useInvoiceItems(invoiceId);
+  if (items.length === 0) return null;
+  return (
+    <div className="mt-3 border-t border-border pt-2">
+      <p className="mb-1 text-[11px] uppercase tracking-widest text-muted-foreground">
+        Détail ({items.length})
+      </p>
+      <ul className="space-y-1 text-sm">
+        {items.map((it) => (
+          <li key={it.id} className="flex items-center justify-between gap-3 text-xs">
+            <span>
+              {it.designation}
+              {it.quantity !== "" && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {it.quantity}
+                  {it.unit ? ` ${it.unit}` : ""}
+                </span>
+              )}
+            </span>
+            <span className="num">{fcfa(Number(it.unit_price) * Number(it.quantity))}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

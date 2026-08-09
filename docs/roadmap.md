@@ -10,12 +10,16 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 
 | Module | État |
 | --- | --- |
+| Paiement mobile money sandbox (Vague 4 fondations) | ✅ |
 | Comptes 7 types + rôles admin étendus | ✅ |
 | Gestion de chantier (projets, budget, dépenses, devis, paiements, facturation, stock, tâches, photos, journal, réserves, plans, documents, messages) | ✅ |
 | Marketplace prestataires + avis | ✅ |
 | Marketplace e-commerce (boutiques, produits, panier, commandes, livraison, transporteurs) | ✅ |
 | Back-office admin | ✅ |
 | PWA installable, i18n FR/EN (nav), multi-pays/devise, Conseil IA à base de règles | ✅ |
+| Lignes de devis & factures (Vague 5 — quote_items, invoice_items) | ✅ |
+| Demande de devis en ligne (Vague 5 — quote_requests, quote_bids) | ✅ |
+| Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds) | ✅ |
 | Tests unitaires (26), docs (schéma, installation, déploiement, changelog, stack) | ✅ |
 
 ---
@@ -70,17 +74,27 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 
 - Inventaire avancé : pertes, mouvements de stock liés aux commandes marketplace, lien vers `products` — reporté.
 
-## Vague 4 — Paiement mobile money ⬜
+## Vague 4 — Paiement mobile money 🔄 (fondations ✅)
 
-- `payments.status`, `payments.provider`, `payments.transaction_id` + `payment_transactions`
-- Gateway MTN MoMo / Moov Money (sandbox d'abord), architecture par pays (PayDunya, Bankly, CMI, Paystack…)
-- Liens de paiement (WhatsApp), paiement à la livraison
+**Migration** `20260818000000_mobile-money.sql` :
+- `payment_transactions` : montant, devise, `provider`, téléphone, statuts `initiee/en_attente/confirmee/echouee/annulee`, `reference`, `transaction_id`, `raw_response`
+- `payments` enrichis : `provider`, `transaction_id`, `status`
+- RLS propriétaire du chantier + admin ; index user/project/order/status ; trigger `updated_at`
 
-## Vague 5 — Devis en ligne + litiges ⬜
+**Hooks** : `useInitiateMobileMoney` (sandbox), `useConfirmMobileMoney` (retour passerelle simulé → crée le `payments` + marque la commande `payee`), `useCancelMobileMoney`.
 
-- `quote_items`, `invoice_items` (lignes de devis/facture)
-- **Demande de devis** : particulier décrit un besoin (photos/plans/budget) → devis multiples → comparaison
-- `disputes` + `refunds` : workflow de médiation (preuves, décision, remboursement)
+**UI** : dialogue `MobileMoneyDialog` (montant → opérateur → numéro → initier → confirmer/échouer) intégré à la page Paiements + onglet transactions ; paiement depuis le panier et le détail de commande ; **lien de paiement public** `/paiement/$reference` partageable via WhatsApp (RPC `get_payment_link_order`).
+
+- ✅ Sandbox MTN MoMo / Moov Money (payement fictif) — **fait**
+- ✅ Lien de paiement partageable (WhatsApp) — **fait**
+- ✅ Paiement à la livraison (méthode `a_la_livraison`) — **fait**
+- ⬜ Gateway réelle MTN MoMo / Moov Money, architecture par pays (PayDunya, Bankly, CMI, Paystack…) à brancher sur `payment_provider`
+
+## Vague 5 — Devis en ligne + litiges ✅
+
+- ✅ `quote_items`, `invoice_items` (lignes de devis/facture) — **fait** (migration `20260819000000_devis-lignes.sql`, UI devis dépliable, détail facture)
+- ✅ **Demande de devis** : particulier décrit un besoin (budget, localisation, domaine) → prestataires répondent avec une offre chiffrée → comparaison et attribution — **fait** (migration `20260820000000_demandes-devis.sql`, page `demandes-devis` 2 onglets, RLS dédiées)
+- ✅ **Litiges & remboursements** : workflow de médiation (preuves, décision, remboursement) — **fait** (migration `20260821000000_litiges-remboursements.sql`, page `litiges` 2 onglets, décision admin + suivi des remboursements)
 
 ## Vague 6 — Confiance & vérification ⬜
 

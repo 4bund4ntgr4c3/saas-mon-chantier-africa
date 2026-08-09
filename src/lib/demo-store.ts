@@ -414,6 +414,57 @@ function seed() {
     };
   });
 
+  const payment_transactions: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      order_id: null,
+      provider: "mtn_momo",
+      amount: 1500000,
+      currency: "XOF",
+      phone: "+229 97 00 11 22",
+      status: "confirmee",
+      reference: "MM-AC11F2",
+      transaction_id: "MTN-88213",
+      raw_response: null,
+      created_at: shift(-98),
+      updated_at: shift(-98),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      order_id: null,
+      provider: "moov_money",
+      amount: 900000,
+      currency: "XOF",
+      phone: "+229 97 00 11 22",
+      status: "confirmee",
+      reference: "MM-B904A1",
+      transaction_id: "MOOV-19644",
+      raw_response: null,
+      created_at: shift(-80),
+      updated_at: shift(-80),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      project_id: project.id,
+      order_id: null,
+      provider: "mtn_momo",
+      amount: 500000,
+      currency: "XOF",
+      phone: "+229 97 00 11 22",
+      status: "echouee",
+      reference: "MM-C7703B",
+      transaction_id: null,
+      raw_response: { reason: "solde_insuffisant" },
+      created_at: shift(-2),
+      updated_at: shift(-2),
+    },
+  ];
+
   const quotes: DemoRow[] = [
     {
       id: uid(),
@@ -459,6 +510,46 @@ function seed() {
       valid_until: shift(10),
       status: "converti",
       notes: "Devis transformé en facture",
+    },
+  ];
+  const [quoteCharpente, quotePeinture, quoteElec] = quotes;
+
+  const quote_items: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      quote_id: quoteCharpente!.id,
+      designation: "Charpente bois (sciage + pose)",
+      quantity: 1,
+      unit: "forfait",
+      unit_price: 3250000,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      quote_id: quoteCharpente!.id,
+      designation: "Tôles bac alu 0.5 mm (150 m²)",
+      quantity: 150,
+      unit: "m²",
+      unit_price: 7200,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      quote_id: quotePeinture!.id,
+      designation: "Peinture intérieure (3 chambres)",
+      quantity: 1,
+      unit: "forfait",
+      unit_price: 980000,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      quote_id: quotePeinture!.id,
+      designation: "Peinture extérieure (façades)",
+      quantity: 1,
+      unit: "forfait",
+      unit_price: 770000,
     },
   ];
 
@@ -608,6 +699,36 @@ function seed() {
       method: "mtn_momo",
       reference: "MOMO-CLIENT-009",
       notes: "Paiement partiel en attente du solde.",
+    },
+  ];
+
+  const invoice_items: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      invoice_id: invAcompte!.id,
+      designation: "Acompte travaux — 40 %",
+      quantity: "1",
+      unit: "forfait",
+      unit_price: 16500000,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      invoice_id: invGros!.id,
+      designation: "Murs RDC (agglos + main d'œuvre)",
+      quantity: "1",
+      unit: "forfait",
+      unit_price: 5800000,
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      invoice_id: invGros!.id,
+      designation: "Dalle de toiture (coulage + ferraillage)",
+      quantity: "1",
+      unit: "forfait",
+      unit_price: 4000000,
     },
   ];
 
@@ -1085,6 +1206,85 @@ function seed() {
     },
   ];
 
+  const quote_requests: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      title: "Construction d'une clôture de 60 mètres",
+      description:
+        "Je souhaite réaliser une clôture en parpaings de 60 m de long, hauteur 2 m, avec portail. Terrain à Cotonou, quartier Fidjrossè.",
+      category: "maconnerie",
+      budget_min: 450000,
+      budget_max: 750000,
+      city: "Cotonou",
+      commune: "Cotonou",
+      deadline: shift(21),
+      status: "ouverte",
+      winner_bid_id: null,
+      created_at: shift(-3),
+      updated_at: shift(-3),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      title: "Réfection électrique d'une villa (R+1)",
+      description:
+        "Mise aux normes du tableau électrique et remplacement de l'installation existante, 5 pièces + dépendance. Plans disponibles.",
+      category: "electricite",
+      budget_min: 300000,
+      budget_max: 500000,
+      city: "Cotonou",
+      commune: "Cotonou",
+      deadline: shift(14),
+      status: "ouverte",
+      winner_bid_id: null,
+      created_at: shift(-5),
+      updated_at: shift(-5),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      title: "Peinture intérieure et extérieure",
+      description:
+        "Peinture complète d'un duplex de 3 chambres + salon. Surface estimée 320 m². Sous-couche et finition.",
+      category: "peinture",
+      budget_min: 250000,
+      budget_max: 380000,
+      city: "Abomey-Calavi",
+      commune: "Abomey-Calavi",
+      deadline: shift(30),
+      status: "attribuee",
+      winner_bid_id: null,
+      created_at: shift(-10),
+      updated_at: shift(-4),
+    },
+  ];
+  const reqMac = quote_requests[0]!;
+
+  const quote_bids: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      request_id: reqMac.id,
+      amount: 520000,
+      message:
+        "Clôture en parpaings de 15, 2 m de haut, portail métallique inclus. Délai 3 semaines.",
+      status: "soumise",
+      created_at: shift(-2),
+      updated_at: shift(-2),
+    },
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      request_id: reqMac.id,
+      amount: 680000,
+      message: "Réalisation soignée avec fondation filante et poteaux en béton armé tous les 3 m.",
+      status: "soumise",
+      created_at: shift(-1),
+      updated_at: shift(-1),
+    },
+  ];
+
   const stores: DemoRow[] = [
     {
       id: uid(),
@@ -1221,6 +1421,75 @@ function seed() {
     },
   ];
 
+  const orderDemo: DemoRow = {
+    id: uid(),
+    user_id: DEMO_USER,
+    store_id: stores[0]!.id,
+    project_id: project.id,
+    status: "paiement_en_attente",
+    reference: "CMD-DEMO-MM",
+    subtotal: 168000,
+    delivery_fee: 2000,
+    total: 170000,
+    payment_method: "mtn_momo",
+    payment_status: "paiement_en_attente",
+    delivery_address: "Quartier Gbégamey, Cotonou",
+    city: "Cotonou",
+    phone: "+229 97 00 11 22",
+    notes: "Paiement en attente — lien de paiement mobile money.",
+    ordered_at: shift(-1),
+    created_at: shift(-1),
+    updated_at: shift(-1),
+    lat: null,
+    lng: null,
+  };
+
+  const orderItemsDemo: DemoRow[] = [
+    {
+      id: uid(),
+      order_id: orderDemo.id,
+      product_id: productsSeed[0]!.id,
+      name: "Ciment CIMBENIN 42.5",
+      unit: "sac",
+      quantity: 40,
+      unit_price: 4200,
+    },
+  ];
+
+  const disputes: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      ref: "LIT-2026-10001",
+      subject: "Quantité de ciment non conforme à la livraison",
+      description:
+        "La livraison n°0021 annonçait 12 sacs de ciment mais seuls 9 ont été déposés. Photos du bon de livraison disponibles.",
+      related_type: "order",
+      related_id: orderDemo.id,
+      amount: 12600,
+      status: "ouverte",
+      decision: null,
+      decision_note: null,
+      decided_by: null,
+      decided_at: null,
+      created_at: shift(-4),
+      updated_at: shift(-4),
+    },
+  ];
+
+  const dispute_evidences: DemoRow[] = [
+    {
+      id: uid(),
+      user_id: DEMO_USER,
+      dispute_id: disputes[0]!.id,
+      note: "Bon de livraison signé — 9 sacs comptés.",
+      file_path: null,
+      created_at: shift(-3),
+    },
+  ];
+
+  const refunds: DemoRow[] = [];
+
   return {
     categories: cats as unknown as DemoRow[],
     projects: [project],
@@ -1229,10 +1498,13 @@ function seed() {
     budget_lines,
     expenses,
     payments,
+    payment_transactions,
     quotes,
+    quote_items,
     site_logs,
     documents,
     invoices,
+    invoice_items,
     invoice_payments,
     materials,
     material_requirements,
@@ -1241,6 +1513,8 @@ function seed() {
     photos,
     providers,
     provider_reviews,
+    quote_requests,
+    quote_bids,
     product_categories: productCats,
     stores,
     products: productsSeed,
@@ -1304,9 +1578,12 @@ function seed() {
     vehicles: [],
     carts: [],
     cart_items: [],
-    orders: [],
-    order_items: [],
+    orders: [orderDemo],
+    order_items: orderItemsDemo,
     deliveries: [],
+    disputes,
+    dispute_evidences,
+    refunds,
     reserves: [
       {
         id: uid(),
@@ -1516,6 +1793,13 @@ export function demoDuplicateProject(projectId: string): string {
       if (p["expense_id"]) dest["expense_id"] = idMap.get(p["expense_id"]) ?? p["expense_id"];
     });
 
+  (db["payment_transactions"] as DemoRow[])
+    .filter((t) => t["project_id"] === projectId)
+    .forEach((t) => {
+      const dest = copy("payment_transactions", t);
+      if (t["order_id"]) dest["order_id"] = idMap.get(t["order_id"]) ?? t["order_id"];
+    });
+
   (db["quotes"] as DemoRow[])
     .filter((q) => q["project_id"] === projectId)
     .forEach((q) => copy("quotes", q));
@@ -1560,6 +1844,55 @@ export function demoDuplicateProject(projectId: string): string {
     .forEach((p) => {
       const dest = copy("invoice_payments", p);
       if (p["invoice_id"]) dest["invoice_id"] = idMap.get(p["invoice_id"]) ?? p["invoice_id"];
+    });
+
+  (db["quote_items"] as DemoRow[])
+    .filter((q) => q["quote_id"] !== undefined)
+    .forEach((q) => {
+      const dest = copy("quote_items", q);
+      if (q["quote_id"]) dest["quote_id"] = idMap.get(q["quote_id"]) ?? q["quote_id"];
+    });
+
+  (db["invoice_items"] as DemoRow[])
+    .filter((i) => i["invoice_id"] !== undefined)
+    .forEach((i) => {
+      const dest = copy("invoice_items", i);
+      if (i["invoice_id"]) dest["invoice_id"] = idMap.get(i["invoice_id"]) ?? i["invoice_id"];
+    });
+
+  (db["quote_requests"] as DemoRow[])
+    .filter((r) => r["user_id"] === project["user_id"] || true)
+    .forEach((r) => {
+      const dest = copy("quote_requests", r);
+      idMap.set(r.id, dest.id);
+    });
+
+  (db["quote_bids"] as DemoRow[])
+    .filter((b) => b["request_id"] !== undefined)
+    .forEach((b) => {
+      const dest = copy("quote_bids", b);
+      if (b["request_id"]) dest["request_id"] = idMap.get(b["request_id"]) ?? b["request_id"];
+    });
+
+  (db["disputes"] as DemoRow[])
+    .filter((d) => d["user_id"] === project["user_id"] || true)
+    .forEach((d) => {
+      const dest = copy("disputes", d);
+      idMap.set(d.id, dest.id);
+    });
+
+  (db["dispute_evidences"] as DemoRow[])
+    .filter((e) => e["dispute_id"] !== undefined)
+    .forEach((e) => {
+      const dest = copy("dispute_evidences", e);
+      if (e["dispute_id"]) dest["dispute_id"] = idMap.get(e["dispute_id"]) ?? e["dispute_id"];
+    });
+
+  (db["refunds"] as DemoRow[])
+    .filter((r) => r["dispute_id"] !== undefined)
+    .forEach((r) => {
+      const dest = copy("refunds", r);
+      if (r["dispute_id"]) dest["dispute_id"] = idMap.get(r["dispute_id"]) ?? r["dispute_id"];
     });
 
   return newId;

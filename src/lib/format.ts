@@ -59,6 +59,24 @@ export const PAYMENT_METHODS = [
   { value: "moov_money", label: "Moov Money" },
   { value: "virement", label: "Virement bancaire" },
   { value: "cheque", label: "Chèque" },
+  { value: "a_la_livraison", label: "À la livraison" },
+] as const;
+
+export const PAYMENT_PROVIDERS = [
+  { value: "mtn_momo", label: "MTN Mobile Money" },
+  { value: "moov_money", label: "Moov Money" },
+  { value: "paydunya", label: "PayDunya" },
+  { value: "bankly", label: "Bankly" },
+  { value: "cmi", label: "CMI" },
+  { value: "paystack", label: "Paystack" },
+] as const;
+
+export const PAYMENT_TRANSACTION_STATUSES = [
+  { value: "initiee", label: "Initiée" },
+  { value: "en_attente", label: "En attente" },
+  { value: "confirmee", label: "Confirmée" },
+  { value: "echouee", label: "Échouée" },
+  { value: "annulee", label: "Annulée" },
 ] as const;
 
 export const PAYMENT_TYPES = [
@@ -73,6 +91,52 @@ export const QUOTE_STATUSES = [
   { value: "accepte", label: "Accepté" },
   { value: "rejete", label: "Rejeté" },
   { value: "converti", label: "Converti en commande" },
+] as const;
+
+export const QUOTE_REQUEST_STATUSES = [
+  { value: "ouverte", label: "Ouverte" },
+  { value: "attribuee", label: "Attribuée" },
+  { value: "cloturee", label: "Clôturée" },
+] as const;
+
+export const QUOTE_BID_STATUSES = [
+  { value: "soumise", label: "Soumise" },
+  { value: "acceptee", label: "Acceptée" },
+] as const;
+
+export const DISPUTE_STATUSES = [
+  { value: "ouverte", label: "Ouvert" },
+  { value: "en_examen", label: "En examen" },
+  { value: "decide", label: "Décision rendue" },
+  { value: "cloture", label: "Clôturé" },
+] as const;
+
+export const DISPUTE_DECISIONS = [
+  { value: "favorable_demandeur", label: "Favorable au demandeur" },
+  { value: "favorable_defendeur", label: "Favorable au défendeur" },
+  { value: "partiel", label: "Partiellement favorable" },
+] as const;
+
+export const DISPUTE_TYPES = [
+  { value: "commande", label: "Commande / livraison" },
+  { value: "devis", label: "Devis / prestation" },
+  { value: "paiement", label: "Paiement" },
+  { value: "livraison", label: "Livraison / transport" },
+  { value: "facturation", label: "Facturation" },
+  { value: "autre", label: "Autre litige" },
+] as const;
+
+export const REFUND_METHODS = [
+  { value: "mobile_money", label: "Mobile money" },
+  { value: "virement", label: "Virement bancaire" },
+  { value: "carte", label: "Carte bancaire" },
+] as const;
+
+export const REFUND_STATUSES = [
+  { value: "initie", label: "Initié" },
+  { value: "en_attente", label: "En attente" },
+  { value: "effectue", label: "Effectué" },
+  { value: "echoue", label: "Échoué" },
 ] as const;
 
 export const PROJECT_STATUSES = [

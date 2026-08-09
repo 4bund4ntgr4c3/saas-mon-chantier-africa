@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CheckCircle2, Package, Receipt, RefreshCw, Truck } from "lucide-react";
+import { CheckCircle2, Package, Receipt, RefreshCw, Smartphone, Share2, Truck } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { fcfa, labelOf, ORDER_STATUSES } from "@/lib/format";
 import {
   useDeliveries,
@@ -111,12 +113,14 @@ function OrderDetail({ order }: { order: Order }) {
   const { data: products = [] } = useProducts();
   const updateOrderStatus = useUpdateOrderStatus();
   const updateDelivery = useUpdateDeliveryStatus();
+  const [mmOpen, setMmOpen] = useState(false);
 
   const delivery = deliveries.find((d) => d.order_id === order.id) ?? null;
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
   const currentStep = SELLER_STEPS.indexOf(order.status as (typeof SELLER_STEPS)[number]);
   const cancelled = ["annulee", "remboursee", "litige"].includes(order.status);
+  const awaitingPayment = order.status === "paiement_en_attente" || order.status === "creee";
 
   const advance = () => {
     const idx = SELLER_STEPS.indexOf(order.status as (typeof SELLER_STEPS)[number]);
@@ -129,6 +133,15 @@ function OrderDetail({ order }: { order: Order }) {
     if (next === "livree" && delivery) {
       updateDelivery.mutate({ id: delivery.id, status: "livree" });
     }
+  };
+
+  const shareLink = () => {
+    const ref = order.reference ?? order.id;
+    const url = `${window.location.origin}/paiement/${ref}`;
+    const text = `Paiement de votre commande chez BâtiBénin (${ref}) : ${fcfa(order.total)}. Règlement par mobile money ici : ${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    navigator.clipboard?.writeText(url).catch(() => {});
+    toast.success("Lien de paiement partagé (WhatsApp) et copié");
   };
 
   const completed = order.status === "livree";
@@ -145,6 +158,12 @@ function OrderDetail({ order }: { order: Order }) {
           </p>
         </div>
         <StatusBadge status={order.status} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={shareLink}>
+          <Share2 className="size-4" /> Partager le lien de paiement
+        </Button>
       </div>
 
       {!cancelled && (
@@ -185,14 +204,21 @@ function OrderDetail({ order }: { order: Order }) {
           </div>
 
           {currentStep < SELLER_STEPS.length - 1 && (
-            <Button
-              className="mt-4 w-full"
-              onClick={advance}
-              disabled={updateOrderStatus.isPending}
-            >
-              <RefreshCw className="size-4" /> Marquer «{" "}
-              {labelOf(ORDER_STATUSES, SELLER_STEPS[currentStep + 1])} »
-            </Button>
+            <div className="mt-4 flex gap-2">
+              {awaitingPayment && (
+                <Button variant="outline" onClick={() => setMmOpen(true)} className="flex-1">
+                  <Smartphone className="size-4" /> Payer par mobile money
+                </Button>
+              )}
+              <Button
+                className={awaitingPayment ? "flex-1" : "w-full"}
+                onClick={advance}
+                disabled={updateOrderStatus.isPending}
+              >
+                <RefreshCw className="size-4" /> Marquer «{" "}
+                {labelOf(ORDER_STATUSES, SELLER_STEPS[currentStep + 1])} »
+              </Button>
+            </div>
           )}
           {completed && (
             <p className="mt-3 flex items-center gap-2 rounded-md bg-success/10 px-3 py-2 text-sm text-success">
@@ -259,6 +285,14 @@ function OrderDetail({ order }: { order: Order }) {
           ))}
         </ul>
       </div>
+
+      <MobileMoneyDialog
+        projectId={null}
+        orderId={order.id}
+        amount={order.total}
+        open={mmOpen}
+        onOpenChange={setMmOpen}
+      />
     </div>
   );
 }
@@ -290,6 +324,7 @@ const PAYMENT = [
   { value: "moov_money", label: "Moov Money" },
   { value: "virement", label: "Virement" },
   { value: "cheque", label: "Chèque" },
+  { value: "a_la_livraison", label: "À la livraison" },
 ] as const;
 
 const DELIVERY = [

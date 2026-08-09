@@ -32,6 +32,7 @@ import {
   Users,
   Wallet,
   Truck,
+  TicketCheck,
 } from "lucide-react";
 import { type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +84,13 @@ const NAV = [
   { to: "/photos", labelKey: "nav.photos", icon: Images, feature: "photos" },
   { to: "/taches", labelKey: "nav.taches", icon: ListChecks, feature: "taches" },
   { to: "/prestataires", labelKey: "nav.prestataires", icon: Handshake, feature: "marketplace" },
+  {
+    to: "/demandes-devis",
+    labelKey: "nav.demandes-devis",
+    icon: TicketCheck,
+    feature: "marketplace",
+  },
+  { to: "/litiges", labelKey: "nav.litiges", icon: ShieldCheck, feature: "marketplace" },
   { to: "/boutique", labelKey: "nav.boutique", icon: Store, feature: "marketplace" },
   { to: "/panier", labelKey: "nav.panier", icon: ShoppingCart, feature: "marketplace" },
   { to: "/commandes", labelKey: "nav.commandes", icon: Package, feature: "marketplace" },

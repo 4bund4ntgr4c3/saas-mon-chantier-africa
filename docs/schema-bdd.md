@@ -15,6 +15,9 @@ erDiagram
     projects ||--o{ budget_lines : "1..n"
     projects ||--o{ expenses : "1..n"
     projects ||--o{ payments : "1..n"
+    projects ||--o{ payment_transactions : "1..n"
+    orders ||--o{ payment_transactions : "1..1"
+    payments ||--o{ payment_transactions : "1..1"
     projects ||--o{ site_logs : "1..n"
     projects ||--o{ quotes : "1..n"
     projects ||--o{ documents : "1..n"
@@ -37,6 +40,16 @@ erDiagram
     companies ||--o{ expenses : "1..n"
     quotes ||--o{ payments : "1..n"
     suppliers ||--o{ quotes : "1..n"
+    quotes ||--o{ quote_items : "1..n"
+    invoices ||--o{ invoice_items : "1..n"
+    profiles ||--o{ quote_requests : "1..n"
+    profiles ||--o{ quote_bids : "1..n"
+    quote_requests ||--o{ quote_bids : "1..n"
+    profiles ||--o{ disputes : "1..n"
+    profiles ||--o{ dispute_evidences : "1..n"
+    disputes ||--o{ dispute_evidences : "1..n"
+    profiles ||--o{ refunds : "1..n"
+    disputes ||--o{ refunds : "1..n"
 
     stores ||--o{ products : "1..n"
     profiles ||--o{ stores : "1..1"
@@ -89,15 +102,23 @@ erDiagram
 | `budget_lines` | Répartition budgétaire par catégorie et phase. |
 | `expenses` | Dépenses : date, libellé, catégorie, fournisseur, entreprise, montant FCFA, paiement. |
 | `payments` | Paiements (comptant, acompte, partiel, solde) et échéances. |
+| `payment_transactions` | **Vague 3** : transactions mobile money (montant, opérateur, numéro, statut, référence, `transaction_id`, `raw_response`). |
 | `quotes` | Devis fournisseurs, comparaison, conversion en commande. |
+| `quote_items` | **Vague 3/4** : lignes de devis (designation, `quantity` numeric, `unit`, `unit_price`), FK `quotes`. |
+| `quote_requests` | **Vague 5** : besoin décrit par un particulier (titre, description, dom, budget min/max, ville, échéance, statut, `winner_bid_id`). |
+| `quote_bids` | **Vague 5** : offre chiffrée d'un prestataire (montant, message, statut), FK `quote_requests`. |
+| `disputes` | **Vague 5** : litige ouvert (référence, objet, description, type, montant, statut, décision de médiation). |
+| `dispute_evidences` | **Vague 5** : preuves déposées sur un litige (note, `file_path`). |
+| `refunds` | **Vague 5** : remboursement émis (montant, méthode, statut, référence), FK `disputes`. |
+| `invoices` / `invoice_payments` | Facturation et règlements associés. |
+| `invoice_items` | **Vague 3/4** : lignes de facture (designation, `quantity` text, `unit`, `unit_price`), FK `invoices`. |
 | `site_logs` | Journal de chantier (commentaires, avancement, difficultés). |
 | `documents` | Pièces : plans, permis, actes, factures, contrats, garanties (bucket `documents`). |
 | `materials` | Stock & matériaux. |
 | `material_requirements` | **Vague 3** : besoins en matériaux d'un chantier (prévu / commandé / livré / consommé, statut). |
 | `material_deliveries` | **Vague 3** : livraisons de matériaux liées au chantier et au besoin. |
-| `photos` | Photos de chantier. |
+| `photo` | Photos de chantier. |
 | `tasks` | Tâches & planning avec échéances. |
-| `invoices` / `invoice_payments` | Facturation et règlements associés. |
 | `reserves` | Réserves de fin de chantier (statut, priorité, échéance). |
 | `plans` | Fichiers de plans (bucket `documents`, chemin `plans/{user}/{project}/…`). |
 | `messages` | Conversation partagée par chantier. |
@@ -128,7 +149,7 @@ erDiagram
 | `audit_logs` | Journal d'audit (triggers sur les suppressions de données sensibles). |
 
 ## Énumérations
-`account_type`, `document_category`, `invoice_status`, `task_status`, `task_priority`, `order_status`, `delivery_status`, `reserve_status`, `reserve_priority`.
+`account_type`, `document_category`, `invoice_status`, `task_status`, `task_priority`, `order_status`, `delivery_status`, `reserve_status`, `reserve_priority`, `payment_provider` (mtn_momo, moov_money, paydunya, bankly, cmi, paystack), `payment_transaction_status` (initiee, en_attente, confirmee, echouee, annulee), `quote_request_status` (ouverte, attribuee, cloturee), `quote_bid_status` (soumise, acceptee), `dispute_status` (ouverte, en_examen, decide, cloture), `dispute_decision` (favorable_demandeur, favorable_defendeur, partiel), `refund_status` (initie, en_attente, effectue, echoue), `refund_method` (mobile_money, virement, carte).
 
 ## Sécurité
 - **RLS activée** sur chaque table avec politiques `FOR authenticated USING (user_id = auth.uid())` (lecture/écriture de ses propres données).

@@ -6,6 +6,117 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.18 — Vague 5 : Litiges & remboursements (2026-08-09)
+
+### Migrations
+- `supabase/migrations/20260821000000_litiges-remboursements.sql`
+  - ✅ `disputes` : litige ouvert (référence, objet, description, type, montant litigieux, statuts `ouverte/en_examen/decide/cloture`, décision de médiation `favorable_demandeur/favorable_defendeur/partiel`, note et date de décision)
+  - ✅ `dispute_evidences` : preuves déposées (note, `file_path`), liées à un litige
+  - ✅ `refunds` : remboursement émis (montant, méthode `mobile_money/virement/carte`, statuts `initie/en_attente/effectue/echoue`, référence, date de traitement)
+  - 🔒 RLS : litiges lisibles par tous (médiation transparente), écritures propriétaire ou admin ; preuves lisibles par l'auteur/litige/admin ; remboursements lisibles par l'auteur ou admin ; triggers `updated_at`
+
+### Données & hooks (`src/lib/data.ts`)
+- ✅ `useDisputes()` — tous les litiges ; `useMyDisputes()` — les miens
+- ✅ `useDisputeEvidences(disputeId)` — preuves ; `useRefunds(disputeId)` — remboursements
+- ✅ `useDecideDispute()` — rend une décision de médiation ; `disputeRef()` — génère `LIT-YYYY-XXXXX`
+- ✅ `TableName` / `RELATED` : `disputes`, `dispute_evidences`, `refunds` ajoutés (liés entre eux)
+
+### Format (`src/lib/format.ts`)
+- ✅ `DISPUTE_STATUSES`, `DISPUTE_DECISIONS`, `DISPUTE_TYPES`, `REFUND_METHODS`, `REFUND_STATUSES`
+
+### UI
+- ✅ `src/routes/_authenticated/litiges.tsx` : « Mes litiges » / « Tous les litiges » — ouvrir un litige, déposer des preuves, émettre un remboursement, rendre une décision de médiation ; feature `marketplace`
+- ✅ Navigation : entrée « Litiges & médiation » + i18n FR/EN
+
+### Démo (`src/lib/demo-store.ts`)
+- ✅ 1 litige ouvert (livraison ciment) + 1 preuve seedés ; reset projet étendu
+
+---
+
+## v0.17 — Vague 5 : Demande de devis en ligne (2026-08-09)
+
+### Migrations
+- `supabase/migrations/20260820000000_demandes-devis.sql`
+  - ✅ `quote_requests` : besoin décrit par un particulier (titre, description, `category`, budget min/max, ville/commune, date limite, statut `ouverte/attribuee/cloturee`, `winner_bid_id`)
+  - ✅ `quote_bids` : offre chiffrée d'un prestataire (montant, message, statut `soumise/acceptee`) liée à une demande
+  - 🔒 RLS : demandes lisibles par tous les connectés (pour répondre), écritures réservées au propriétaire ; offres lisibles par le demandeur + l'auteur, écritures réservées à l'auteur ; index + triggers `updated_at`
+
+### Données & hooks (`src/lib/data.ts`)
+- ✅ `useQuoteRequests()` — toutes les demandes (feed des besoins ouverts)
+- ✅ `useMyQuoteRequests()` — mes demandes (suivi des offres reçues)
+- ✅ `useQuoteBids(requestId)` — offres d'une demande
+- ✅ `useMyQuoteBids()` — mes offres déposées
+- ✅ `useAwardQuoteBid()` — attribue le devis gagnant (`status=attribuee` + `winner_bid_id`)
+- ✅ `TableName` / `RELATED` : `quote_requests` et `quote_bids` ajoutés (entrecroisés)
+
+### Format (`src/lib/format.ts`)
+- ✅ `QUOTE_REQUEST_STATUSES` (ouverte/attribuée/clôturée) et `QUOTE_BID_STATUSES` (soumise/acceptée)
+
+### UI
+- ✅ `src/routes/_authenticated/demandes-devis.tsx` : deux onglets — « Mes demandes » (publication, offres reçues, attribution) et « Répondre aux besoins » (recherche/domaine, dépôt d'offre) ; feature `marketplace`
+- ✅ Navigation : entrée « Demandes de devis » (icône TicketCheck) + i18n FR/EN
+
+### Démo (`src/lib/demo-store.ts`)
+- ✅ `quote_requests` (3 demandes : clôture, électricité, peinture) et `quote_bids` seedés ; reset projet étendu
+
+---
+
+## v0.16 — Vague 3/4 : Lignes de devis & factures (2026-08-09)
+
+### Migrations
+- `supabase/migrations/20260819000000_devis-lignes.sql`
+  - ✅ `quote_items` : lignes de devis (designation, `quantity` numeric, `unit`, `unit_price`), FK `quotes`, RLS propriétaire, trigger `updated_at`
+  - ✅ `invoice_items` : lignes de factures (designation, `quantity` text, `unit`, `unit_price`), FK `invoices`, RLS propriétaire, trigger `updated_at`
+
+### Données & hooks (`src/lib/data.ts`)
+- ✅ `useQuoteItems(quoteId)` — lignes d'un devis
+- ✅ `useInvoiceItems(invoiceId)` — lignes d'une facture
+- ✅ `TableName` / `RELATED` : `quote_items` et `invoice_items` ajoutés (liés à `quotes` / `invoices`)
+
+### UI
+- ✅ `src/routes/_authenticated/devis.tsx` : devis dépliable sous la forme d'une ligne « Lignes du devis » — ajout/édition/suppression de postes (désignation, quantité, unité, prix unitaire), total automatique
+- ✅ `src/routes/_authenticated/facturation.tsx` : détail des postes d'une facture (liste designations + totaux)
+
+### Démo (`src/lib/demo-store.ts`)
+- ✅ `quote_items` seedés sur les 3 devis démo et `invoice_items` sur les factures démo ; reset projet étendu
+
+---
+
+## v0.15 — Vague 3 : Paiements mobile money (sandbox) (2026-08-09)
+
+### Migrations
+- `supabase/migrations/20260818000000_mobile-money.sql`
+  - ✅ `payment_transactions` : transactions de paiement mobile money (montant, devise, `provider`, téléphone, statuts `initiee/en_attente/confirmee/echouee/annulee`, `reference`, `transaction_id`, `raw_response`)
+  - 🔧 `payments` : colonnes `provider`, `transaction_id`, `status` (+ `phone` selon besoin)
+  - 🔒 RLS : `payment_transactions` propriétaire uniquement (lecture/écriture) + admin ; index sur user/project/order/status ; trigger `updated_at`
+  - ✅ Enums `payment_provider` (mtn_momo, moov_money, paydunya, bankly, cmi, paystack) et `payment_transaction_status`
+
+### Hooks (`src/lib/data.ts`)
+- ✅ `usePaymentTransactions(projectId)` — transactions du chantier
+- ✅ `useInitiateMobileMoney()` — initie un paiement (transaction `initiee`, sandbox) ; marque la commande `payee` si `order_id`
+- ✅ `useConfirmMobileMoney()` — confirme la transaction (simule le retour passerelle) **et crée automatiquement le `payments` associé**
+- ✅ `useCancelMobileMoney()` — annule une transaction initiée
+- ✅ `TableName` / `RELATED` : `payment_transactions` ajouté (lié à `orders`, `payments`)
+
+### Format (`src/lib/format.ts`)
+- ✅ `PAYMENT_PROVIDERS` (passerelles) et `PAYMENT_TRANSACTION_STATUSES` (libellés)
+
+### UI
+- ✅ `src/components/mobile-money-dialog.tsx` : dialogue de paiement mobile money (montant, opérateur, numéro → initier → confirmer/échouer), sandbox de démo
+- ✅ `src/routes/_authenticated/paiements.tsx` : bouton « Payer par mobile money » + section « Transactions mobile money » (date, passerelle, montant, badge statut)
+- ✅ `src/routes/_authenticated/commandes.tsx` : bouton « Payer par mobile money » sur une commande en attente de paiement — à la confirmation, la commande passe automatiquement `payee`
+- ✅ `src/routes/_authenticated/panier.tsx` : commande passée avec un moyen mobile money → passe en `paiement_en_attente` et ouvre automatiquement le dialogue de paiement ; à la confirmation la commande passe `payee`
+- ✅ **Liens de paiement partageables** : RPC `get_payment_link_order` (lecture publique d'une commande par référence, sécurisée `SECURITY DEFINER`), page publique `src/routes/paiement.$reference.tsx` (résumé de commande + paiement mobile money), bouton « Partager le lien de paiement » (WhatsApp + copie) sur le détail de commande
+- ✅ **Paiement à la livraison** : nouvelle méthode `a_la_livraison` (`PAYMENT_METHODS`) — la commande reste en attente de livraison sans transaction en ligne ; page de lien de paiement adaptée (montant réglé au dépositaire)
+
+### Demo
+- ✅ `demo-store.ts` : 3 `payment_transactions` (2 confirmées MTN/Moov + 1 échouée) sur le chantier démo ; `seed`/reset étendus
+
+### Validation
+- ✅ `npm run build` · `npx tsc --noEmit` · `npx eslint .` · `npm run test` (26 tests) — tout vert
+
+---
+
 ## v0.14 — Vague 3 : Matériaux & inventaire chantier (2026-08-09)
 
 ### Migrations

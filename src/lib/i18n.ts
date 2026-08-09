@@ -22,6 +22,8 @@ const dict = {
   "nav.photos": ["Photos", "Photos"],
   "nav.taches": ["Tâches", "Tasks"],
   "nav.prestataires": ["Prestataires", "Service providers"],
+  "nav.demandes-devis": ["Demandes de devis", "Quote requests"],
+  "nav.litiges": ["Litiges & médiation", "Disputes & mediation"],
   "nav.boutique": ["Boutique", "Store"],
   "nav.panier": ["Panier", "Cart"],
   "nav.commandes": ["Commandes", "Orders"],

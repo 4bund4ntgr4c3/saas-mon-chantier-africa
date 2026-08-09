@@ -97,6 +97,10 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | `20260815000000_collaboration.sql` | **Vague 1** : organizations, organization_members, project_members |
 | `20260816000000_ecommerce.sql` | **Vague 2** : product_prices, product_inventory (+ trigger prix) |
 | `20260817000000_materiaux-inventaire.sql` | **Vague 3** : material_requirements, material_deliveries |
+| `20260818000000_mobile-money.sql` | **Vague 3/4** : payment_transactions, enums payment_provider/status, payments.provider/transaction_id/status |
+| `20260819000000_devis-lignes.sql` | **Vague 3/4** : quote_items, invoice_items (lignes de devis/facture) |
+| `20260820000000_demandes-devis.sql` | **Vague 5** : quote_requests, quote_bids (demande de devis en ligne) |
+| `20260821000000_litiges-remboursements.sql` | **Vague 5** : disputes, dispute_evidences, refunds (médiation + remboursement) |
 
 ## 5. Fonctionnalités livrées (map rapide → pour éviter de refaire)
 
@@ -109,6 +113,10 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | E-commerce avancé (Vague 2) | boutique (fiche/comparateur), ma-boutique (analytics) | `useProductPrices`, `useProductInventory`, `useAddInventoryMovement`, `useCompareOffers`, `useStoreAnalytics` |
 | Collaboration (Vague 1) | header + cartes projets | `useProjectMembers`, `useMyProjectInvites`, `useAcceptProjectInvite`, `useAddProjectMember`, `useUpdateProjectMember`, `useRemoveProjectMember`, `useMyOrganizations` |
 | Matériaux & inventaire (Vague 3) | matériaux (nav, feature `stock`) | `useMaterialRequirements`, `useMaterialDeliveries`, `useAddMaterialRequirement`, `useUpdateMaterialRequirement`, `useAddMaterialDelivery` |
+| Paiement mobile money (Vague 4) | paiements (bouton + onglet transactions), commandes (paiement en attente + partage lien), panier (checkout mobile money), `/paiement/$reference` (publique) | `usePaymentTransactions`, `useInitiateMobileMoney`, `useConfirmMobileMoney`, `useCancelMobileMoney`, `usePublicOrderByReference` |
+| Lignes devis & factures (Vague 3/4) | devis (postes dépliables + ajout), facturation (détail des postes) | `useQuoteItems`, `useInvoiceItems` |
+| Demande de devis (Vague 5) | demandes-devis (mes demandes + répondre aux besoins) | `useQuoteRequests`, `useMyQuoteRequests`, `useQuoteBids`, `useMyQuoteBids`, `useAwardQuoteBid` |
+| Litiges & remboursements (Vague 5) | litiges (mes litiges + tous) | `useDisputes`, `useMyDisputes`, `useDisputeEvidences`, `useRefunds`, `useDecideDispute` |
 | Admin | admin/, admin/utilisateurs, admin/demandes-demo, audit | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs` |
 | IA (règles) | tableau-de-bord (Conseiller) | — |
 

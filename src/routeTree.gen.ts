@@ -20,6 +20,7 @@ import { Route as AuthenticatedBoutiqueRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
 import { Route as AuthenticatedCalendrierRouteImport } from './routes/_authenticated/calendrier'
 import { Route as AuthenticatedCommandesRouteImport } from './routes/_authenticated/commandes'
+import { Route as AuthenticatedDemandesDevisRouteImport } from './routes/_authenticated/demandes-devis'
 import { Route as AuthenticatedDepensesRouteImport } from './routes/_authenticated/depenses'
 import { Route as AuthenticatedDevisRouteImport } from './routes/_authenticated/devis'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
@@ -27,6 +28,7 @@ import { Route as AuthenticatedEntreprisesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFacturationRouteImport } from './routes/_authenticated/facturation'
 import { Route as AuthenticatedFournisseursRouteImport } from './routes/_authenticated/fournisseurs'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
+import { Route as AuthenticatedLitigesRouteImport } from './routes/_authenticated/litiges'
 import { Route as AuthenticatedMaBoutiqueRouteImport } from './routes/_authenticated/ma-boutique'
 import { Route as AuthenticatedMateriauxRouteImport } from './routes/_authenticated/materiaux'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -43,6 +45,7 @@ import { Route as AuthenticatedReservesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
 import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
 import { Route as AuthenticatedTachesRouteImport } from './routes/_authenticated/taches'
+import { Route as PaiementReferenceRouteImport } from './routes/paiement.$reference'
 import { Route as PartageTokenRouteImport } from './routes/partage.$token'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminDemandesDemoRouteImport } from './routes/_authenticated/admin.demandes-demo'
@@ -102,6 +105,12 @@ const AuthenticatedCommandesRoute = AuthenticatedCommandesRouteImport.update({
   path: '/commandes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDemandesDevisRoute =
+  AuthenticatedDemandesDevisRouteImport.update({
+    id: '/demandes-devis',
+    path: '/demandes-devis',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDepensesRoute = AuthenticatedDepensesRouteImport.update({
   id: '/depenses',
   path: '/depenses',
@@ -138,6 +147,11 @@ const AuthenticatedFournisseursRoute =
 const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   id: '/journal',
   path: '/journal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLitigesRoute = AuthenticatedLitigesRouteImport.update({
+  id: '/litiges',
+  path: '/litiges',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMaBoutiqueRoute = AuthenticatedMaBoutiqueRouteImport.update({
@@ -222,6 +236,11 @@ const AuthenticatedTachesRoute = AuthenticatedTachesRouteImport.update({
   path: '/taches',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const PaiementReferenceRoute = PaiementReferenceRouteImport.update({
+  id: '/paiement/$reference',
+  path: '/paiement/$reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PartageTokenRoute = PartageTokenRouteImport.update({
   id: '/partage/$token',
   path: '/partage/$token',
@@ -256,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/budget': typeof AuthenticatedBudgetRoute
   '/calendrier': typeof AuthenticatedCalendrierRoute
   '/commandes': typeof AuthenticatedCommandesRoute
+  '/demandes-devis': typeof AuthenticatedDemandesDevisRoute
   '/depenses': typeof AuthenticatedDepensesRoute
   '/devis': typeof AuthenticatedDevisRoute
   '/documents': typeof AuthenticatedDocumentsRoute
@@ -263,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/facturation': typeof AuthenticatedFacturationRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/litiges': typeof AuthenticatedLitigesRoute
   '/ma-boutique': typeof AuthenticatedMaBoutiqueRoute
   '/materiaux': typeof AuthenticatedMateriauxRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -279,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/stock': typeof AuthenticatedStockRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/taches': typeof AuthenticatedTachesRoute
+  '/paiement/$reference': typeof PaiementReferenceRoute
   '/partage/$token': typeof PartageTokenRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
@@ -295,6 +317,7 @@ export interface FileRoutesByTo {
   '/budget': typeof AuthenticatedBudgetRoute
   '/calendrier': typeof AuthenticatedCalendrierRoute
   '/commandes': typeof AuthenticatedCommandesRoute
+  '/demandes-devis': typeof AuthenticatedDemandesDevisRoute
   '/depenses': typeof AuthenticatedDepensesRoute
   '/devis': typeof AuthenticatedDevisRoute
   '/documents': typeof AuthenticatedDocumentsRoute
@@ -302,6 +325,7 @@ export interface FileRoutesByTo {
   '/facturation': typeof AuthenticatedFacturationRoute
   '/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/litiges': typeof AuthenticatedLitigesRoute
   '/ma-boutique': typeof AuthenticatedMaBoutiqueRoute
   '/materiaux': typeof AuthenticatedMateriauxRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -318,6 +342,7 @@ export interface FileRoutesByTo {
   '/stock': typeof AuthenticatedStockRoute
   '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/taches': typeof AuthenticatedTachesRoute
+  '/paiement/$reference': typeof PaiementReferenceRoute
   '/partage/$token': typeof PartageTokenRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
@@ -336,6 +361,7 @@ export interface FileRoutesById {
   '/_authenticated/budget': typeof AuthenticatedBudgetRoute
   '/_authenticated/calendrier': typeof AuthenticatedCalendrierRoute
   '/_authenticated/commandes': typeof AuthenticatedCommandesRoute
+  '/_authenticated/demandes-devis': typeof AuthenticatedDemandesDevisRoute
   '/_authenticated/depenses': typeof AuthenticatedDepensesRoute
   '/_authenticated/devis': typeof AuthenticatedDevisRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
@@ -343,6 +369,7 @@ export interface FileRoutesById {
   '/_authenticated/facturation': typeof AuthenticatedFacturationRoute
   '/_authenticated/fournisseurs': typeof AuthenticatedFournisseursRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
+  '/_authenticated/litiges': typeof AuthenticatedLitigesRoute
   '/_authenticated/ma-boutique': typeof AuthenticatedMaBoutiqueRoute
   '/_authenticated/materiaux': typeof AuthenticatedMateriauxRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
@@ -359,6 +386,7 @@ export interface FileRoutesById {
   '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
   '/_authenticated/taches': typeof AuthenticatedTachesRoute
+  '/paiement/$reference': typeof PaiementReferenceRoute
   '/partage/$token': typeof PartageTokenRoute
   '/_authenticated/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
   '/_authenticated/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
@@ -377,6 +405,7 @@ export interface FileRouteTypes {
     | '/budget'
     | '/calendrier'
     | '/commandes'
+    | '/demandes-devis'
     | '/depenses'
     | '/devis'
     | '/documents'
@@ -384,6 +413,7 @@ export interface FileRouteTypes {
     | '/facturation'
     | '/fournisseurs'
     | '/journal'
+    | '/litiges'
     | '/ma-boutique'
     | '/materiaux'
     | '/messages'
@@ -400,6 +430,7 @@ export interface FileRouteTypes {
     | '/stock'
     | '/tableau-de-bord'
     | '/taches'
+    | '/paiement/$reference'
     | '/partage/$token'
     | '/admin/demandes-demo'
     | '/admin/utilisateurs'
@@ -416,6 +447,7 @@ export interface FileRouteTypes {
     | '/budget'
     | '/calendrier'
     | '/commandes'
+    | '/demandes-devis'
     | '/depenses'
     | '/devis'
     | '/documents'
@@ -423,6 +455,7 @@ export interface FileRouteTypes {
     | '/facturation'
     | '/fournisseurs'
     | '/journal'
+    | '/litiges'
     | '/ma-boutique'
     | '/materiaux'
     | '/messages'
@@ -439,6 +472,7 @@ export interface FileRouteTypes {
     | '/stock'
     | '/tableau-de-bord'
     | '/taches'
+    | '/paiement/$reference'
     | '/partage/$token'
     | '/admin/demandes-demo'
     | '/admin/utilisateurs'
@@ -456,6 +490,7 @@ export interface FileRouteTypes {
     | '/_authenticated/budget'
     | '/_authenticated/calendrier'
     | '/_authenticated/commandes'
+    | '/_authenticated/demandes-devis'
     | '/_authenticated/depenses'
     | '/_authenticated/devis'
     | '/_authenticated/documents'
@@ -463,6 +498,7 @@ export interface FileRouteTypes {
     | '/_authenticated/facturation'
     | '/_authenticated/fournisseurs'
     | '/_authenticated/journal'
+    | '/_authenticated/litiges'
     | '/_authenticated/ma-boutique'
     | '/_authenticated/materiaux'
     | '/_authenticated/messages'
@@ -479,6 +515,7 @@ export interface FileRouteTypes {
     | '/_authenticated/stock'
     | '/_authenticated/tableau-de-bord'
     | '/_authenticated/taches'
+    | '/paiement/$reference'
     | '/partage/$token'
     | '/_authenticated/admin/demandes-demo'
     | '/_authenticated/admin/utilisateurs'
@@ -491,6 +528,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChangelogRoute: typeof ChangelogRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PaiementReferenceRoute: typeof PaiementReferenceRoute
   PartageTokenRoute: typeof PartageTokenRoute
 }
 
@@ -573,6 +611,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommandesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/demandes-devis': {
+      id: '/_authenticated/demandes-devis'
+      path: '/demandes-devis'
+      fullPath: '/demandes-devis'
+      preLoaderRoute: typeof AuthenticatedDemandesDevisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/depenses': {
       id: '/_authenticated/depenses'
       path: '/depenses'
@@ -620,6 +665,13 @@ declare module '@tanstack/react-router' {
       path: '/journal'
       fullPath: '/journal'
       preLoaderRoute: typeof AuthenticatedJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/litiges': {
+      id: '/_authenticated/litiges'
+      path: '/litiges'
+      fullPath: '/litiges'
+      preLoaderRoute: typeof AuthenticatedLitigesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/ma-boutique': {
@@ -734,6 +786,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTachesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/paiement/$reference': {
+      id: '/paiement/$reference'
+      path: '/paiement/$reference'
+      fullPath: '/paiement/$reference'
+      preLoaderRoute: typeof PaiementReferenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/partage/$token': {
       id: '/partage/$token'
       path: '/partage/$token'
@@ -772,6 +831,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
   AuthenticatedCalendrierRoute: typeof AuthenticatedCalendrierRoute
   AuthenticatedCommandesRoute: typeof AuthenticatedCommandesRoute
+  AuthenticatedDemandesDevisRoute: typeof AuthenticatedDemandesDevisRoute
   AuthenticatedDepensesRoute: typeof AuthenticatedDepensesRoute
   AuthenticatedDevisRoute: typeof AuthenticatedDevisRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
@@ -779,6 +839,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFacturationRoute: typeof AuthenticatedFacturationRoute
   AuthenticatedFournisseursRoute: typeof AuthenticatedFournisseursRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
+  AuthenticatedLitigesRoute: typeof AuthenticatedLitigesRoute
   AuthenticatedMaBoutiqueRoute: typeof AuthenticatedMaBoutiqueRoute
   AuthenticatedMateriauxRoute: typeof AuthenticatedMateriauxRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
@@ -807,6 +868,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
   AuthenticatedCalendrierRoute: AuthenticatedCalendrierRoute,
   AuthenticatedCommandesRoute: AuthenticatedCommandesRoute,
+  AuthenticatedDemandesDevisRoute: AuthenticatedDemandesDevisRoute,
   AuthenticatedDepensesRoute: AuthenticatedDepensesRoute,
   AuthenticatedDevisRoute: AuthenticatedDevisRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
@@ -814,6 +876,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFacturationRoute: AuthenticatedFacturationRoute,
   AuthenticatedFournisseursRoute: AuthenticatedFournisseursRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
+  AuthenticatedLitigesRoute: AuthenticatedLitigesRoute,
   AuthenticatedMaBoutiqueRoute: AuthenticatedMaBoutiqueRoute,
   AuthenticatedMateriauxRoute: AuthenticatedMateriauxRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
@@ -844,6 +907,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChangelogRoute: ChangelogRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PaiementReferenceRoute: PaiementReferenceRoute,
   PartageTokenRoute: PartageTokenRoute,
 }
 export const routeTree = rootRouteImport

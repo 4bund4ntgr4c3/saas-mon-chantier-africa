@@ -24,6 +24,173 @@ export type Company = Tables["companies"]["Row"];
 export type Expense = Tables["expenses"]["Row"];
 export type Payment = Tables["payments"]["Row"];
 export type Quote = Tables["quotes"]["Row"];
+export type QuoteItem = Tables["quote_items"]["Row"];
+export type QuoteRequest = Tables["quote_requests"]["Row"];
+export type QuoteBid = Tables["quote_bids"]["Row"];
+export type Dispute = Tables["disputes"]["Row"];
+export type DisputeEvidence = Tables["dispute_evidences"]["Row"];
+export type Refund = Tables["refunds"]["Row"];
+
+export function useQuoteItems(quoteId: string | null) {
+  return useQuery({
+    queryKey: ["quote_items", quoteId],
+    enabled: !!quoteId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<QuoteItem>("quote_items").filter((i) => i.quote_id === quoteId!)
+        : unwrap<QuoteItem[]>(
+            supabase.from("quote_items").select("*").eq("quote_id", quoteId!).order("created_at"),
+          ),
+  });
+}
+
+/** Toutes les demandes de devis (le marketplace permet de répondre à celles des autres). */
+export function useQuoteRequests() {
+  return useQuery({
+    queryKey: ["quote_requests"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<QuoteRequest>("quote_requests")
+        : unwrap<QuoteRequest[]>(
+            supabase.from("quote_requests").select("*").order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Demandes de devis publiées par l'utilisateur courant (pour le suivi des offres reçues). */
+export function useMyQuoteRequests() {
+  const { data: profile } = useProfile();
+  const uid = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["quote_requests", "mine", uid],
+    enabled: !!uid,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<QuoteRequest>("quote_requests").filter((r) => r.user_id === uid)
+        : unwrap<QuoteRequest[]>(
+            supabase
+              .from("quote_requests")
+              .select("*")
+              .eq("user_id", uid!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Offres reçues sur une demande de devis. */
+export function useQuoteBids(requestId: string | null) {
+  return useQuery({
+    queryKey: ["quote_bids", requestId],
+    enabled: !!requestId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<QuoteBid>("quote_bids").filter((b) => b.request_id === requestId!)
+        : unwrap<QuoteBid[]>(
+            supabase
+              .from("quote_bids")
+              .select("*")
+              .eq("request_id", requestId!)
+              .order("created_at"),
+          ),
+  });
+}
+
+/** Mes offres déposées sur les demandes de devis des autres. */
+export function useMyQuoteBids() {
+  const { data: profile } = useProfile();
+  const uid = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["quote_bids", "mine", uid],
+    enabled: !!uid,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<QuoteBid>("quote_bids").filter((b) => b.user_id === uid)
+        : unwrap<QuoteBid[]>(
+            supabase.from("quote_bids").select("*").eq("user_id", uid!).order("created_at"),
+          ),
+  });
+}
+
+/** Attribue le devis gagnant d'une demande (réservé au propriétaire de la demande). */
+export function useAwardQuoteBid() {
+  return useSaveRow("quote_requests", "Devis attribué");
+}
+
+/** Tous les litiges (médiation transparente, lisible par toute personne connectée). */
+export function useDisputes() {
+  return useQuery({
+    queryKey: ["disputes"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Dispute>("disputes")
+        : unwrap<Dispute[]>(
+            supabase.from("disputes").select("*").order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Mes litiges (ceux que j'ai ouverts). */
+export function useMyDisputes() {
+  const { data: profile } = useProfile();
+  const uid = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["disputes", "mine", uid],
+    enabled: !!uid,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Dispute>("disputes").filter((d) => d.user_id === uid)
+        : unwrap<Dispute[]>(
+            supabase
+              .from("disputes")
+              .select("*")
+              .eq("user_id", uid!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Preuves déposées sur un litige. */
+export function useDisputeEvidences(disputeId: string | null) {
+  return useQuery({
+    queryKey: ["dispute_evidences", disputeId],
+    enabled: !!disputeId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<DisputeEvidence>("dispute_evidences").filter((e) => e.dispute_id === disputeId!)
+        : unwrap<DisputeEvidence[]>(
+            supabase
+              .from("dispute_evidences")
+              .select("*")
+              .eq("dispute_id", disputeId!)
+              .order("created_at"),
+          ),
+  });
+}
+
+/** Remboursements émis sur un litige. */
+export function useRefunds(disputeId: string | null) {
+  return useQuery({
+    queryKey: ["refunds", disputeId],
+    enabled: !!disputeId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Refund>("refunds").filter((r) => r.dispute_id === disputeId!)
+        : unwrap<Refund[]>(
+            supabase.from("refunds").select("*").eq("dispute_id", disputeId!).order("created_at"),
+          ),
+  });
+}
+
+/** Rendu d'une décision de médiation (réservé aux administrateurs). */
+export function useDecideDispute() {
+  return useSaveRow("disputes", "Décision enregistrée");
+}
+
+/** Génère la référence d'un litige (ex. LIT-2026-00001). */
+export function disputeRef() {
+  const n = String(Math.floor(Math.random() * 90000) + 10000);
+  return `LIT-${new Date().getFullYear()}-${n}`;
+}
 export type BudgetLine = Tables["budget_lines"]["Row"];
 
 async function unwrap<T>(p: PromiseLike<{ data: T | null; error: { message: string } | null }>) {
@@ -354,16 +521,19 @@ type TableName =
   | "expenses"
   | "payments"
   | "quotes"
+  | "quote_items"
   | "budget_lines"
   | "categories"
   | "site_logs"
   | "documents"
   | "profiles"
   | "invoices"
+  | "invoice_items"
   | "invoice_payments"
   | "materials"
   | "material_requirements"
   | "material_deliveries"
+  | "payment_transactions"
   | "tasks"
   | "photos"
   | "providers"
@@ -383,6 +553,11 @@ type TableName =
   | "reserves"
   | "plans"
   | "messages"
+  | "quote_requests"
+  | "quote_bids"
+  | "disputes"
+  | "dispute_evidences"
+  | "refunds"
   | "profile_verifications"
   | "organizations"
   | "organization_members"
@@ -394,13 +569,16 @@ const RELATED: Record<TableName, string[]> = {
   companies: ["companies"],
   expenses: ["expenses"],
   payments: ["payments", "expenses"],
-  quotes: ["quotes"],
+  payment_transactions: ["payment_transactions", "orders", "payments"],
+  quotes: ["quotes", "quote_items"],
+  quote_items: ["quote_items", "quotes"],
   budget_lines: ["budget_lines"],
   categories: ["categories"],
   site_logs: ["site_logs"],
   documents: ["documents"],
   profiles: ["profile"],
-  invoices: ["invoices", "invoice_payments"],
+  invoices: ["invoices", "invoice_payments", "invoice_items"],
+  invoice_items: ["invoice_items", "invoices"],
   invoice_payments: ["invoice_payments", "invoices"],
   materials: ["materials"],
   material_requirements: ["material_requirements", "materials"],
@@ -424,6 +602,11 @@ const RELATED: Record<TableName, string[]> = {
   reserves: ["reserves"],
   plans: ["plans"],
   messages: ["messages"],
+  quote_requests: ["quote_requests", "quote_bids"],
+  quote_bids: ["quote_bids", "quote_requests"],
+  disputes: ["disputes", "dispute_evidences", "refunds"],
+  dispute_evidences: ["dispute_evidences", "disputes"],
+  refunds: ["refunds", "disputes"],
   profile_verifications: ["profile_verifications"],
   organizations: ["organizations", "organization_members"],
   organization_members: ["organization_members", "organizations"],
@@ -985,6 +1168,23 @@ export function useSendNotificationEmail() {
 /* ---------- Facturation client ---------- */
 
 export type Invoice = Tables["invoices"]["Row"];
+
+export type InvoiceItem = Tables["invoice_items"]["Row"];
+
+export function useInvoiceItems(invoiceId: string) {
+  return useQuery({
+    queryKey: ["invoice_items", invoiceId],
+    enabled: !!invoiceId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<InvoiceItem>("invoice_items").filter(
+            (r) => (r as { invoice_id: string }).invoice_id === invoiceId,
+          )
+        : unwrap<InvoiceItem[]>(
+            supabase.from("invoice_items").select("*").eq("invoice_id", invoiceId),
+          ),
+  });
+}
 export type InvoicePayment = Tables["invoice_payments"]["Row"];
 export type InvoiceStatus = Database["public"]["Enums"]["invoice_status"];
 
@@ -1258,6 +1458,290 @@ export function useAddMaterialRequirement() {
       toast.success("Besoin en matériaux ajouté");
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Paiement mobile money ---------- */
+
+export type PaymentTransaction = Tables["payment_transactions"]["Row"];
+export type PaymentProvider = Database["public"]["Enums"]["payment_provider"];
+export type PaymentTransactionStatus = Database["public"]["Enums"]["payment_transaction_status"];
+
+export const MOBILE_MONEY_PROVIDERS: PaymentProvider[] = [
+  "mtn_momo",
+  "moov_money",
+  "paydunya",
+  "bankly",
+  "cmi",
+  "paystack",
+];
+
+/** Transactions de paiement mobile money de l'utilisateur (chantier ou commande). */
+export function usePaymentTransactions(projectId: string | null) {
+  return useQuery({
+    queryKey: ["payment_transactions", projectId],
+    enabled: !projectId || !!projectId,
+    queryFn: () =>
+      isGuestMode()
+        ? projectId
+          ? demoRows<PaymentTransaction>("payment_transactions").filter(
+              (r) => (r as { project_id: string | null }).project_id === projectId,
+            )
+          : demoRows<PaymentTransaction>("payment_transactions")
+        : unwrap<PaymentTransaction[]>(
+            projectId
+              ? supabase
+                  .from("payment_transactions")
+                  .select("*")
+                  .eq("project_id", projectId)
+                  .order("created_at", { ascending: false })
+              : supabase
+                  .from("payment_transactions")
+                  .select("*")
+                  .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+type InitiateInput = {
+  project_id?: string;
+  order_id?: string;
+  amount: number;
+  provider: PaymentProvider;
+  phone: string;
+  currency?: string;
+  reference?: string;
+};
+
+/** Initie un paiement mobile money (sandbox) : crée une transaction `initiee`. */
+export function useInitiateMobileMoney() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: InitiateInput) => {
+      const txn: Partial<PaymentTransaction> = {
+        project_id: values.project_id ?? null,
+        order_id: values.order_id ?? null,
+        provider: values.provider,
+        amount: values.amount,
+        currency: values.currency ?? "XOF",
+        phone: values.phone,
+        status: "initiee",
+        reference: values.reference ?? `MM-${Date.now().toString(36).toUpperCase()}`,
+      };
+      if (isGuestMode()) {
+        const id = demoInsert("payment_transactions", {
+          ...txn,
+          status: "confirmee",
+          transaction_id: `TX-${Date.now().toString(36).toUpperCase()}`,
+        });
+        if (values.order_id) {
+          demoUpdate("orders", values.order_id, {
+            payment_status: "payee",
+            status: "payee",
+          });
+        }
+        return id;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { data, error } = await supabase
+        .from("payment_transactions")
+        .insert({ ...txn, user_id: auth.user.id })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return data?.id;
+    },
+    onSuccess: () => {
+      ["payment_transactions", "orders"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+      toast.success("Paiement initié");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+type ConfirmInput = {
+  transactionId: string;
+  order_id?: string;
+  project_id?: string;
+  provider: PaymentProvider;
+  amount: number;
+  phone?: string;
+  payment_date?: string;
+  reference?: string;
+};
+
+/** Confirme un paiement mobile money (simule le retour de la passerelle). */
+export function useConfirmMobileMoney() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: ConfirmInput) => {
+      const transactionId = values.transactionId;
+      if (isGuestMode()) {
+        demoUpdate("payment_transactions", transactionId, {
+          status: "confirmee",
+          transaction_id: `TX-${Date.now().toString(36).toUpperCase()}`,
+        });
+        if (values.order_id) {
+          demoUpdate("orders", values.order_id, {
+            payment_status: "payee",
+            status: "payee",
+          });
+        }
+        if (values.project_id) {
+          demoInsert("payments", {
+            project_id: values.project_id,
+            amount: values.amount,
+            payment_date: values.payment_date ?? new Date().toISOString().slice(0, 10),
+            kind: "comptant",
+            method: values.provider === "mtn_momo" ? "mtn_momo" : "moov_money",
+            provider: values.provider,
+            phone: values.phone ?? null,
+            transaction_id: transactionId,
+            status: "confirmee",
+            reference: values.reference ?? null,
+          });
+        }
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error: txnErr } = await supabase
+        .from("payment_transactions")
+        .update({
+          status: "confirmee",
+          transaction_id: `TX-${Date.now().toString(36).toUpperCase()}`,
+        })
+        .eq("id", transactionId);
+      if (txnErr) throw new Error(txnErr.message);
+      if (values.order_id) {
+        const { error: orderErr } = await supabase
+          .from("orders")
+          .update({ payment_status: "payee", status: "payee" })
+          .eq("id", values.order_id);
+        if (orderErr) throw new Error(orderErr.message);
+      }
+      if (values.project_id) {
+        const { error: payErr } = await supabase.from("payments").insert({
+          user_id: auth.user.id,
+          project_id: values.project_id,
+          amount: values.amount,
+          payment_date: values.payment_date ?? new Date().toISOString().slice(0, 10),
+          kind: "comptant",
+          method: values.provider === "mtn_momo" ? "mtn_momo" : "moov_money",
+          provider: values.provider,
+          phone: values.phone ?? null,
+          transaction_id: transactionId,
+          reference: values.reference ?? null,
+        });
+        if (payErr) throw new Error(payErr.message);
+      }
+    },
+    onSuccess: (_d, v) => {
+      ["payment_transactions", "orders", "payments"].forEach((k) =>
+        qc.invalidateQueries({ queryKey: [k] }),
+      );
+      toast.success("Paiement confirmé");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Annule un paiement initié (non confirmé). */
+export function useCancelMobileMoney() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (transactionId: string) => {
+      if (isGuestMode()) {
+        demoUpdate("payment_transactions", transactionId, { status: "annulee" });
+        return;
+      }
+      const { error } = await supabase
+        .from("payment_transactions")
+        .update({ status: "annulee" as PaymentTransactionStatus })
+        .eq("id", transactionId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["payment_transactions"] });
+      toast.success("Paiement annulé");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Lien de paiement public ---------- */
+
+export type PaymentLinkOrder = {
+  order: {
+    id: string;
+    reference: string | null;
+    status: string;
+    payment_method: string | null;
+    total: number;
+    delivery_fee: number;
+    store_id: string;
+    city: string | null;
+    phone: string | null;
+    notes: string | null;
+  } | null;
+  items: {
+    id: string;
+    name: string;
+    quantity: number;
+    unit_price: number;
+    unit: string | null;
+  }[];
+  store: { id: string; name: string } | null;
+};
+
+/** Lit une commande publiquement par référence (lien de paiement partageable). */
+export function usePublicOrderByReference(reference: string | null) {
+  return useQuery({
+    queryKey: ["payment_link", reference],
+    enabled: !!reference,
+    queryFn: async () => {
+      if (!reference) return null;
+      if (isGuestMode()) {
+        const order = demoRows<Order & { reference: string | null }>("orders").find(
+          (o) => o.reference === reference,
+        );
+        if (!order) return null;
+        const items = demoRows<{
+          id: string;
+          order_id: string;
+          name: string;
+          quantity: number;
+          unit_price: number;
+          unit: string | null;
+        }>("order_items").filter((i) => i.order_id === order.id);
+        const store = demoRows<{ id: string; name: string }>("stores").find(
+          (s) => s.id === order.store_id,
+        );
+        return {
+          order: {
+            id: order.id,
+            reference: order.reference,
+            status: order.status,
+            payment_method: order.payment_method,
+            total: Number(order.total),
+            delivery_fee: Number(order.delivery_fee),
+            store_id: order.store_id,
+            city: order.city,
+            phone: order.phone,
+            notes: order.notes ?? "",
+          },
+          items,
+          store: store ?? null,
+        } as PaymentLinkOrder;
+      }
+      const { data, error } = await supabase.rpc("get_payment_link_order", {
+        p_reference: reference,
+      });
+      if (error) throw new Error(error.message);
+      return (data as unknown as PaymentLinkOrder | null) ?? null;
+    },
+    retry: false,
   });
 }
 

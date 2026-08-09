@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ import {
   useRemoveCartItem,
   useStores,
   useUpdateCartItem,
+  useUpdateOrderStatus,
 } from "@/lib/data";
 import { QtyStepper, CloseButton } from "./boutique";
 
@@ -61,9 +63,11 @@ function PanierPage() {
   const updateItem = useUpdateCartItem();
   const removeItem = useRemoveCartItem();
   const createOrder = useCreateOrder();
+  const updateOrderStatus = useUpdateOrderStatus();
   const { projects, project } = useCurrentProject();
 
   const [projectId, setLocalProjectId] = useState<string | null>(null);
+  const [payingOrder, setPayingOrder] = useState<{ id: string; total: number } | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
@@ -136,7 +140,7 @@ function PanierPage() {
   const placeOrder = async (storeGroup: (typeof totalByGroup)[number]) => {
     if (!paymentMethod) {
       toast.error("Choisissez un mode de paiement");
-      return;
+      return null;
     }
     const items = storeGroup.rows.map((r) => ({
       productId: r.item.product_id,
@@ -146,7 +150,7 @@ function PanierPage() {
       unitPrice: Number(r.item.unit_price),
     }));
     const store = storeById.get(storeGroup.storeId);
-    await createOrder.mutateAsync({
+    const orderId = await createOrder.mutateAsync({
       storeId: storeGroup.storeId,
       projectId: effectiveProjectId,
       items,
@@ -167,6 +171,25 @@ function PanierPage() {
             }
           : null,
     });
+    return orderId;
+  };
+
+  const checkout = async () => {
+    const created: { id: string; total: number }[] = [];
+    for (const g of totalByGroup) {
+      const id = await placeOrder(g);
+      if (id) created.push({ id, total: g.total });
+    }
+    const isMoMo = paymentMethod === "mtn_momo" || paymentMethod === "moov_money";
+    const isCod = paymentMethod === "a_la_livraison";
+    if (isMoMo && created.length > 0) {
+      created.forEach((o) => updateOrderStatus.mutate({ id: o.id, status: "paiement_en_attente" }));
+      setPayingOrder(created[0]!);
+    } else if (created.length > 0) {
+      toast.success(
+        isCod ? "Commande enregistrée — paiement à la livraison" : "Commande enregistrée",
+      );
+    }
   };
 
   return (
@@ -386,7 +409,7 @@ function PanierPage() {
           <Button
             className="mt-4 w-full"
             disabled={createOrder.isPending}
-            onClick={() => totalByGroup.forEach((g) => void placeOrder(g))}
+            onClick={() => void checkout()}
           >
             {createOrder.isPending
               ? "Commande en cours…"
@@ -399,6 +422,16 @@ function PanierPage() {
           </p>
         </div>
       </div>
+
+      <MobileMoneyDialog
+        projectId={effectiveProjectId}
+        orderId={payingOrder?.id ?? null}
+        amount={payingOrder?.total ?? grandTotal}
+        open={payingOrder !== null}
+        onOpenChange={(o) => {
+          if (!o) setPayingOrder(null);
+        }}
+      />
     </>
   );
 }
@@ -407,6 +440,8 @@ function PaymentIcon({ method }: { method: string }) {
   switch (method) {
     case "especes":
       return <Wallet className="size-4 shrink-0" />;
+    case "a_la_livraison":
+      return <Truck className="size-4 shrink-0" />;
     case "mtn_momo":
     case "moov_money":
       return <Smartphone className="size-4 shrink-0" />;

@@ -48,6 +48,23 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 - Besoins en matériaux par chantier : quantités prévues / commandées / livrées / consommées / restantes, montant estimé, barre de progression
 - Enregistrement des livraisons avec mise à jour automatique du besoin, historique des livraisons, clôture des besoins livrés
 
+### Paiement mobile money (sandbox)
+- Transactions mobile money : MTN MoMo, Moov Money & passerelles (PayDunya, Bankly, CMI, Paystack)
+- Initier → confirmer/annuler un paiement, confirmation simulée du retour passerelle, création automatique du paiement comptable, badge de statut par transaction
+- Lien de paiement public `/paiement/$reference` partageable (WhatsApp), paiement à la livraison
+
+### Devis & factures
+- Devis dépliables avec lignes de détail (postes, quantités, unités, prix), total automatique
+- Détail des postes sur chaque facture
+
+### Demande de devis en ligne
+- Publiez un besoin (domaine, budget, localisation, échéance) et recevez des offres chiffrées de prestataires
+- Répondez aux demandes ouvertes et comparez ; attribuez l'offre retenue
+
+### Litiges & médiation
+- Ouvrez un litige (commande, devis, paiement, livraison, facturation), déposez vos preuves
+- Suivez la décision de médiation et le remboursement associé
+
 ### Expérience
 - PWA installable, i18n FR/EN (navigation), multi-pays/devise (FCFA/XOF, XAF, CDF), mode invité démo, tour guidé, conseiller IA à base de règles, page publique « Nouveautés » (changelog)
 

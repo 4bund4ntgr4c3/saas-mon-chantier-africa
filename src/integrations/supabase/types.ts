@@ -268,6 +268,95 @@ export type Database = {
         };
         Relationships: [];
       };
+      disputes: {
+        Row: {
+          amount: number | null;
+          created_at: string;
+          decided_at: string | null;
+          decided_by: string | null;
+          decision: string | null;
+          decision_note: string | null;
+          description: string | null;
+          id: string;
+          ref: string;
+          related_id: string | null;
+          related_type: string | null;
+          status: string;
+          subject: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number | null;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          decision?: string | null;
+          decision_note?: string | null;
+          description?: string | null;
+          id?: string;
+          ref: string;
+          related_id?: string | null;
+          related_type?: string | null;
+          status?: string;
+          subject: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number | null;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          decision?: string | null;
+          decision_note?: string | null;
+          description?: string | null;
+          id?: string;
+          ref?: string;
+          related_id?: string | null;
+          related_type?: string | null;
+          status?: string;
+          subject?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      dispute_evidences: {
+        Row: {
+          created_at: string;
+          dispute_id: string;
+          file_path: string | null;
+          id: string;
+          note: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          dispute_id: string;
+          file_path?: string | null;
+          id?: string;
+          note?: string | null;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          dispute_id?: string;
+          file_path?: string | null;
+          id?: string;
+          note?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dispute_evidences_dispute_id_fkey";
+            columns: ["dispute_id"];
+            isOneToOne: false;
+            referencedRelation: "disputes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       email_log: {
         Row: {
           details: Json | null;
@@ -390,6 +479,50 @@ export type Database = {
             columns: ["project_id"];
             isOneToOne: false;
             referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      invoice_items: {
+        Row: {
+          created_at: string;
+          designation: string;
+          id: string;
+          invoice_id: string;
+          quantity: string;
+          unit: string | null;
+          unit_price: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          designation: string;
+          id?: string;
+          invoice_id: string;
+          quantity?: string;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          designation?: string;
+          id?: string;
+          invoice_id?: string;
+          quantity?: string;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "invoices";
             referencedColumns: ["id"];
           },
         ];
@@ -825,6 +958,72 @@ export type Database = {
           },
         ];
       };
+      payment_transactions: {
+        Row: {
+          amount: number;
+          created_at: string;
+          currency: string;
+          id: string;
+          order_id: string | null;
+          phone: string | null;
+          project_id: string | null;
+          provider: Database["public"]["Enums"]["payment_provider"];
+          raw_response: Json | null;
+          reference: string | null;
+          status: Database["public"]["Enums"]["payment_transaction_status"];
+          transaction_id: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          order_id?: string | null;
+          phone?: string | null;
+          project_id?: string | null;
+          provider?: Database["public"]["Enums"]["payment_provider"];
+          raw_response?: Json | null;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["payment_transaction_status"];
+          transaction_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          order_id?: string | null;
+          phone?: string | null;
+          project_id?: string | null;
+          provider?: Database["public"]["Enums"]["payment_provider"];
+          raw_response?: Json | null;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["payment_transaction_status"];
+          transaction_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payment_transactions_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       payments: {
         Row: {
           amount: number;
@@ -837,9 +1036,13 @@ export type Database = {
           method: Database["public"]["Enums"]["payment_method"];
           notes: string | null;
           payment_date: string;
+          phone: string | null;
           project_id: string;
+          provider: Database["public"]["Enums"]["payment_provider"] | null;
           reference: string | null;
+          status: Database["public"]["Enums"]["payment_transaction_status"];
           supplier_id: string | null;
+          transaction_id: string | null;
           updated_at: string;
           user_id: string;
         };
@@ -854,9 +1057,13 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"];
           notes?: string | null;
           payment_date?: string;
+          phone?: string | null;
           project_id: string;
+          provider?: Database["public"]["Enums"]["payment_provider"] | null;
           reference?: string | null;
+          status?: Database["public"]["Enums"]["payment_transaction_status"];
           supplier_id?: string | null;
+          transaction_id?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -871,9 +1078,13 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"];
           notes?: string | null;
           payment_date?: string;
+          phone?: string | null;
           project_id?: string;
+          provider?: Database["public"]["Enums"]["payment_provider"] | null;
           reference?: string | null;
+          status?: Database["public"]["Enums"]["payment_transaction_status"];
           supplier_id?: string | null;
+          transaction_id?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -1000,6 +1211,150 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      quote_items: {
+        Row: {
+          created_at: string;
+          designation: string;
+          id: string;
+          quantity: number;
+          quote_id: string;
+          unit: string | null;
+          unit_price: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          designation: string;
+          id?: string;
+          quantity?: number;
+          quote_id: string;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          designation?: string;
+          id?: string;
+          quantity?: number;
+          quote_id?: string;
+          unit?: string | null;
+          unit_price?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey";
+            columns: ["quote_id"];
+            isOneToOne: false;
+            referencedRelation: "quotes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quote_requests: {
+        Row: {
+          budget_max: number | null;
+          budget_min: number | null;
+          category: string | null;
+          city: string | null;
+          commune: string | null;
+          created_at: string;
+          deadline: string | null;
+          description: string | null;
+          id: string;
+          status: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
+          winner_bid_id: string | null;
+        };
+        Insert: {
+          budget_max?: number | null;
+          budget_min?: number | null;
+          category?: string | null;
+          city?: string | null;
+          commune?: string | null;
+          created_at?: string;
+          deadline?: string | null;
+          description?: string | null;
+          id?: string;
+          status?: string;
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+          winner_bid_id?: string | null;
+        };
+        Update: {
+          budget_max?: number | null;
+          budget_min?: number | null;
+          category?: string | null;
+          city?: string | null;
+          commune?: string | null;
+          created_at?: string;
+          deadline?: string | null;
+          description?: string | null;
+          id?: string;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+          winner_bid_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quote_requests_winner_bid_fkey";
+            columns: ["winner_bid_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_bids";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      quote_bids: {
+        Row: {
+          amount: number;
+          created_at: string;
+          id: string;
+          message: string | null;
+          request_id: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          message?: string | null;
+          request_id: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          message?: string | null;
+          request_id?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "quote_bids_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: false;
+            referencedRelation: "quote_requests";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       quotes: {
         Row: {
@@ -1699,6 +2054,7 @@ export type Database = {
           notes: string | null;
           ordered_at: string;
           payment_method: string | null;
+          payment_status: string | null;
           phone: string | null;
           project_id: string | null;
           reference: string | null;
@@ -1720,6 +2076,7 @@ export type Database = {
           notes?: string | null;
           ordered_at?: string;
           payment_method?: string | null;
+          payment_status?: string;
           phone?: string | null;
           project_id?: string | null;
           reference?: string | null;
@@ -1741,6 +2098,7 @@ export type Database = {
           notes?: string | null;
           ordered_at?: string;
           payment_method?: string | null;
+          payment_status?: string;
           phone?: string | null;
           project_id?: string | null;
           reference?: string | null;
@@ -2049,6 +2407,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      refunds: {
+        Row: {
+          amount: number;
+          created_at: string;
+          dispute_id: string;
+          id: string;
+          method: string;
+          processed_at: string | null;
+          reference: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number;
+          created_at?: string;
+          dispute_id: string;
+          id?: string;
+          method?: string;
+          processed_at?: string | null;
+          reference?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          dispute_id?: string;
+          id?: string;
+          method?: string;
+          processed_at?: string | null;
+          reference?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "refunds_dispute_id_fkey";
+            columns: ["dispute_id"];
+            isOneToOne: false;
+            referencedRelation: "disputes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       reserves: {
         Row: {
           assigned_to: string | null;
@@ -2244,6 +2649,7 @@ export type Database = {
     Functions: {
       seed_demo_data: { Args: { _user_id: string }; Returns: undefined };
       get_shared_project: { Args: { p_token: string }; Returns: string };
+      get_payment_link_order: { Args: { p_reference: string }; Returns: string };
     };
     Enums: {
       account_type:
@@ -2280,6 +2686,8 @@ export type Database = {
         | "remboursee"
         | "litige";
       payment_method: "especes" | "mtn_momo" | "moov_money" | "virement" | "cheque";
+      payment_provider: "mtn_momo" | "moov_money" | "paydunya" | "bankly" | "cmi" | "paystack";
+      payment_transaction_status: "initiee" | "en_attente" | "confirmee" | "echouee" | "annulee";
       payment_type: "comptant" | "acompte" | "partiel" | "solde";
       project_status: "planifie" | "en_cours" | "suspendu" | "termine";
       quote_status: "en_attente" | "accepte" | "rejete" | "converti";
@@ -2449,6 +2857,8 @@ export const Constants = {
         "litige",
       ],
       payment_method: ["especes", "mtn_momo", "moov_money", "virement", "cheque"],
+      payment_provider: ["mtn_momo", "moov_money", "paydunya", "bankly", "cmi", "paystack"],
+      payment_transaction_status: ["initiee", "en_attente", "confirmee", "echouee", "annulee"],
       payment_type: ["comptant", "acompte", "partiel", "solde"],
       project_status: ["planifie", "en_cours", "suspendu", "termine"],
       quote_status: ["en_attente", "accepte", "rejete", "converti"],

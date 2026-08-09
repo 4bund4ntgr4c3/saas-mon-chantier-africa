@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FeatureGate } from "@/components/feature-gate";
 import { useMemo, useState } from "react";
-import { Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Pencil, Plus, Smartphone, Trash2, Upload } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { ImportDialog, type ImportColumn } from "@/components/import-csv";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,20 @@ import {
   useDeleteRow,
   useImportRows,
   usePayments,
+  usePaymentTransactions,
   useSaveRow,
   useSuppliers,
   type Payment,
 } from "@/lib/data";
-import { fcfa, frDate, labelOf, PAYMENT_METHODS, PAYMENT_TYPES } from "@/lib/format";
+import {
+  fcfa,
+  frDate,
+  labelOf,
+  PAYMENT_METHODS,
+  PAYMENT_PROVIDERS,
+  PAYMENT_TYPES,
+  PAYMENT_TRANSACTION_STATUSES,
+} from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/paiements")({
   head: () => ({
@@ -45,11 +55,13 @@ export const Route = createFileRoute("/_authenticated/paiements")({
 function PaymentsPage() {
   const { project, projectId } = useCurrentProject();
   const { data: payments = [] } = usePayments(projectId);
+  const { data: transactions = [] } = usePaymentTransactions(projectId);
   const { data: suppliers = [] } = useSuppliers();
   const { data: companies = [] } = useCompanies();
   const save = useSaveRow("payments", "Paiement enregistré");
   const remove = useDeleteRow("payments");
   const [editing, setEditing] = useState<Payment | null>(null);
+  const [mmOpen, setMmOpen] = useState(false);
 
   const fields: Field[] = useMemo(
     () => [
@@ -146,6 +158,9 @@ function PaymentsPage() {
         subtitle={`${payments.length} versement(s) · ${fcfa(total)}`}
         action={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setMmOpen(true)}>
+              <Smartphone className="size-4" /> Payer par mobile money
+            </Button>
             <ImportDialog
               title="Importer des paiements"
               description="Téléversez un fichier CSV ou Excel de paiements pour ce chantier."
@@ -280,6 +295,53 @@ function PaymentsPage() {
         </table>
       </div>
 
+      <div data-tour="mm-transactions" className="panel overflow-x-auto">
+        <div className="border-b border-border px-4 py-3">
+          <h3 className="font-display text-sm font-semibold">Transactions mobile money</h3>
+          <p className="text-xs text-muted-foreground">
+            Paiements initiés via passerelles (MTN MoMo, Moov Money, …) en sandbox.
+          </p>
+        </div>
+        <table className="w-full min-w-[560px] text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Passerelle</th>
+              <th className="px-4 py-3 text-right">Montant</th>
+              <th className="px-4 py-3">Statut</th>
+              <th className="px-4 py-3">Référence</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {transactions.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  Aucune transaction mobile money.
+                </td>
+              </tr>
+            ) : (
+              transactions.map((t) => (
+                <tr key={t.id} className="transition-colors hover:bg-secondary/40">
+                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                    {frDate(t.created_at)}
+                  </td>
+                  <td className="px-4 py-3">{labelOf(PAYMENT_PROVIDERS, t.provider)}</td>
+                  <td className="num whitespace-nowrap px-4 py-3 text-right text-primary">
+                    {fcfa(Number(t.amount))}
+                  </td>
+                  <td className="px-4 py-3">
+                    <TransactionBadge status={t.status} />
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {t.transaction_id ?? t.reference ?? "—"}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
       {editing && (
         <RecordDialog
           open
@@ -300,6 +362,28 @@ function PaymentsPage() {
           onSubmit={async (v) => save.mutateAsync({ id: editing.id, values: toPayload(v) })}
         />
       )}
+      <MobileMoneyDialog
+        projectId={projectId}
+        amount={total}
+        open={mmOpen}
+        onOpenChange={setMmOpen}
+      />
     </>
+  );
+}
+
+function TransactionBadge({ status }: { status: string }) {
+  const tone: Record<string, string> = {
+    initiee: "text-muted-foreground",
+    en_attente: "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+    confirmee:
+      "border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+    echouee: "border-destructive bg-destructive/10 text-destructive",
+    annulee: "border-destructive bg-destructive/10 text-destructive",
+  };
+  return (
+    <Badge variant="outline" className={`border ${tone[status] ?? ""}`}>
+      {labelOf(PAYMENT_TRANSACTION_STATUSES, status)}
+    </Badge>
   );
 }
