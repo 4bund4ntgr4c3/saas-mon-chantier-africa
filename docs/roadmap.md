@@ -126,9 +126,14 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ⬜ Push web réel (service worker) + push mobile
 - ⬜ SMS / WhatsApp transactionnels (devis, rapports, suivi de livraison) via fournisseur
 
-## Vague 9 — Location de matériel ⬜
+## Vague 9 — Location de matériel 🔄
 
-- `equipment` + `equipment_rentals` : prix/jour/semaine, caution, réservation, livraison, état du matériel
+- ✅ `equipment` + `equipment_rentals` : prix/jour/semaine, caution, réservation, livraison, état du matériel (migration `20260825000000_location-materiel.sql`)
+- ✅ Catalogue `/location` (recherche, filtre catégorie, carte tarifs/caution), demande de location (période + livraison)
+- ✅ Mon matériel (CRUD parc, statut/état) et Mes locations (confirmations propriétaire + demandes client)
+- ✅ `computeRentalPrice` (semaines + jours), notifications à la demande et au changement de statut
+- ⬜ Calendrier de disponibilité / chevauchement de périodes, QR code remise du matériel
+- ⬜ Paiement de la caution et de la location par mobile money
 
 ## Vague 10 — Immobilier promoteurs ⬜
 

@@ -28,6 +28,7 @@ const dict = {
   "nav.panier": ["Panier", "Cart"],
   "nav.commandes": ["Commandes", "Orders"],
   "nav.ma-boutique": ["Ma boutique", "My shop"],
+  "nav.location": ["Location de matériel", "Equipment rental"],
   "nav.rapports": ["Rapports", "Reports"],
   "nav.recherche": ["Recherche", "Search"],
   "nav.alertes": ["Alertes", "Alerts"],

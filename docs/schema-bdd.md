@@ -87,6 +87,10 @@ erDiagram
     profiles ||--o{ invoice_payments : "1..n"
     profiles ||--o{ ai_conversations : "1..n"
     ai_conversations ||--o{ ai_actions : "1..n"
+    profiles ||--o{ equipment : "1..n"
+    equipment ||--o{ equipment_rentals : "1..n"
+    profiles ||--o{ equipment_rentals : "1..n"
+    projects ||--o{ equipment_rentals : "1..n"
 ```
 
 ## Tables
@@ -101,6 +105,8 @@ erDiagram
 | `notifications` | Notifications persistées multi-canal : `channel` (`in_app`/`email`/`push`/`sms`/`whatsapp`), `kind` (commande, livraison, paiement, devis, rapport, litige, verification, assistant), `title`, `body`, `link`, `read_at`. RLS propriétaire. |
 | `device_tokens` | Appareils enregistrés pour le push : `token` unique par utilisateur (`user_id, token`), `platform`, `last_seen_at`. RLS propriétaire. |
 | `email_log` | Journal d'envoi des notifications. |
+| `equipment` | Matériel à louer : nom, catégorie, marque/modèle, ville, `daily_price`, `weekly_price`, `deposit` (caution), `quantity`, `condition` (excellent/bon/moyen/mauvais), `status` (disponible/loue/hors_service). RLS : catalogue lisible par tous les connectés, écriture propriétaire. |
+| `equipment_rentals` | Location de matériel : matériel, client, chantier, `start_date`/`end_date`, tarifs figés, `total_price`, `deposit`, livraison (`delivery_fee`, `delivery_address`, `scheduled_at`), `returned_at`, `status` (demande → confirmee → en_cours → retour_en_cours → terminee, + annulee/litige). RLS : client + propriétaire du matériel. |
 | `demo_requests` | Demandes d'accès à la démo commerciale. |
 
 ### Chantiers & suivi

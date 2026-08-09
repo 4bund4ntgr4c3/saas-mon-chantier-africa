@@ -71,6 +71,11 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 - Back-office admin de validation : approuvez/rejetez les documents et faites évoluer le niveau de confiance des profils
 - Avis étendus sur les vendeurs, produits et transporteurs, avec badge « Achat vérifié » et anti-faux avis (un avis par utilisateur et par cible)
 
+### Location de matériel
+- Catalogue de matériel à louer (prix par jour/semaine, caution, état, ville) avec recherche et filtre par catégorie
+- Demande de location avec période et livraison ; le propriétaire confirme, démarre et clôture le retour
+- Mon parc de matériel : ajout, modification, statut (disponible/loué/hors service)
+
 ### IA — Assistant conversationnel
 - Assistant par rôle (« Parler au chantier ») : dictée vocale (Web Speech), questions en français, réponses à base de règles sur vos données réelles
 - IA Achats : besoins matériaux restants, meilleure offre par produit parmi toutes les boutiques (comparaison multi-boutiques), calcul des quantités au multiple de la commande minimale, estimation du plan d'achat et économie vs prix de référence, ajout au panier

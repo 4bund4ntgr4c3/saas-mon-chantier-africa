@@ -272,3 +272,40 @@ export const REVIEW_TARGETS = [
   { value: "product", label: "Produit" },
   { value: "driver", label: "Transporteur" },
 ] as const;
+
+export const EQUIPMENT_CATEGORIES = [
+  { value: "gros_oeuvre", label: "Gros œuvre" },
+  { value: "maconnerie", label: "Maçonnerie" },
+  { value: "echafaudage", label: "Échafaudage" },
+  { value: "outillage", label: "Outillage" },
+  { value: "beton", label: "Béton & pompage" },
+  { value: "terrassement", label: "Terrassement" },
+  { value: "transport", label: "Transport" },
+  { value: "levage", label: "Levage" },
+  { value: "groupe_electrogene", label: "Groupe électrogène" },
+  { value: "securite", label: "Sécurité chantier" },
+  { value: "autre", label: "Autre" },
+] as const;
+
+export const EQUIPMENT_CONDITIONS = [
+  { value: "excellent", label: "Excellent" },
+  { value: "bon", label: "Bon" },
+  { value: "moyen", label: "Moyen" },
+  { value: "mauvais", label: "Mauvais" },
+] as const;
+
+export const EQUIPMENT_STATUSES = [
+  { value: "disponible", label: "Disponible" },
+  { value: "loue", label: "Loué" },
+  { value: "hors_service", label: "Hors service" },
+] as const;
+
+export const EQUIPMENT_RENTAL_STATUSES = [
+  { value: "demande", label: "Demande envoyée" },
+  { value: "confirmee", label: "Confirmée" },
+  { value: "en_cours", label: "En cours" },
+  { value: "retour_en_cours", label: "Retour en cours" },
+  { value: "terminee", label: "Terminée" },
+  { value: "annulee", label: "Annulée" },
+  { value: "litige", label: "Litige" },
+] as const;

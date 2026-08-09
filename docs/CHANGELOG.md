@@ -6,6 +6,40 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.25 — Vague 9 : Location de matériel (1ère tranche) (2026-08-09)
+
+### Migration
+- `supabase/migrations/20260825000000_location-materiel.sql`
+  - ✅ Enums `equipment_status` (`disponible` / `loue` / `hors_service`), `equipment_condition` (`excellent` / `bon` / `moyen` / `mauvais`), `equipment_rental_status` (`demande` → `confirmee` → `en_cours` → `retour_en_cours` → `terminee`, + `annulee` / `litige`)
+  - ✅ Table `equipment` : propriétaire, nom, catégorie, marque/modèle, ville, prix jour/semaine, **caution**, quantité, état, statut — RLS catalogue (lecture tous connectés, écriture propriétaire)
+  - ✅ Table `equipment_rentals` : matériel, client, chantier, période, tarifs figés, total calculé, livraison (adresse + frais), retour — RLS (client + propriétaire du matériel)
+  - ✅ Index + triggers `updated_at`
+
+### Hooks (`src/lib/data.ts`)
+- ✅ `computeRentalPrice(daily, weekly, start, end)` — pur et testé : semaines au tarif hebdo + jours restants au tarif jour, minimum 1 jour
+- ✅ `useEquipment()` (catalogue) / `useMyEquipment()` (mon parc) / `useMyEquipmentRentals()` (mes demandes) 
+- ✅ `useCreateEquipmentRental()` — tarif calculé à la création, notification au propriétaire
+- ✅ `useUpdateEquipmentRentalStatus()` — confirmation → matériel `loue`, retour → `disponible` + `returned_at`, notification
+- ✅ CRUD du matériel via `useSaveRow`/`useDeleteRow` (`equipment`)
+
+### Interface (`src/routes/_authenticated/location.tsx`)
+- ✅ Route `/location` (feature `marketplace`) avec 3 onglets :
+  - **Catalogue** : grille du matériel disponible, recherche + filtre par catégorie, carte (prix jour/semaine/caution, état, quantité) + boîte « Réserver » (période, livraison)
+  - **Mon matériel** : parc avec statut/état, ajout, modification (formulaire pré-rempli), retrait
+  - **Mes locations** : demandes reçues sur mon matériel (confirmer / démarrer / retour reçu / annuler) + mes demandes en tant que client
+- ✅ Entrée de navigation `nav.location` (FR/EN), icône `Wrench`
+
+### Démo
+- ✅ Seeds : 4 équipements (groupe électrogène, brouette, bétonnière, échafaudage) + 1 location confirmée
+
+### Tests
+- ✅ `computeRentalPrice` : 4 tests (3 jours, semaine complète, semaines + jours, minimum 1 jour) → **37 tests OK**
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur
+
+---
+
 ## v0.24 — Vague 8 : Notifications multi-canal (tranche 2 — page, push navigateur & SMS) (2026-08-09)
 
 ### Page « Mes notifications » (`src/routes/_authenticated/notifications.tsx`)

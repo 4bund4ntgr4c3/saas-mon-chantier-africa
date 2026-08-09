@@ -122,6 +122,7 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | Confiance & vérification (Vague 6) | parametres (section vérification), admin/verifications, avis vendeurs/produits/transporteurs (boutique — fiche produit, panier, prestataires) | `useProfileVerification`, `useMyVerificationDocuments`, `useAllVerificationDocuments`, `useSubmitVerificationDocument`, `useReviewVerificationDocument`, `useMarketReviews`, `useAddMarketReview` |
 | IA — Assistant (Vague 7) | assistant (conversation par rôle, IA Achats multi-boutiques, calcul de quantités, notes vocales, prévision de stock fournisseur, descriptions IA produits) | `useAiConversations`, `useAiActions`, `useUpsertAiConversation`, `useAddAiAction`, `useStoreStockForecast`, `computeStockForecast`, `suggestProductDescription` |
 | Notifications multi-canal (Vague 8) | cloche (notifications persistées + marquage lu), parametres (canaux push/SMS/WhatsApp + autorisation navigateur), `/notifications` (historique/filtres/suppression), commandes (partage SMS lien de paiement) | `useNotifications`, `useUnreadNotificationCount`, `useMarkNotificationsRead`, `useMarkNotificationRead`, `useDeleteNotification`, `useAddNotification`, `addPersistedNotification`, `useDeviceTokens`, `useRegisterDeviceToken`, `useRemoveDeviceToken` |
+| Location de matériel (Vague 9) | `/location` (catalogue, mon matériel, mes locations) | `useEquipment`, `useMyEquipment`, `useMyEquipmentRentals`, `useCreateEquipmentRental`, `useUpdateEquipmentRentalStatus`, `computeRentalPrice` |
 | Admin | admin/, admin/utilisateurs, admin/demandes-demo, admin/verifications, audit | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs` |
 | IA (règles) | tableau-de-bord (Conseiller) | — |
 
@@ -131,9 +132,9 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 npm run build      # génère routeTree.gen.ts + build complet
 npx tsc --noEmit   # 0 erreur attendue
 npx eslint .       # 0 erreur (18 warnings fast-refresh tolérés)
-npm run test       # 33 tests (format 16, i18n 3, guest-mode 3, geo 4, data 7)
+npm run test       # 37 tests (format 16, i18n 3, guest-mode 3, geo 4, data 11)
 ```
 
 ## 7. Prochaines étapes
 
-Voir `docs/roadmap.md` — **Vague 7** (IA) : brancher un LLM optionnel pour des réponses ouvertes. **Vague 8** (notifications multi-canal) : push web réel (service worker) et SMS/WhatsApp transactionnels via fournisseur.
+Voir `docs/roadmap.md` — **Vague 8** (notifications) : push web réel (service worker) et SMS/WhatsApp transactionnels. **Vague 9** (location de matériel) : calendrier de disponibilité, paiement de la caution par mobile money. Ensuite **Vague 10** (immobilier promoteurs).

@@ -444,6 +444,129 @@ export type Database = {
         };
         Relationships: [];
       };
+      equipment: {
+        Row: {
+          brand: string | null;
+          category: string;
+          city: string | null;
+          condition: Database["public"]["Enums"]["equipment_condition"];
+          created_at: string;
+          daily_price: number;
+          deposit: number;
+          description: string | null;
+          id: string;
+          image_url: string | null;
+          model: string | null;
+          name: string;
+          quantity: number;
+          status: Database["public"]["Enums"]["equipment_status"];
+          updated_at: string;
+          user_id: string;
+          weekly_price: number;
+        };
+        Insert: {
+          brand?: string | null;
+          category?: string;
+          city?: string | null;
+          condition?: Database["public"]["Enums"]["equipment_condition"];
+          created_at?: string;
+          daily_price?: number;
+          deposit?: number;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          model?: string | null;
+          name: string;
+          quantity?: number;
+          status?: Database["public"]["Enums"]["equipment_status"];
+          updated_at?: string;
+          user_id: string;
+          weekly_price?: number;
+        };
+        Update: {
+          brand?: string | null;
+          category?: string;
+          city?: string | null;
+          condition?: Database["public"]["Enums"]["equipment_condition"];
+          created_at?: string;
+          daily_price?: number;
+          deposit?: number;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          model?: string | null;
+          name?: string;
+          quantity?: number;
+          status?: Database["public"]["Enums"]["equipment_status"];
+          updated_at?: string;
+          user_id?: string;
+          weekly_price?: number;
+        };
+        Relationships: [];
+      };
+      equipment_rentals: {
+        Row: {
+          created_at: string;
+          daily_price: number;
+          delivery_address: string | null;
+          delivery_fee: number;
+          deposit: number;
+          end_date: string;
+          equipment_id: string;
+          id: string;
+          notes: string | null;
+          project_id: string | null;
+          returned_at: string | null;
+          scheduled_at: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["equipment_rental_status"];
+          total_price: number;
+          updated_at: string;
+          user_id: string;
+          weekly_price: number;
+        };
+        Insert: {
+          created_at?: string;
+          daily_price?: number;
+          delivery_address?: string | null;
+          delivery_fee?: number;
+          deposit?: number;
+          end_date: string;
+          equipment_id: string;
+          id?: string;
+          notes?: string | null;
+          project_id?: string | null;
+          returned_at?: string | null;
+          scheduled_at?: string | null;
+          start_date: string;
+          status?: Database["public"]["Enums"]["equipment_rental_status"];
+          total_price?: number;
+          updated_at?: string;
+          user_id: string;
+          weekly_price?: number;
+        };
+        Update: {
+          created_at?: string;
+          daily_price?: number;
+          delivery_address?: string | null;
+          delivery_fee?: number;
+          deposit?: number;
+          end_date?: string;
+          equipment_id?: string;
+          id?: string;
+          notes?: string | null;
+          project_id?: string | null;
+          returned_at?: string | null;
+          scheduled_at?: string | null;
+          start_date?: string;
+          status?: Database["public"]["Enums"]["equipment_rental_status"];
+          total_price?: number;
+          updated_at?: string;
+          user_id?: string;
+          weekly_price?: number;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           body: string | null;
@@ -2892,6 +3015,16 @@ export type Database = {
         | "garantie"
         | "photo_chantier"
         | "autre";
+      equipment_condition: "excellent" | "bon" | "moyen" | "mauvais";
+      equipment_rental_status:
+        | "demande"
+        | "confirmee"
+        | "en_cours"
+        | "retour_en_cours"
+        | "terminee"
+        | "annulee"
+        | "litige";
+      equipment_status: "disponible" | "loue" | "hors_service";
       invoice_status: "emise" | "partielle" | "payee" | "annulee";
       notification_channel: "in_app" | "email" | "push" | "sms" | "whatsapp";
       notification_kind:
@@ -3075,6 +3208,17 @@ export const Constants = {
         "photo_chantier",
         "autre",
       ],
+      equipment_condition: ["excellent", "bon", "moyen", "mauvais"],
+      equipment_rental_status: [
+        "demande",
+        "confirmee",
+        "en_cours",
+        "retour_en_cours",
+        "terminee",
+        "annulee",
+        "litige",
+      ],
+      equipment_status: ["disponible", "loue", "hors_service"],
       order_status: [
         "creee",
         "paiement_en_attente",

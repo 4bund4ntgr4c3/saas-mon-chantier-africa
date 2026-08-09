@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeStockForecast, suggestProductDescription } from "@/lib/data";
+import { computeRentalPrice, computeStockForecast, suggestProductDescription } from "@/lib/data";
 
 describe("computeStockForecast", () => {
   const now = Date.now();
@@ -110,5 +110,34 @@ describe("suggestProductDescription", () => {
     expect(d).toContain("Résistance UV");
     expect(d).toContain("Séchage rapide");
     expect(d).toContain("bidon");
+  });
+});
+
+describe("computeRentalPrice", () => {
+  it("tarifie une location de 3 jours au tarif journalier", () => {
+    const r = computeRentalPrice(10000, 50000, "2026-08-01", "2026-08-04");
+    expect(r.days).toBe(3);
+    expect(r.weeks).toBe(0);
+    expect(r.total).toBe(30000);
+  });
+
+  it("applique le tarif hebdomadaire pour 7 jours", () => {
+    const r = computeRentalPrice(10000, 50000, "2026-08-01", "2026-08-08");
+    expect(r.days).toBe(7);
+    expect(r.weeks).toBe(1);
+    expect(r.total).toBe(50000);
+  });
+
+  it("combine semaines et jours restants", () => {
+    const r = computeRentalPrice(10000, 50000, "2026-08-01", "2026-08-10");
+    expect(r.days).toBe(9);
+    expect(r.weeks).toBe(1);
+    expect(r.total).toBe(70000);
+  });
+
+  it("force au minimum un jour", () => {
+    const r = computeRentalPrice(10000, 50000, "2026-08-01", "2026-08-01");
+    expect(r.days).toBe(1);
+    expect(r.total).toBe(10000);
   });
 });

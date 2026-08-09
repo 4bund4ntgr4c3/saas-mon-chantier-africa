@@ -15,7 +15,13 @@ import {
 } from "@/lib/demo-store";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { haversineKm } from "@/lib/geo";
-import { DELIVERY_STATUSES, fcfa, labelOf, PRODUCT_UNITS } from "@/lib/format";
+import {
+  DELIVERY_STATUSES,
+  EQUIPMENT_RENTAL_STATUSES,
+  fcfa,
+  labelOf,
+  PRODUCT_UNITS,
+} from "@/lib/format";
 
 type Tables = Database["public"]["Tables"];
 export type Project = Tables["projects"]["Row"];
@@ -566,6 +572,8 @@ type TableName =
   | "ai_actions"
   | "notifications"
   | "device_tokens"
+  | "equipment"
+  | "equipment_rentals"
   | "organizations"
   | "organization_members"
   | "project_members";
@@ -621,6 +629,8 @@ const RELATED: Record<TableName, string[]> = {
   ai_actions: ["ai_actions", "ai_conversations"],
   notifications: ["notifications"],
   device_tokens: ["device_tokens"],
+  equipment: ["equipment", "equipment_rentals"],
+  equipment_rentals: ["equipment_rentals", "equipment"],
   organizations: ["organizations", "organization_members"],
   organization_members: ["organization_members", "organizations"],
   project_members: ["project_members"],
@@ -1448,6 +1458,264 @@ export function useMarkNotificationRead() {
 /** Supprime une notification persistée. */
 export function useDeleteNotification() {
   return useDeleteRow("notifications");
+}
+
+/* ---------- Vague 9 : location de matériel ---------- */
+
+export type Equipment = Tables["equipment"]["Row"];
+export type EquipmentRental = Tables["equipment_rentals"]["Row"];
+export type EquipmentStatus = Database["public"]["Enums"]["equipment_status"];
+export type EquipmentRentalStatus = Database["public"]["Enums"]["equipment_rental_status"];
+
+/** Calcule le montant d'une location : semaines au tarif hebdo + jours restants au tarif jour. */
+export function computeRentalPrice(
+  dailyPrice: number,
+  weeklyPrice: number,
+  startDate: string,
+  endDate: string,
+) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const days = Math.max(
+    1,
+    Math.round(
+      (Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()) -
+        Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())) /
+        msPerDay,
+    ),
+  );
+  const weeks = Math.floor(days / 7);
+  const remaining = days % 7;
+  return {
+    days,
+    weeks,
+    total: weeks * weeklyPrice + remaining * dailyPrice,
+  };
+}
+
+/** Catalogue du matériel à louer (tous les équipements visibles). */
+export function useEquipment() {
+  return useQuery({
+    queryKey: ["equipment"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Equipment>("equipment")
+        : unwrap<Equipment[]>(
+            supabase.from("equipment").select("*").order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Mes équipements mis en location. */
+export function useMyEquipment() {
+  const { data: profile } = useProfile();
+  const uid = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["equipment", "mine", uid],
+    enabled: !!uid,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<Equipment>("equipment").filter((e) => e.user_id === uid)
+        : unwrap<Equipment[]>(
+            supabase
+              .from("equipment")
+              .select("*")
+              .eq("user_id", uid!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Locations d'un équipement (vue propriétaire : demandes reçues + historiques). */
+export function useEquipmentRentals(equipmentId: string | null) {
+  return useQuery({
+    queryKey: ["equipment_rentals", equipmentId],
+    enabled: !!equipmentId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<EquipmentRental>("equipment_rentals").filter(
+            (r) => r.equipment_id === equipmentId!,
+          )
+        : unwrap<EquipmentRental[]>(
+            supabase
+              .from("equipment_rentals")
+              .select("*")
+              .eq("equipment_id", equipmentId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Mes demandes de location (client). */
+export function useMyEquipmentRentals() {
+  const { data: profile } = useProfile();
+  const uid = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["equipment_rentals", "mine", uid],
+    enabled: !!uid,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<EquipmentRental>("equipment_rentals").filter((r) => r.user_id === uid)
+        : unwrap<EquipmentRental[]>(
+            supabase
+              .from("equipment_rentals")
+              .select("*")
+              .eq("user_id", uid!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+export type RentalPayload = {
+  equipment_id: string;
+  start_date: string;
+  end_date: string;
+  project_id?: string | null;
+  delivery_address?: string | null;
+  delivery_fee?: number;
+  scheduled_at?: string | null;
+  notes?: string | null;
+};
+
+/** Crée une demande de location (tarif calculé, statut « demande »). */
+export function useCreateEquipmentRental() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: RentalPayload) => {
+      let equipment: Equipment | null = null;
+      if (isGuestMode()) {
+        equipment =
+          demoRows<Equipment>("equipment").find((e) => e.id === payload.equipment_id) ?? null;
+      } else {
+        const { data } = await supabase
+          .from("equipment")
+          .select("*")
+          .eq("id", payload.equipment_id)
+          .maybeSingle();
+        equipment = data;
+      }
+      if (!equipment) throw new Error("Équipement introuvable");
+      const daily = Number(equipment.daily_price);
+      const weekly = Number(equipment.weekly_price);
+      const { total } = computeRentalPrice(daily, weekly, payload.start_date, payload.end_date);
+
+      if (isGuestMode()) {
+        demoInsert("equipment_rentals", {
+          id: crypto.randomUUID(),
+          user_id: DEMO_USER,
+          equipment_id: payload.equipment_id,
+          project_id: payload.project_id ?? null,
+          start_date: payload.start_date,
+          end_date: payload.end_date,
+          daily_price: daily,
+          weekly_price: weekly,
+          total_price: total,
+          deposit: Number(equipment.deposit),
+          delivery_fee: payload.delivery_fee ?? 0,
+          delivery_address: payload.delivery_address ?? null,
+          scheduled_at: payload.scheduled_at ?? null,
+          notes: payload.notes ?? null,
+          status: "demande",
+          created_at: new Date().toISOString(),
+          returned_at: null,
+        });
+        return { id: crypto.randomUUID(), ownerUserId: equipment.user_id };
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { data, error } = await supabase
+        .from("equipment_rentals")
+        .insert({
+          user_id: auth.user.id,
+          equipment_id: payload.equipment_id,
+          project_id: payload.project_id ?? null,
+          start_date: payload.start_date,
+          end_date: payload.end_date,
+          daily_price: daily,
+          weekly_price: weekly,
+          total_price: total,
+          deposit: Number(equipment.deposit),
+          delivery_fee: payload.delivery_fee ?? 0,
+          delivery_address: payload.delivery_address ?? null,
+          scheduled_at: payload.scheduled_at ?? null,
+          notes: payload.notes ?? null,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return { id: data.id, ownerUserId: equipment.user_id };
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["equipment_rentals"] });
+      toast.success("Demande de location envoyée");
+      void addPersistedNotification({
+        title: "Nouvelle demande de location",
+        body: "Un client souhaite louer votre matériel. Confirmez la disponibilité.",
+        kind: "commande",
+        link: "/location",
+        userId: res.ownerUserId,
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Fait évoluer le statut d'une location (confirmation → matériel loué, retour → disponible). */
+export function useUpdateEquipmentRentalStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: EquipmentRentalStatus }) => {
+      if (isGuestMode()) {
+        demoUpdate("equipment_rentals", id, { status });
+        const rental = demoRows<EquipmentRental>("equipment_rentals").find((r) => r.id === id);
+        if (rental) {
+          const equipmentStatus: EquipmentStatus =
+            status === "confirmee" || status === "en_cours" ? "loue" : "disponible";
+          demoUpdate("equipment", rental.equipment_id, { status: equipmentStatus });
+          if (status === "terminee") {
+            demoUpdate("equipment_rentals", id, { returned_at: new Date().toISOString() });
+          }
+        }
+        return;
+      }
+      const { error } = await supabase.from("equipment_rentals").update({ status }).eq("id", id);
+      if (error) throw new Error(error.message);
+      const { data: rental } = await supabase
+        .from("equipment_rentals")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (rental) {
+        const equipmentStatus: EquipmentStatus =
+          status === "confirmee" || status === "en_cours" ? "loue" : "disponible";
+        const { error: eqErr } = await supabase
+          .from("equipment")
+          .update({ status: equipmentStatus })
+          .eq("id", rental.equipment_id);
+        if (eqErr) throw new Error(eqErr.message);
+        if (status === "terminee") {
+          const { error: retErr } = await supabase
+            .from("equipment_rentals")
+            .update({ returned_at: new Date().toISOString() })
+            .eq("id", id);
+          if (retErr) throw new Error(retErr.message);
+        }
+      }
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["equipment_rentals"] });
+      qc.invalidateQueries({ queryKey: ["equipment"] });
+      toast.success("Location mise à jour");
+      void addPersistedNotification({
+        title: "Location mise à jour",
+        body: `Le statut de la location est désormais : ${labelOf(EQUIPMENT_RENTAL_STATUSES, v.status)}.`,
+        kind: "livraison",
+        link: "/location",
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 }
 
 /* ---------- Facturation client ---------- */
