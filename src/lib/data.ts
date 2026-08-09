@@ -559,6 +559,10 @@ type TableName =
   | "dispute_evidences"
   | "refunds"
   | "profile_verifications"
+  | "verification_documents"
+  | "market_reviews"
+  | "ai_conversations"
+  | "ai_actions"
   | "organizations"
   | "organization_members"
   | "project_members";
@@ -607,7 +611,11 @@ const RELATED: Record<TableName, string[]> = {
   disputes: ["disputes", "dispute_evidences", "refunds"],
   dispute_evidences: ["dispute_evidences", "disputes"],
   refunds: ["refunds", "disputes"],
-  profile_verifications: ["profile_verifications"],
+  profile_verifications: ["profile_verifications", "verification_documents"],
+  verification_documents: ["verification_documents", "profile_verifications"],
+  market_reviews: ["market_reviews"],
+  ai_conversations: ["ai_conversations", "ai_actions"],
+  ai_actions: ["ai_actions", "ai_conversations"],
   organizations: ["organizations", "organization_members"],
   organization_members: ["organization_members", "organizations"],
   project_members: ["project_members"],
@@ -989,7 +997,8 @@ export function useAdminStats() {
   return useQuery({
     queryKey: ["admin_stats"],
     queryFn: async () => {
-      if (isGuestMode()) return { users: 1, projects: 1, stores: 2, orders: 0, reserves: 3 };
+      if (isGuestMode())
+        return { users: 1, projects: 1, stores: 2, orders: 0, reserves: 3, verifications: 1 };
       const count = async (table: TableName) => {
         const { count, error } = await supabase
           .from(table)
@@ -997,15 +1006,17 @@ export function useAdminStats() {
         if (error) return 0;
         return count ?? 0;
       };
-      const [users, projects, stores, orders, providers, reserves] = await Promise.all([
-        count("profiles"),
-        count("projects"),
-        count("stores"),
-        count("orders"),
-        count("providers"),
-        count("reserves"),
-      ]);
-      return { users, projects, stores, orders, providers, reserves };
+      const [users, projects, stores, orders, providers, reserves, verifications] =
+        await Promise.all([
+          count("profiles"),
+          count("projects"),
+          count("stores"),
+          count("orders"),
+          count("providers"),
+          count("reserves"),
+          count("verification_documents"),
+        ]);
+      return { users, projects, stores, orders, providers, reserves, verifications };
     },
   });
 }
@@ -2006,12 +2017,18 @@ export function useProviderReviews(providerId: string | null) {
 export function useAddProviderReview() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { providerId: string; rating: number; comment?: string | null }) => {
+    mutationFn: async (values: {
+      providerId: string;
+      rating: number;
+      comment?: string | null;
+      verified?: boolean;
+    }) => {
       if (isGuestMode()) {
         demoInsert("provider_reviews", {
           provider_id: values.providerId,
           rating: values.rating,
           comment: values.comment ?? null,
+          verified: values.verified ?? false,
         });
         const providers = demoRows<Provider>("providers");
         const p = providers.find((r) => r.id === values.providerId);
@@ -2034,6 +2051,7 @@ export function useAddProviderReview() {
         provider_id: values.providerId,
         rating: values.rating,
         comment: values.comment ?? null,
+        verified: values.verified ?? false,
         user_id: auth.user.id,
       });
       if (revErr) throw new Error(revErr.message);
@@ -2060,6 +2078,390 @@ export function useAddProviderReview() {
   });
 }
 
+/* ---------- Confiance & vérification ---------- */
+
+/** Niveau de vérification du profil courant (badges identité / entreprise / documents). */
+export function useProfileVerification() {
+  const { data: profile } = useProfile();
+  const userId = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["profile_verifications", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      if (isGuestMode()) {
+        return (
+          demoRows<ProfileVerification>("profile_verifications").find(
+            (v) => v.user_id === (userId ?? DEMO_USER),
+          ) ?? null
+        );
+      }
+      const { data, error } = await supabase
+        .from("profile_verifications")
+        .select("*")
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return (data as ProfileVerification | null) ?? null;
+    },
+  });
+}
+
+/** Documents de vérification soumis par l'utilisateur courant. */
+export function useMyVerificationDocuments() {
+  const { data: profile } = useProfile();
+  const userId = profile?.id ?? null;
+  return useQuery({
+    queryKey: ["verification_documents", "mine", userId],
+    enabled: !!userId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<VerificationDocument>("verification_documents").filter(
+            (d) => d.user_id === (userId ?? DEMO_USER),
+          )
+        : unwrap<VerificationDocument[]>(
+            supabase
+              .from("verification_documents")
+              .select("*")
+              .eq("user_id", userId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Tous les documents de vérification, pour la validation admin. */
+export function useAllVerificationDocuments() {
+  return useQuery({
+    queryKey: ["verification_documents", "all"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<VerificationDocument>("verification_documents")
+        : unwrap<VerificationDocument[]>(
+            supabase.from("verification_documents").select("*").order("created_at", {
+              ascending: false,
+            }),
+          ),
+  });
+}
+
+/** Soumet un document de vérification (workflow confiance). */
+export function useSubmitVerificationDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { docType: string; note?: string | null }) => {
+      if (isGuestMode()) {
+        demoInsert("verification_documents", {
+          doc_type: values.docType,
+          note: values.note ?? null,
+          status: "en_attente",
+          file_path: null,
+          admin_note: null,
+          reviewed_by: null,
+          reviewed_at: null,
+        });
+        return { ok: true };
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase.from("verification_documents").insert({
+        user_id: auth.user.id,
+        doc_type: values.docType,
+        note: values.note ?? null,
+        status: "en_attente",
+      });
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["verification_documents"] });
+      toast.success("Document soumis, en attente de validation");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Décision admin : approuve ou rejette un document et met à jour le niveau de confiance. */
+export function useReviewVerificationDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      documentId: string;
+      userId: string;
+      approve: boolean;
+      note?: string | null;
+    }) => {
+      if (isGuestMode()) {
+        demoUpdate("verification_documents", values.documentId, {
+          status: values.approve ? "approuve" : "rejete",
+          admin_note: values.note ?? null,
+          reviewed_at: new Date().toISOString(),
+        });
+        const verified = demoRows<VerificationDocument>("verification_documents").some(
+          (d) => d.user_id === values.userId && d.status === "approuve",
+        );
+        demoUpdate("profile_verifications", values.userId, {
+          verified_documents: verified,
+          verified_identity: verified,
+          level: verified ? "professionnel" : "non_verifie",
+          verified_at: verified ? new Date().toISOString() : null,
+        });
+        return { ok: true };
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase
+        .from("verification_documents")
+        .update({
+          status: values.approve ? "approuve" : "rejete",
+          admin_note: values.note ?? null,
+          reviewed_by: auth.user.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", values.documentId);
+      if (error) throw new Error(error.message);
+      const { data: docs } = await supabase
+        .from("verification_documents")
+        .select("status")
+        .eq("user_id", values.userId)
+        .eq("status", "approuve");
+      if (docs) {
+        await supabase
+          .from("profile_verifications")
+          .update({
+            verified_documents: docs.length > 0,
+            verified_identity: docs.length > 0,
+            level: docs.length > 0 ? "professionnel" : "non_verifie",
+            verified_at: docs.length > 0 ? new Date().toISOString() : null,
+          })
+          .eq("user_id", values.userId);
+      }
+      return { ok: true };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["verification_documents"] });
+      qc.invalidateQueries({ queryKey: ["profile_verifications"] });
+      toast.success("Décision enregistrée");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Avis sur une cible du marketplace (boutique, produit ou transporteur). */
+export function useMarketReviews(targetType: ReviewTarget, targetId: string | null) {
+  return useQuery({
+    queryKey: ["market_reviews", targetType, targetId],
+    enabled: !!targetId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<MarketReview>("market_reviews").filter(
+            (r) => r.target_type === targetType && r.target_id === targetId!,
+          )
+        : unwrap<MarketReview[]>(
+            supabase
+              .from("market_reviews")
+              .select("*")
+              .eq("target_type", targetType)
+              .eq("target_id", targetId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Ajoute un avis sur le marketplace puis recalcule la note moyenne de la cible. */
+export function useAddMarketReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      targetType: ReviewTarget;
+      targetId: string;
+      rating: number;
+      comment?: string | null;
+      verified?: boolean;
+    }) => {
+      if (isGuestMode()) {
+        demoInsert("market_reviews", {
+          target_type: values.targetType,
+          target_id: values.targetId,
+          rating: values.rating,
+          comment: values.comment ?? null,
+          verified: values.verified ?? false,
+        });
+        recomputeDemoRating(values.targetType, values.targetId);
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error: revErr } = await supabase.from("market_reviews").insert({
+        user_id: auth.user.id,
+        target_type: values.targetType,
+        target_id: values.targetId,
+        rating: values.rating,
+        comment: values.comment ?? null,
+        verified: values.verified ?? false,
+      });
+      if (revErr) throw new Error(revErr.message);
+      const { data: rows, error: listErr } = await supabase
+        .from("market_reviews")
+        .select("rating")
+        .eq("target_type", values.targetType)
+        .eq("target_id", values.targetId);
+      if (listErr) throw new Error(listErr.message);
+      const all = (rows ?? []).map((r) => Number(r.rating));
+      const avg = all.reduce((s, r) => s + r, 0) / Math.max(1, all.length);
+      const table = values.targetType === "store" ? "stores" : "products";
+      const { error: updErr } = await supabase
+        .from(table)
+        .update({ rating: Math.round(avg * 100) / 100, review_count: all.length })
+        .eq("id", values.targetId);
+      if (updErr) throw new Error(updErr.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["market_reviews"] });
+      qc.invalidateQueries({ queryKey: ["stores"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["drivers"] });
+      toast.success("Avis publié, merci !");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/* ---------- Vague 7 — Assistant conversationnel (fils & actions) ---------- */
+
+/** Conversations IA de l'utilisateur courant, les plus récentes d'abord. */
+export function useAiConversations() {
+  return useQuery({
+    queryKey: ["ai_conversations"],
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<AiConversation>("ai_conversations").sort(
+            (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+          )
+        : unwrap<AiConversation[]>(
+            supabase.from("ai_conversations").select("*").order("updated_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Actions d'une conversation donnée (décisions/recommandations proposées). */
+export function useAiActions(conversationId: string | null) {
+  return useQuery({
+    queryKey: ["ai_actions", conversationId],
+    enabled: !!conversationId,
+    queryFn: () =>
+      isGuestMode()
+        ? demoRows<AiAction>("ai_actions")
+            .filter((a) => a.conversation_id === conversationId)
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        : unwrap<AiAction[]>(
+            supabase
+              .from("ai_actions")
+              .select("*")
+              .eq("conversation_id", conversationId!)
+              .order("created_at", { ascending: false }),
+          ),
+  });
+}
+
+/** Crée (ou met à jour le titre) d'une conversation IA. */
+export function useUpsertAiConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      title: string;
+      projectId?: string | null;
+      role?: string | null;
+      existingId?: string | null;
+    }) => {
+      if (isGuestMode()) {
+        if (values.existingId) {
+          demoUpdate("ai_conversations", values.existingId, { title: values.title });
+          return values.existingId;
+        }
+        const id = crypto.randomUUID();
+        demoInsert("ai_conversations", {
+          id,
+          title: values.title,
+          project_id: values.projectId ?? null,
+          role: values.role ?? null,
+        });
+        return id;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      if (values.existingId) {
+        const { error } = await supabase
+          .from("ai_conversations")
+          .update({ title: values.title })
+          .eq("id", values.existingId);
+        if (error) throw new Error(error.message);
+        return values.existingId;
+      }
+      const { data, error } = await supabase
+        .from("ai_conversations")
+        .insert({
+          user_id: auth.user.id,
+          title: values.title,
+          project_id: values.projectId ?? null,
+          role: values.role ?? null,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return data!.id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["ai_conversations"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Ajoute une action proposée par l'assistant dans une conversation. */
+export function useAddAiAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      conversationId: string;
+      actionType: AiActionType;
+      title: string;
+      payload?: Record<string, unknown>;
+    }) => {
+      if (isGuestMode()) {
+        demoInsert("ai_actions", {
+          conversation_id: values.conversationId,
+          action_type: values.actionType,
+          title: values.title,
+          payload: (values.payload ?? {}) as Json,
+        });
+        return;
+      }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Session expirée");
+      const { error } = await supabase.from("ai_actions").insert({
+        conversation_id: values.conversationId,
+        user_id: auth.user.id,
+        action_type: values.actionType,
+        title: values.title,
+        payload: (values.payload ?? {}) as Json,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["ai_actions"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+function recomputeDemoRating(targetType: ReviewTarget, targetId: string) {
+  const reviews = demoRows<MarketReview>("market_reviews").filter(
+    (r) => r.target_type === targetType && r.target_id === targetId,
+  );
+  const avg = reviews.reduce((s, r) => s + Number(r.rating), 0) / Math.max(1, reviews.length);
+  const table =
+    targetType === "store" ? "stores" : targetType === "product" ? "products" : "drivers";
+  demoUpdate(table, targetId, {
+    rating: Math.round(avg * 100) / 100,
+    review_count: reviews.length,
+  });
+}
+
 /* ---------- Marketplace e-commerce ---------- */
 
 export type Store = Tables["stores"]["Row"];
@@ -2072,6 +2474,14 @@ export type OrderItem = Tables["order_items"]["Row"];
 export type Delivery = Tables["deliveries"]["Row"];
 export type Driver = Tables["drivers"]["Row"];
 export type Vehicle = Tables["vehicles"]["Row"];
+export type MarketReview = Tables["market_reviews"]["Row"];
+export type VerificationDocument = Tables["verification_documents"]["Row"];
+export type ProfileVerification = Tables["profile_verifications"]["Row"];
+export type ReviewTarget = "store" | "product" | "driver";
+export type AiConversation = Tables["ai_conversations"]["Row"];
+export type AiAction = Tables["ai_actions"]["Row"];
+export type AiActionType =
+  "achat" | "finance" | "planning" | "document" | "recommandation" | "autre";
 
 export function useStores() {
   return useQuery({

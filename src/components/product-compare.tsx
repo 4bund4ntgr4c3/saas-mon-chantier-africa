@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BadgeCheck, LocateFixed, MapPin, ShoppingCart, Sparkles, Truck } from "lucide-react";
+import { BadgeCheck, LocateFixed, MapPin, ShoppingCart, Sparkles, Star, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,6 +19,7 @@ import {
   type Product,
 } from "@/lib/data";
 import { useGeolocation } from "@/lib/geo";
+import { MarketReviewsBlock } from "@/components/market-reviews";
 
 export function ProductDetailDialog({
   product,
@@ -212,6 +213,19 @@ export function ProductDetailDialog({
               </ul>
             </div>
           )}
+
+          {/* Avis sur le produit */}
+          <div className="rounded-lg border border-border p-3">
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              <Star className="size-3.5" /> Avis sur ce produit
+            </p>
+            <MarketReviewsBlock
+              targetType="product"
+              targetId={product.id}
+              average={Number(product.rating ?? 0)}
+              count={Number(product.review_count ?? 0)}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAlertesRouteImport } from './routes/_authenticated/alertes'
+import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedBoutiqueRouteImport } from './routes/_authenticated/boutique'
 import { Route as AuthenticatedBudgetRouteImport } from './routes/_authenticated/budget'
@@ -50,6 +51,7 @@ import { Route as PartageTokenRouteImport } from './routes/partage.$token'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminDemandesDemoRouteImport } from './routes/_authenticated/admin.demandes-demo'
 import { Route as AuthenticatedAdminUtilisateursRouteImport } from './routes/_authenticated/admin.utilisateurs'
+import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -78,6 +80,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const AuthenticatedAlertesRoute = AuthenticatedAlertesRouteImport.update({
   id: '/alertes',
   path: '/alertes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
@@ -263,6 +270,12 @@ const AuthenticatedAdminUtilisateursRoute =
     path: '/admin/utilisateurs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminVerificationsRoute =
+  AuthenticatedAdminVerificationsRouteImport.update({
+    id: '/admin/verifications',
+    path: '/admin/verifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -270,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof ChangelogRoute
   '/reset-password': typeof ResetPasswordRoute
   '/alertes': typeof AuthenticatedAlertesRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/boutique': typeof AuthenticatedBoutiqueRoute
   '/budget': typeof AuthenticatedBudgetRoute
@@ -304,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/partage/$token': typeof PartageTokenRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -312,6 +327,7 @@ export interface FileRoutesByTo {
   '/changelog': typeof ChangelogRoute
   '/reset-password': typeof ResetPasswordRoute
   '/alertes': typeof AuthenticatedAlertesRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/boutique': typeof AuthenticatedBoutiqueRoute
   '/budget': typeof AuthenticatedBudgetRoute
@@ -346,6 +362,7 @@ export interface FileRoutesByTo {
   '/partage/$token': typeof PartageTokenRoute
   '/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -356,6 +373,7 @@ export interface FileRoutesById {
   '/changelog': typeof ChangelogRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/alertes': typeof AuthenticatedAlertesRoute
+  '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/boutique': typeof AuthenticatedBoutiqueRoute
   '/_authenticated/budget': typeof AuthenticatedBudgetRoute
@@ -390,6 +408,7 @@ export interface FileRoutesById {
   '/partage/$token': typeof PartageTokenRoute
   '/_authenticated/admin/demandes-demo': typeof AuthenticatedAdminDemandesDemoRoute
   '/_authenticated/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -400,6 +419,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/reset-password'
     | '/alertes'
+    | '/assistant'
     | '/audit'
     | '/boutique'
     | '/budget'
@@ -434,6 +454,7 @@ export interface FileRouteTypes {
     | '/partage/$token'
     | '/admin/demandes-demo'
     | '/admin/utilisateurs'
+    | '/admin/verifications'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -442,6 +463,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/reset-password'
     | '/alertes'
+    | '/assistant'
     | '/audit'
     | '/boutique'
     | '/budget'
@@ -476,6 +498,7 @@ export interface FileRouteTypes {
     | '/partage/$token'
     | '/admin/demandes-demo'
     | '/admin/utilisateurs'
+    | '/admin/verifications'
     | '/admin'
   id:
     | '__root__'
@@ -485,6 +508,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/reset-password'
     | '/_authenticated/alertes'
+    | '/_authenticated/assistant'
     | '/_authenticated/audit'
     | '/_authenticated/boutique'
     | '/_authenticated/budget'
@@ -519,6 +543,7 @@ export interface FileRouteTypes {
     | '/partage/$token'
     | '/_authenticated/admin/demandes-demo'
     | '/_authenticated/admin/utilisateurs'
+    | '/_authenticated/admin/verifications'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -574,6 +599,13 @@ declare module '@tanstack/react-router' {
       path: '/alertes'
       fullPath: '/alertes'
       preLoaderRoute: typeof AuthenticatedAlertesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/audit': {
@@ -821,11 +853,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUtilisateursRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/verifications': {
+      id: '/_authenticated/admin/verifications'
+      path: '/admin/verifications'
+      fullPath: '/admin/verifications'
+      preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertesRoute: typeof AuthenticatedAlertesRoute
+  AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedBoutiqueRoute: typeof AuthenticatedBoutiqueRoute
   AuthenticatedBudgetRoute: typeof AuthenticatedBudgetRoute
@@ -858,11 +898,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTachesRoute: typeof AuthenticatedTachesRoute
   AuthenticatedAdminDemandesDemoRoute: typeof AuthenticatedAdminDemandesDemoRoute
   AuthenticatedAdminUtilisateursRoute: typeof AuthenticatedAdminUtilisateursRoute
+  AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlertesRoute: AuthenticatedAlertesRoute,
+  AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedBoutiqueRoute: AuthenticatedBoutiqueRoute,
   AuthenticatedBudgetRoute: AuthenticatedBudgetRoute,
@@ -895,6 +937,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTachesRoute: AuthenticatedTachesRoute,
   AuthenticatedAdminDemandesDemoRoute: AuthenticatedAdminDemandesDemoRoute,
   AuthenticatedAdminUtilisateursRoute: AuthenticatedAdminUtilisateursRoute,
+  AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

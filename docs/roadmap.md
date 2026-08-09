@@ -20,6 +20,8 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 | Lignes de devis & factures (Vague 5 — quote_items, invoice_items) | ✅ |
 | Demande de devis en ligne (Vague 5 — quote_requests, quote_bids) | ✅ |
 | Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds) | ✅ |
+| Confiance & vérification (Vague 6 — verification_documents, market_reviews, avis vérifiés) | ✅ |
+| IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales) | 🔄 |
 | Tests unitaires (26), docs (schéma, installation, déploiement, changelog, stack) | ✅ |
 
 ---
@@ -96,18 +98,19 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ **Demande de devis** : particulier décrit un besoin (budget, localisation, domaine) → prestataires répondent avec une offre chiffrée → comparaison et attribution — **fait** (migration `20260820000000_demandes-devis.sql`, page `demandes-devis` 2 onglets, RLS dédiées)
 - ✅ **Litiges & remboursements** : workflow de médiation (preuves, décision, remboursement) — **fait** (migration `20260821000000_litiges-remboursements.sql`, page `litiges` 2 onglets, décision admin + suivi des remboursements)
 
-## Vague 6 — Confiance & vérification ⬜
+## Vague 6 — Confiance & vérification ✅
 
-- Workflow de soumission de documents + validation admin (table `profile_verifications` existante)
-- Avis étendus : transporteurs, vendeurs, produits
-- Avis vérifiés + lutte anti-faux avis
+- ✅ Workflow de soumission de documents + validation admin (table `profile_verifications` existante)
+- ✅ Avis étendus : transporteurs, vendeurs, produits
+- ✅ Avis vérifiés + lutte anti-faux avis
 
-## Vague 7 — IA ⬜
+## Vague 7 — IA 🔄
 
-- Notes vocales + speech-to-text « Parler au chantier »
-- IA achats : liste de matériaux, calcul de quantités, comparaison, préparation de panier
-- Assistant conversationnel par rôle (`ai_conversations`, `ai_actions`)
-- Recommandations marketplace, IA fournisseur (prévision stock, descriptions)
+- ✅ Notes vocales + speech-to-text « Parler au chantier » (bouton micro, Web Speech)
+- 🔄 Assistant conversationnel par rôle (`ai_conversations`, `ai_actions`) — 1ère tranche : assistant à base de règles, IA Achats (liste + estimation + panier), recommandations produits
+- ⬜ IA achats : comparaison multi-boutiques, calcul de quantités avancé
+- ⬜ Recommandations marketplace, IA fournisseur (prévision stock, descriptions)
+- ⬜ Branchage LLM (optionnel) pour des réponses ouvertes
 
 ## Vague 8 — Notifications multi-canal ⬜
 

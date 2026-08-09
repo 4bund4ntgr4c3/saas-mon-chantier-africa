@@ -3,10 +3,12 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  BadgeCheck,
   CreditCard,
   MapPin,
   ShoppingBag,
   Smartphone,
+  Star,
   Truck,
   Wallet,
 } from "lucide-react";
@@ -79,6 +81,8 @@ function PanierPage() {
 
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const storeById = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
+  const driverById = useMemo(() => new Map(drivers.map((d) => [d.id, d])), [drivers]);
+  const selectedDriver = driverId ? driverById.get(driverId) : undefined;
 
   const rows = useMemo(() => {
     const items = (cart?.items ?? []).map((it) => {
@@ -317,6 +321,33 @@ function PanierPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {selectedDriver && (
+                      <p className="flex flex-wrap items-center gap-2 pt-1 text-xs text-muted-foreground">
+                        <Truck className="size-3.5" />
+                        {selectedDriver.name}
+                        {selectedDriver.verified && (
+                          <Badge className="bg-success text-success-foreground">
+                            <BadgeCheck className="mr-1 size-3" /> Vérifié
+                          </Badge>
+                        )}
+                        <span className="inline-flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Star
+                              key={i}
+                              className={cn(
+                                "size-3",
+                                i <= Math.round(Number(selectedDriver.rating)) &&
+                                  "fill-primary text-primary",
+                              )}
+                            />
+                          ))}
+                          <span className="ml-1">
+                            {Number(selectedDriver.rating).toLocaleString("fr-FR")} (
+                            {selectedDriver.review_count})
+                          </span>
+                        </span>
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="schedule" className="text-xs">

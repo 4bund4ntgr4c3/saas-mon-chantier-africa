@@ -6,6 +6,75 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.20 — Vague 7 : IA (1ère tranche — Assistant conversationnel) (2026-08-09)
+
+### Migrations
+- `supabase/migrations/20260823000000_assistant-ia.sql`
+  - ✅ `ai_conversations` : fils de discussion persistés (utilisateur, chantier, titre, rôle)
+  - ✅ `ai_actions` : actions proposées par l'assistant (type `ai_action_type`, titre, payload JSONB)
+  - 🔒 RLS : conversations et actions privées (lecture/écriture du propriétaire uniquement)
+
+### Données & hooks (`src/lib/data.ts`)
+- ✅ `useAiConversations()` / `useAiActions(conversationId)` — liste les fils et leurs actions
+- ✅ `useUpsertAiConversation()` — crée ou renomme un fil (double branche guest/Supabase)
+- ✅ `useAddAiAction()` — enregistre une action dans un fil
+- ✅ Types exportés `AiConversation`, `AiAction`, `AiActionType`
+
+### Rôles & navigation
+- ✅ Feature `assistant` ajoutée aux 7 rôles de `src/lib/roles.ts` (accès `full`)
+- ✅ Menu « Assistant IA » (`/assistant`) + libellé i18n FR/EN
+
+### UI
+- ✅ `src/routes/_authenticated/assistant.tsx` : assistant conversationnel par rôle
+  - ✅ Moteur à base de règles : achats, budget, planning, recommandations, état global
+  - ✅ IA Achats : liste les besoins matériaux restants, estime le coût, propose l'ajout au panier
+  - ✅ Notes vocales « Parler au chantier » : reconnaissance vocale Web Speech (bouton micro)
+  - ✅ Persistance : fil + actions enregistrés à chaque question
+
+### Démo (`src/lib/demo-store.ts`)
+- ✅ 2 conversations et 3 actions seedées (achats matériaux, recalibrage budget)
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur (18 warnings fast-refresh tolérés) · 26 tests OK
+
+---
+
+## v0.19 — Vague 6 : Confiance & vérification (2026-08-09)
+
+### Migrations
+- `supabase/migrations/20260822000000_confiance-verification.sql`
+  - ✅ `verification_documents` : soumission de documents par les professionnels (type `identite/rccm/patente/cnps/quittance/permis/diplome`, note, statut `en_attente/approuve/rejete`, note admin, réviseur, date de revue)
+  - ✅ `market_reviews` : avis étendus sur le marketplace avec `target_type` (`store`/`product`/`driver`) + `target_id`, note 1–5, commentaire, flag `verified` (achat réel)
+  - ✅ Contrainte `UNIQUE (user_id, target_type, target_id)` : **un seul avis par utilisateur et par cible** (lutte anti-faux avis)
+  - ✅ `provider_reviews.verified` ajouté + contrainte `UNIQUE (user_id, provider_id)` (anti-doublon)
+  - ✅ `products.rating` / `products.review_count` ajoutés (cohérence avec stores & drivers)
+  - 🔒 RLS : documents lisibles propriétaire ou admin, écritures propriétaire ou admin ; `market_reviews` lisibles par tous, écritures auteur
+
+### Données & hooks (`src/lib/data.ts`)
+- ✅ `useProfileVerification()` — niveau de confiance du profil courant
+- ✅ `useMyVerificationDocuments()` / `useAllVerificationDocuments()` — documents soumis (moi / tous, admin)
+- ✅ `useSubmitVerificationDocument()` — soumet un document
+- ✅ `useReviewVerificationDocument()` — décision admin : approuve/rejette et met à jour `profile_verifications` (niveau, `verified_documents`, `verified_at`)
+- ✅ `useMarketReviews(targetType, targetId)` / `useAddMarketReview()` — liste et ajoute un avis, recalcule la note moyenne de la cible (boutique/produit/transporteur)
+- 🔧 `useAddProviderReview()` — supporte le flag `verified`
+- ✅ `useAdminStats()` — compte les documents de vérification
+
+### Format (`src/lib/format.ts`)
+- ✅ `VERIFICATION_DOC_TYPES`, `VERIFICATION_DOC_STATUSES`, `REVIEW_TARGETS`
+
+### UI
+- ✅ `src/routes/_authenticated/parametres.tsx` : section « Vérification du profil » — badge de statut, indicateurs identité/entreprise/documents, formulaire de soumission, liste des documents avec statut
+- ✅ `src/routes/_authenticated/admin.verifications.tsx` : back-office de validation des documents (filtres, approbation/rejet avec note) ; nav admin + i18n FR/EN + carte sur `admin/index`
+- ✅ `src/components/market-reviews.tsx` : bloc d'avis réutilisable (note, liste avec badge « Achat vérifié », formulaire, anti-doublon)
+- ✅ `src/components/product-compare.tsx` : avis produit dans la fiche détaillée
+- ✅ `src/routes/_authenticated/panier.tsx` : note/vérification du transporteur sélectionné
+- 🔧 `src/routes/_authenticated/prestataires.tsx` : badge « Achat vérifié » sur les avis + flag selon le niveau de vérification
+
+### Démo (`src/lib/demo-store.ts`)
+- ✅ 2 documents seedés (RCCM approuvé, identité en attente), 3 avis marketplace (boutique/produit/transporteur), notes de produits, driver extrait en constante réutilisable
+
+---
+
 ## v0.18 — Vague 5 : Litiges & remboursements (2026-08-09)
 
 ### Migrations

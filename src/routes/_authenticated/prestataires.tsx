@@ -34,6 +34,7 @@ import {
   useAddProviderReview,
   useDeleteRow,
   useProfile,
+  useProfileVerification,
   useProviderReviews,
   useProviders,
   useSaveProvider,
@@ -341,6 +342,10 @@ function ProvidersPage() {
 function ProviderDialog({ provider, onClose }: { provider: Provider; onClose: () => void }) {
   const { data: reviews = [] } = useProviderReviews(provider.id);
   const addReview = useAddProviderReview();
+  const { data: verification } = useProfileVerification();
+  const verifiedReview = Boolean(
+    verification?.verified_documents || verification?.verified_identity,
+  );
   const [rating, setRating] = useState("5");
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
@@ -353,6 +358,7 @@ function ProviderDialog({ provider, onClose }: { provider: Provider; onClose: ()
         providerId: provider.id,
         rating: Number(rating),
         comment: comment.trim() || null,
+        verified: verifiedReview,
       });
       setComment("");
     } finally {
@@ -470,6 +476,11 @@ function ProviderDialog({ provider, onClose }: { provider: Provider; onClose: ()
                       </span>
                     </div>
                     {r.comment && <p className="mt-1.5 text-sm">{r.comment}</p>}
+                    {r.verified && (
+                      <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-success">
+                        <ShieldCheck className="size-3.5" /> Achat vérifié
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

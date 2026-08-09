@@ -74,12 +74,16 @@ erDiagram
 
     profiles ||--o{ providers : "1..n"
     providers ||--o{ provider_reviews : "1..n"
+    profiles ||--o{ verification_documents : "1..n"
+    profiles ||--o{ market_reviews : "1..n"
     profiles ||--o{ demo_requests : "1..n"
     profiles ||--o{ audit_logs : "1..n"
     profiles ||--o{ email_log : "1..n"
     projects ||--o{ audit_logs : "1..n"
     profiles ||--o{ invoices : "1..n"
     profiles ||--o{ invoice_payments : "1..n"
+    profiles ||--o{ ai_conversations : "1..n"
+    ai_conversations ||--o{ ai_actions : "1..n"
 ```
 
 ## Tables
@@ -134,7 +138,22 @@ erDiagram
 | `carts` / `cart_items` | Paniers d'achat. |
 | `orders` / `order_items` | Commandes (statut workflow complet). |
 | `drivers` / `vehicles` / `deliveries` | Livraison : transporteurs, véhicules, planning. |
-| `providers` / `provider_reviews` | Annuaire des prestataires BTP (13 domaines) et avis. |
+| `providers` / `provider_reviews` | Annuaire des prestataires BTP (13 domaines) et avis (flag `verified`). |
+| `market_reviews` | **Vague 6** : avis étendus boutique/produit/transporteur (`target_type` + `target_id`), flag `verified`, contrainte `UNIQUE (user_id, target_type, target_id)` anti-faux avis. |
+| `verification_documents` | **Vague 6** : documents de vérification soumis par les professionnels (type, statut `en_attente/approuve/rejete`, note admin, réviseur). |
+
+### IA (Vague 7)
+| Table | Rôle |
+| --- | --- |
+| `ai_conversations` | Fils de discussion persistés avec l'assistant (utilisateur, chantier optionnel, titre, rôle). |
+| `ai_actions` | Actions proposées par l'assistant (type `ai_action_type`, titre, payload JSONB) — ex. ajout au panier, alerte budget, recalibrage planning. |
+
+### Confiance & vérification (Vague 6)
+| Table | Rôle |
+| --- | --- |
+| `profile_verifications` | Niveau de confiance du profil (identité, entreprise, documents, premium). |
+| `verification_documents` | Pièces soumises et validées par l'admin (complètent `profile_verifications`). |
+| `market_reviews` | Avis vendeurs/produits/transporteurs avec badge « Achat vérifié ». |
 
 ### Collaboration & multi-tenant (Vague 1)
 | Table | Rôle |
@@ -149,7 +168,7 @@ erDiagram
 | `audit_logs` | Journal d'audit (triggers sur les suppressions de données sensibles). |
 
 ## Énumérations
-`account_type`, `document_category`, `invoice_status`, `task_status`, `task_priority`, `order_status`, `delivery_status`, `reserve_status`, `reserve_priority`, `payment_provider` (mtn_momo, moov_money, paydunya, bankly, cmi, paystack), `payment_transaction_status` (initiee, en_attente, confirmee, echouee, annulee), `quote_request_status` (ouverte, attribuee, cloturee), `quote_bid_status` (soumise, acceptee), `dispute_status` (ouverte, en_examen, decide, cloture), `dispute_decision` (favorable_demandeur, favorable_defendeur, partiel), `refund_status` (initie, en_attente, effectue, echoue), `refund_method` (mobile_money, virement, carte).
+`account_type`, `document_category`, `invoice_status`, `task_status`, `task_priority`, `order_status`, `delivery_status`, `reserve_status`, `reserve_priority`, `payment_provider` (mtn_momo, moov_money, paydunya, bankly, cmi, paystack), `payment_transaction_status` (initiee, en_attente, confirmee, echouee, annulee), `quote_request_status` (ouverte, attribuee, cloturee), `quote_bid_status` (soumise, acceptee), `dispute_status` (ouverte, en_examen, decide, cloture), `dispute_decision` (favorable_demandeur, favorable_defendeur, partiel), `refund_status` (initie, en_attente, effectue, echoue), `refund_method` (mobile_money, virement, carte), `review_target` (store, product, driver), `verification_doc_type` (identite, rccm, patente, cnps, quittance, permis, diplome), `verification_status` (en_attente, approuve, rejete), `ai_action_type` (achat, finance, planning, document, recommandation, autre).
 
 ## Sécurité
 - **RLS activée** sur chaque table avec politiques `FOR authenticated USING (user_id = auth.uid())` (lecture/écriture de ses propres données).

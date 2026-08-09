@@ -101,6 +101,8 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | `20260819000000_devis-lignes.sql` | **Vague 3/4** : quote_items, invoice_items (lignes de devis/facture) |
 | `20260820000000_demandes-devis.sql` | **Vague 5** : quote_requests, quote_bids (demande de devis en ligne) |
 | `20260821000000_litiges-remboursements.sql` | **Vague 5** : disputes, dispute_evidences, refunds (médiation + remboursement) |
+| `20260822000000_confiance-verification.sql` | **Vague 6** : verification_documents, market_reviews, provider_reviews.verified, products.rating/review_count (+ contraintes UNIQUE anti-faux avis) |
+| `20260823000000_assistant-ia.sql` | **Vague 7** : ai_conversations, ai_actions, enum ai_action_type (assistant conversationnel par rôle) |
 
 ## 5. Fonctionnalités livrées (map rapide → pour éviter de refaire)
 
@@ -117,7 +119,9 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | Lignes devis & factures (Vague 3/4) | devis (postes dépliables + ajout), facturation (détail des postes) | `useQuoteItems`, `useInvoiceItems` |
 | Demande de devis (Vague 5) | demandes-devis (mes demandes + répondre aux besoins) | `useQuoteRequests`, `useMyQuoteRequests`, `useQuoteBids`, `useMyQuoteBids`, `useAwardQuoteBid` |
 | Litiges & remboursements (Vague 5) | litiges (mes litiges + tous) | `useDisputes`, `useMyDisputes`, `useDisputeEvidences`, `useRefunds`, `useDecideDispute` |
-| Admin | admin/, admin/utilisateurs, admin/demandes-demo, audit | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs` |
+| Confiance & vérification (Vague 6) | parametres (section vérification), admin/verifications, avis vendeurs/produits/transporteurs (boutique — fiche produit, panier, prestataires) | `useProfileVerification`, `useMyVerificationDocuments`, `useAllVerificationDocuments`, `useSubmitVerificationDocument`, `useReviewVerificationDocument`, `useMarketReviews`, `useAddMarketReview` |
+| IA — Assistant (Vague 7) | assistant (conversation par rôle, IA Achats, notes vocales) | `useAiConversations`, `useAiActions`, `useUpsertAiConversation`, `useAddAiAction` |
+| Admin | admin/, admin/utilisateurs, admin/demandes-demo, admin/verifications, audit | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs` |
 | IA (règles) | tableau-de-bord (Conseiller) | — |
 
 ## 6. Contrôles qualité (commandes)
@@ -131,4 +135,4 @@ npm run test       # 26 tests (format 16, i18n 3, guest-mode 3, geo 4)
 
 ## 7. Prochaines étapes
 
-Voir `docs/roadmap.md` — **Vague 4** (paiement mobile money MTN MoMo / Moov Money) à lancer ensuite.
+Voir `docs/roadmap.md` — **Vague 7** (IA) : compléter la comparaison multi-boutiques de l'IA Achats, les recommandations marketplace et l'IA fournisseur (prévision stock, descriptions).

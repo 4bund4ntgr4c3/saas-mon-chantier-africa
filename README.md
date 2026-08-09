@@ -65,6 +65,16 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 - Ouvrez un litige (commande, devis, paiement, livraison, facturation), déposez vos preuves
 - Suivez la décision de médiation et le remboursement associé
 
+### Confiance & vérification
+- Soumettez vos documents (identité, RCCM, patente, CNPS, quittance…) depuis les paramètres ; suivez leur statut
+- Back-office admin de validation : approuvez/rejetez les documents et faites évoluer le niveau de confiance des profils
+- Avis étendus sur les vendeurs, produits et transporteurs, avec badge « Achat vérifié » et anti-faux avis (un avis par utilisateur et par cible)
+
+### IA — Assistant conversationnel
+- Assistant par rôle (« Parler au chantier ») : dictée vocale (Web Speech), questions en français, réponses à base de règles sur vos données réelles
+- IA Achats : liste les besoins matériaux restants du chantier, estime le coût et propose l'ajout au panier
+- Recommandations produits, alertes budget et planning, fils de discussion et actions persistés
+
 ### Expérience
 - PWA installable, i18n FR/EN (navigation), multi-pays/devise (FCFA/XOF, XAF, CDF), mode invité démo, tour guidé, conseiller IA à base de règles, page publique « Nouveautés » (changelog)
 

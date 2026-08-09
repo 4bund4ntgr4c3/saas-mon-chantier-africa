@@ -25,6 +25,7 @@ import {
   Search,
   ShieldCheck,
   Settings,
+  Sparkles,
   Receipt,
   ShoppingCart,
   Store,
@@ -98,6 +99,7 @@ const NAV = [
   { to: "/rapports", labelKey: "nav.rapports", icon: BarChart3, feature: "rapports" },
   { to: "/recherche", labelKey: "nav.recherche", icon: Search, feature: "recherche" },
   { to: "/alertes", labelKey: "nav.alertes", icon: BellRing, feature: "alertes" },
+  { to: "/assistant", labelKey: "nav.assistant", icon: Sparkles, feature: "assistant" },
   { to: "/audit", labelKey: "nav.audit", icon: ShieldCheck, feature: "audit" },
   { to: "/parametres", labelKey: "nav.parametres", icon: Settings, feature: "parametres" },
 ] as const satisfies readonly {
@@ -111,6 +113,7 @@ const ADMIN_NAV = [
   { to: "/admin", labelKey: "admin.administration", icon: ShieldCheck },
   { to: "/admin/utilisateurs", labelKey: "admin.utilisateurs", icon: Users },
   { to: "/admin/demandes-demo", labelKey: "admin.demandes-demo", icon: Inbox },
+  { to: "/admin/verifications", labelKey: "admin.verifications", icon: ShieldCheck },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {

@@ -237,3 +237,25 @@ export const RESERVE_PRIORITIES = [
   { value: "haute", label: "Haute" },
   { value: "critique", label: "Critique" },
 ] as const;
+
+export const VERIFICATION_DOC_TYPES = [
+  { value: "identite", label: "Carte d'identité" },
+  { value: "rccm", label: "RCCM" },
+  { value: "patente", label: "Patente" },
+  { value: "cnps", label: "Attestation CNPS" },
+  { value: "quittance", label: "Quittance / facture" },
+  { value: "permis", label: "Permis / agrément" },
+  { value: "diplome", label: "Diplôme / qualification" },
+] as const;
+
+export const VERIFICATION_DOC_STATUSES = [
+  { value: "en_attente", label: "En attente" },
+  { value: "approuve", label: "Approuvé" },
+  { value: "rejete", label: "Rejeté" },
+] as const;
+
+export const REVIEW_TARGETS = [
+  { value: "store", label: "Boutique" },
+  { value: "product", label: "Produit" },
+  { value: "driver", label: "Transporteur" },
+] as const;

@@ -50,6 +50,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_actions: {
+        Row: {
+          action_type: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          payload: Json;
+          title: string;
+          user_id: string;
+        };
+        Insert: {
+          action_type?: string;
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          payload?: Json;
+          title: string;
+          user_id?: string;
+        };
+        Update: {
+          action_type?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          payload?: Json;
+          title?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_conversations: {
+        Row: {
+          created_at: string;
+          id: string;
+          project_id: string | null;
+          role: string | null;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          project_id?: string | null;
+          role?: string | null;
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          project_id?: string | null;
+          role?: string | null;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       budget_lines: {
         Row: {
           category_id: string;
@@ -1723,6 +1783,7 @@ export type Database = {
           provider_id: string;
           rating: number;
           user_id: string;
+          verified: boolean;
         };
         Insert: {
           comment?: string | null;
@@ -1731,6 +1792,7 @@ export type Database = {
           provider_id: string;
           rating: number;
           user_id?: string;
+          verified?: boolean;
         };
         Update: {
           comment?: string | null;
@@ -1739,6 +1801,7 @@ export type Database = {
           provider_id?: string;
           rating?: number;
           user_id?: string;
+          verified?: boolean;
         };
         Relationships: [
           {
@@ -2299,7 +2362,9 @@ export type Database = {
           min_order_quantity: number;
           name: string;
           price: number;
+          rating: number;
           reference: string | null;
+          review_count: number;
           stock: number;
           store_id: string;
           unit: string | null;
@@ -2321,7 +2386,9 @@ export type Database = {
           min_order_quantity?: number;
           name: string;
           price?: number;
+          rating?: number;
           reference?: string | null;
+          review_count?: number;
           stock?: number;
           store_id: string;
           unit?: string | null;
@@ -2343,7 +2410,9 @@ export type Database = {
           min_order_quantity?: number;
           name?: string;
           price?: number;
+          rating?: number;
           reference?: string | null;
+          review_count?: number;
           stock?: number;
           store_id?: string;
           unit?: string | null;
@@ -2367,6 +2436,39 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      market_reviews: {
+        Row: {
+          comment: string | null;
+          created_at: string;
+          id: string;
+          rating: number;
+          target_id: string;
+          target_type: string;
+          user_id: string;
+          verified: boolean;
+        };
+        Insert: {
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          rating: number;
+          target_id: string;
+          target_type: string;
+          user_id?: string;
+          verified?: boolean;
+        };
+        Update: {
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          rating?: number;
+          target_id?: string;
+          target_type?: string;
+          user_id?: string;
+          verified?: boolean;
+        };
+        Relationships: [];
       };
       profile_verifications: {
         Row: {
@@ -2404,6 +2506,48 @@ export type Database = {
           verified_documents?: boolean;
           verified_identity?: boolean;
           verified_at?: string | null;
+        };
+        Relationships: [];
+      };
+      verification_documents: {
+        Row: {
+          admin_note: string | null;
+          created_at: string;
+          doc_type: string;
+          file_path: string | null;
+          id: string;
+          note: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          admin_note?: string | null;
+          created_at?: string;
+          doc_type?: string;
+          file_path?: string | null;
+          id?: string;
+          note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          admin_note?: string | null;
+          created_at?: string;
+          doc_type?: string;
+          file_path?: string | null;
+          id?: string;
+          note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -2825,6 +2969,7 @@ export const Constants = {
         "transporteur",
         "promoteur",
       ],
+      ai_action_type: ["achat", "finance", "planning", "document", "recommandation", "autre"],
       app_role: ["admin", "user"],
       delivery_status: [
         "planifiee",
@@ -2864,6 +3009,17 @@ export const Constants = {
       quote_status: ["en_attente", "accepte", "rejete", "converti"],
       reserve_priority: ["basse", "moyenne", "haute", "critique"],
       reserve_status: ["ouverte", "en_cours", "resolue", "annulee"],
+      review_target: ["store", "product", "driver"],
+      verification_doc_type: [
+        "identite",
+        "rccm",
+        "patente",
+        "cnps",
+        "quittance",
+        "permis",
+        "diplome",
+      ],
+      verification_status: ["en_attente", "approuve", "rejete"],
     },
   },
 } as const;

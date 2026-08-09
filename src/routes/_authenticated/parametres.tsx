@@ -1,6 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Globe, Languages, Mail, Pencil, Plus, Send, Trash2 } from "lucide-react";
+import {
+  BadgeCheck,
+  FileText,
+  Globe,
+  Languages,
+  Mail,
+  Pencil,
+  Plus,
+  Send,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
 import { RecordDialog, toNumber, type Field, type Values } from "@/components/record-form";
@@ -8,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { COUNTRIES, LANGS, usePreferences } from "@/context/preferences-context";
 import {
@@ -28,13 +40,17 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   useCategories,
   useDeleteRow,
+  useMyVerificationDocuments,
   useNotificationPreferences,
   useProfile,
+  useProfileVerification,
   useSaveRow,
   useSendNotificationEmail,
+  useSubmitVerificationDocument,
   useUpdateNotificationPreferences,
   type Category,
 } from "@/lib/data";
+import { frDate, labelOf, VERIFICATION_DOC_STATUSES, VERIFICATION_DOC_TYPES } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/parametres")({
   head: () => ({
@@ -92,6 +108,7 @@ const FEATURE_LABELS: [Feature, string][] = [
   ["taches", "Tâches & planning"],
   ["partage", "Partage"],
   ["marketplace", "Marketplace de prestataires"],
+  ["assistant", "Assistant IA"],
 ];
 
 type PrefKey =
@@ -150,6 +167,147 @@ const TOGGLE_DEFAULTS: Record<PrefKey, boolean> = {
   alert_projects: true,
   weekly_digest: true,
 };
+
+function VerificationSection() {
+  const { data: verification } = useProfileVerification();
+  const { data: docs = [] } = useMyVerificationDocuments();
+  const submitDoc = useSubmitVerificationDocument();
+  const [docType, setDocType] = useState("identite");
+  const [note, setNote] = useState("");
+  const verified = Boolean(verification?.verified_documents || verification?.verified_identity);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    await submitDoc.mutateAsync({ docType, note: note.trim() || null });
+    setNote("");
+  }
+
+  const badgeStyle = verified
+    ? "bg-success text-success-foreground"
+    : "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300";
+
+  return (
+    <div className="panel p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-base font-semibold">Vérification du profil</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Renforcez la confiance de vos clients en validant votre identité et vos documents
+            professionnels.
+          </p>
+        </div>
+        <Badge className={badgeStyle}>
+          <ShieldCheck className="mr-1 size-3" />
+          {verified ? "Profil vérifié" : "En attente de validation"}
+        </Badge>
+      </div>
+
+      {verification && (
+        <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+          <Badge
+            variant={verification.verified_identity ? "default" : "outline"}
+            className="justify-start"
+          >
+            <BadgeCheck className="mr-1 size-3" /> Identité
+            {verification.verified_identity ? "" : " — à confirmer"}
+          </Badge>
+          <Badge
+            variant={verification.verified_business ? "default" : "outline"}
+            className="justify-start"
+          >
+            <BadgeCheck className="mr-1 size-3" /> Entreprise
+            {verification.verified_business ? "" : " — à confirmer"}
+          </Badge>
+          <Badge
+            variant={verification.verified_documents ? "default" : "outline"}
+            className="justify-start"
+          >
+            <BadgeCheck className="mr-1 size-3" /> Documents
+            {verification.verified_documents ? "" : " — à confirmer"}
+          </Badge>
+        </div>
+      )}
+
+      <form onSubmit={submit} className="mt-4 space-y-3 rounded-md border border-border p-3">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <FileText className="size-3.5" /> Soumettre un document
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-48 flex-1">
+            <Label htmlFor="doc_type" className="mb-1.5 block text-xs text-muted-foreground">
+              Type de document
+            </Label>
+            <Select value={docType} onValueChange={setDocType}>
+              <SelectTrigger id="doc_type" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VERIFICATION_DOC_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="doc_note" className="mb-1.5 block text-xs text-muted-foreground">
+            Détails (n° RCCM, référence…)
+          </Label>
+          <Textarea
+            id="doc_note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Ex. : Récépissé RCCM n° 2025-B-01234"
+            rows={2}
+          />
+        </div>
+        <Button type="submit" disabled={submitDoc.isPending}>
+          {submitDoc.isPending ? "Envoi…" : "Soumettre mon document"}
+        </Button>
+      </form>
+
+      <div className="mt-4">
+        <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+          Mes documents ({docs.length})
+        </h3>
+        {docs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aucun document soumis pour l'instant.</p>
+        ) : (
+          <ul className="divide-y divide-border rounded-md border border-border">
+            {docs.map((d) => (
+              <li key={d.id} className="flex flex-wrap items-center gap-3 p-3">
+                <FileText className="size-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {labelOf(VERIFICATION_DOC_TYPES, d.doc_type)}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {d.note || "Sans précision"} · soumis le {frDate(d.created_at)}
+                    {d.admin_note ? ` · ${d.admin_note}` : ""}
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    d.status === "approuve"
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
+                      : d.status === "rejete"
+                        ? "border-destructive/40 bg-destructive/10 text-destructive"
+                        : "border-amber-400/40 bg-amber-400/10 text-amber-600"
+                  }
+                >
+                  {labelOf(VERIFICATION_DOC_STATUSES, d.status)}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function SettingsPage() {
   const { data: profile } = useProfile();
@@ -363,6 +521,10 @@ function SettingsPage() {
           </form>
         </section>
       </div>
+
+      <section className="mt-8">
+        <VerificationSection />
+      </section>
 
       <section className="mt-8">
         <h2 className="mb-3 font-display text-base font-semibold">Préférences</h2>

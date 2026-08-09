@@ -79,7 +79,8 @@ export type Feature =
   | "alertes"
   | "calendrier"
   | "parametres"
-  | "audit";
+  | "audit"
+  | "assistant";
 
 /** none = module masqué, read = consultation seule, full = création/modification. */
 export type Access = "none" | "read" | "full";
@@ -108,6 +109,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     calendrier: "full",
     parametres: "full",
     audit: "full",
+    assistant: "full",
   },
   maitre_oeuvre: {
     "tableau-de-bord": "full",
@@ -132,6 +134,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     calendrier: "full",
     parametres: "full",
     audit: "full",
+    assistant: "full",
   },
   entreprise: {
     "tableau-de-bord": "full",
@@ -156,6 +159,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     calendrier: "read",
     parametres: "full",
     audit: "read",
+    assistant: "full",
   },
   artisan: {
     "tableau-de-bord": "full",
@@ -180,6 +184,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     calendrier: "read",
     parametres: "full",
     audit: "read",
+    assistant: "full",
   },
   quincaillerie: {
     "tableau-de-bord": "full",
@@ -204,6 +209,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     calendrier: "read",
     parametres: "full",
     audit: "read",
+    assistant: "full",
   },
   transporteur: {
     "tableau-de-bord": "full",
@@ -228,6 +234,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     calendrier: "read",
     parametres: "full",
     audit: "read",
+    assistant: "full",
   },
   promoteur: {
     "tableau-de-bord": "full",
@@ -252,6 +259,7 @@ const MATRIX: Record<AccountType, Record<Feature, Access>> = {
     calendrier: "full",
     parametres: "full",
     audit: "full",
+    assistant: "full",
   },
 };
 

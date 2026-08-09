@@ -57,6 +57,12 @@ function AdminOverviewPage() {
       icon: AlertTriangle,
       to: "/admin/demandes-demo",
     },
+    {
+      label: "Vérifications",
+      value: stats?.verifications ?? 0,
+      icon: ShieldCheck,
+      to: "/admin/verifications",
+    },
   ];
 
   return (
@@ -96,6 +102,15 @@ function AdminOverviewPage() {
           </p>
           <Button asChild className="mt-4" variant="secondary">
             <Link to="/admin/demandes-demo">Ouvrir les demandes</Link>
+          </Button>
+        </div>
+        <div className="panel p-5">
+          <h2 className="font-display text-base font-semibold">Vérification des profils</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Validez les documents de confiance soumis par les professionnels du marketplace.
+          </p>
+          <Button asChild className="mt-4" variant="secondary">
+            <Link to="/admin/verifications">Valider les documents</Link>
           </Button>
         </div>
       </div>
