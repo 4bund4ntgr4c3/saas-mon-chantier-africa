@@ -6,6 +6,36 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.29 — Vague 11 : Géolocalisation & cartes (tranche 1 — rayon de livraison + carte boutiques) (2026-08-10)
+
+### Migration
+- `supabase/migrations/20260827000000_geo-livraison.sql`
+  - ✅ Colonne `stores.delivery_radius_km` (rayon de livraison en km, nullable) + index
+
+### Dépendance
+- ✅ `leaflet` ^1.9.4, `react-leaflet` ^5.0.0, `@types/leaflet` ^1.9.22
+
+### Géométrie (`src/lib/geo.ts`)
+- ✅ `distanceKm(a, b)` — distance entre deux positions
+- ✅ `withinRadius(point, center, radiusKm)` — test d'appartenance à un rayon
+- ✅ `formatDistance(km)` — « 850 m », « 3,2 km »
+- ✅ +6 tests (`src/lib/geo.test.ts`) → **53 tests**
+
+### Carte (`src/components/store-map.tsx`)
+- ✅ `StoreMap` : carte Leaflet multi-fournisseurs (**OpenStreetMap / Esri World / CARTO Voyager**), marqueurs boutiques (popup : ville, distance, rayon de livraison), cercles de rayon de livraison, position utilisateur
+
+### Interface
+- ✅ `boutique.tsx` : bouton **« Près de moi »** (géolocalisation navigateur) + sélecteur de rayon (2/5/10/25 km), panneau carte, filtre des produits par boutique dans le rayon, tri « Près de moi », badge distance « à X km » sur chaque carte produit
+- ✅ `ma-boutique.tsx` : champ **Rayon de livraison (km)** dans le formulaire boutique
+
+### Démo
+- ✅ Seeds : `delivery_radius_km` (10 / 25 / 5 km) sur les 3 boutiques
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur (18 warnings préexistants) · **53 tests OK**
+
+---
+
 ## v0.28 — Vague 10 : Immobilier promoteurs (2ème tranche — acompte réservation mobile money) (2026-08-10)
 
 ### Migration

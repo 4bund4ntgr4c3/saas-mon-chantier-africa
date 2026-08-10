@@ -51,6 +51,7 @@ type StoreFormState = {
   address: string;
   phone: string;
   delivery_available: boolean;
+  delivery_radius_km: string;
   delivery_zone: string;
   description: string;
 };
@@ -91,6 +92,7 @@ function MaBoutiquePage() {
     address: "",
     phone: "",
     delivery_available: false,
+    delivery_radius_km: "",
     delivery_zone: "",
     description: "",
   });
@@ -127,6 +129,7 @@ function MaBoutiquePage() {
       address: s.address ?? "",
       phone: s.phone ?? "",
       delivery_available: s.delivery_available,
+      delivery_radius_km: s.delivery_radius_km != null ? String(s.delivery_radius_km) : "",
       delivery_zone: s.delivery_zone ?? "",
       description: s.description ?? "",
     });
@@ -141,6 +144,7 @@ function MaBoutiquePage() {
       address: "",
       phone: "",
       delivery_available: true,
+      delivery_radius_km: "",
       delivery_zone: "",
       description: "",
     });
@@ -148,7 +152,13 @@ function MaBoutiquePage() {
 
   const submitStore = () => {
     if (!form.name.trim()) return;
-    saveStore.mutate({ id: editing?.id, values: { ...form } } as never);
+    const radius = form.delivery_radius_km.trim()
+      ? Math.max(0, Number(form.delivery_radius_km) || 0)
+      : null;
+    saveStore.mutate({
+      id: editing?.id,
+      values: { ...form, delivery_radius_km: radius },
+    } as never);
     setCreating(false);
     setEditing(null);
   };
@@ -560,6 +570,18 @@ function StoreForm({
             value={form.delivery_zone}
             onChange={(e) => setForm({ ...form, delivery_zone: e.target.value })}
             placeholder="Cotonou, Calavi…"
+          />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label className="text-xs">Rayon de livraison (km)</Label>
+          <Input
+            value={form.delivery_radius_km}
+            onChange={(e) => setForm({ ...form, delivery_radius_km: e.target.value })}
+            placeholder="ex. 10"
+            inputMode="numeric"
+            type="number"
+            min="0"
+            step="0.5"
           />
         </div>
         <div className="flex items-center gap-2 sm:col-span-2">

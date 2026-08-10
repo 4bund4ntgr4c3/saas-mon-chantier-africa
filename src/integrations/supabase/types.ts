@@ -3050,6 +3050,7 @@ export type Database = {
           commune: string | null;
           created_at: string;
           delivery_available: boolean;
+          delivery_radius_km: number | null;
           delivery_zone: string | null;
           description: string | null;
           email: string | null;
@@ -3075,6 +3076,7 @@ export type Database = {
           commune?: string | null;
           created_at?: string;
           delivery_available?: boolean;
+          delivery_radius_km?: number | null;
           delivery_zone?: string | null;
           description?: string | null;
           email?: string | null;
@@ -3100,6 +3102,7 @@ export type Database = {
           commune?: string | null;
           created_at?: string;
           delivery_available?: boolean;
+          delivery_radius_km?: number | null;
           delivery_zone?: string | null;
           description?: string | null;
           email?: string | null;

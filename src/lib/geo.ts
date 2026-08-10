@@ -12,6 +12,23 @@ export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: numb
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
+/** Distance en kilomètres entre deux positions. */
+export function distanceKm(a: GeoPosition, b: GeoPosition): number {
+  return haversineKm(a.lat, a.lng, b.lat, b.lng);
+}
+
+/** Vrai si `point` se trouve dans un rayon de `radiusKm` autour de `center`. */
+export function withinRadius(point: GeoPosition, center: GeoPosition, radiusKm: number): boolean {
+  return distanceKm(point, center) <= radiusKm;
+}
+
+/** Formate une distance en mètres/kilomètres lisibles (ex. « 850 m », « 3,2 km »). */
+export function formatDistance(distanceKm: number): string {
+  if (distanceKm < 1) return `${Math.round(distanceKm * 1000)} m`;
+  const rounded = Math.round(distanceKm * 10) / 10;
+  return `${String(rounded).replace(".", ",")} km`;
+}
+
 export type GeoPosition = { lat: number; lng: number };
 
 /**

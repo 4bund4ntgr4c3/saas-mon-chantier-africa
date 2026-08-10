@@ -16,6 +16,7 @@ Permettre à un particulier, un maître d'œuvre ou une entreprise de suivre l'e
 | UI | React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui (Radix) |
 | Données | TanStack Query + Supabase (PostgreSQL, Auth, Storage, Edge Functions) |
 | Exports | PDF (jspdf) · Excel (xlsx) |
+| Cartes | Leaflet (`react-leaflet` v5) — multi-fournisseurs (OSM / Esri / CARTO) |
 | Notifications | Resend (e-mail) + notifications persistées multi-canal (in-app, push, SMS, WhatsApp) |
 | Tests | Vitest + jsdom |
 | Déploiement | Vercel / Cloudflare Workers (Nitro) |
@@ -40,7 +41,8 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 - **Prestataires BTP** : annuaire par domaine (13 domaines) + avis
 - **E-commerce** : boutiques, catalogue de matériaux, panier, commandes, livraison, transporteurs
 - **Comparateur de prix** : fiche produit enrichie, offres concurrentes, distance « près de moi », économies
-- **Portail vendeur** : boutique, produits, commandes reçues, analytics (CA, panier moyen, meilleures ventes), suivi stock/prix
+- **Géolocalisation** : carte des boutiques (Leaflet multi-fournisseurs), recherche « près de moi » avec rayon de livraison, badge distance sur les produits
+- **Portail vendeur** : boutique, produits, commandes reçues, analytics (CA, panier moyen, meilleures ventes), suivi stock/prix, rayon de livraison
 
 ### Collaboration & multi-tenant
 - Invitation de membres par e-mail sur un chantier (rôles owner/editor/viewer), cloche d'invitations, organisations

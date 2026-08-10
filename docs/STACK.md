@@ -65,7 +65,8 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 ### Formatage & valeurs
 - `src/lib/format.ts` : `fcfa()` **résout la devise par pays** (XOF défaut, XAF pour `cg`, CDF pour `cd`) ; listes `ORDER_STATUSES`, `DELIVERY_STATUSES`, `PRODUCT_UNITS`, `DOCUMENT_CATEGORIES`, `QUOTE_STATUSES`, `PAYMENT_METHODS`, `RESERVE_STATUSES`, `RESERVE_PRIORITIES`, `PROVIDER_DOMAINS`, `PROJECT_STATUSES`.
 - i18n : `src/lib/i18n.ts` (`tr(lang, key)`, `I18nKey`) — **navigation/header traduits**, écrans en FR.
-- Géolocalisation : `src/lib/geo.ts` (`haversineKm`, `useGeolocation`) — utilisé par le comparateur « près de moi ».
+- Géolocalisation : `src/lib/geo.ts` (`haversineKm`, `useGeolocation`, `distanceKm`, `withinRadius`, `formatDistance`) — comparateur « près de moi » + recherche par rayon en boutique.
+- Cartes : `src/components/store-map.tsx` (`StoreMap`) — **Leaflet** (`react-leaflet` v5, `leaflet` ^1.9.4) multi-fournisseurs (OpenStreetMap / Esri World / CARTO Voyager), marqueurs, cercles de rayon de livraison, position utilisateur. La carte n'est montée qu'à la demande (pas de SSR).
 
 ### Composants partagés réutilisés (ne pas dupliquer)
 - `ProductCard` / `QtyStepper` / `CloseButton` (`boutique.tsx`, exportés)
@@ -133,9 +134,9 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 npm run build      # génère routeTree.gen.ts + build complet
 npx tsc --noEmit   # 0 erreur attendue
 npx eslint .       # 0 erreur (18 warnings fast-refresh tolérés)
-npm run test       # 47 tests (format 16, i18n 3, guest-mode 3, geo 4, data 21)
+npm run test       # 53 tests (format 16, i18n 3, guest-mode 3, geo 10, data 21)
 ```
 
 ## 7. Prochaines étapes
 
-Voir `docs/roadmap.md` — **Vague 8** (notifications) : push web réel (service worker) et SMS/WhatsApp transactionnels. **Vague 9** (location de matériel) : paiement intégral de la location par mobile money (hors caution). **Vague 10** (immobilier promoteurs) : plans d'étage interactifs. Ensuite **Vague 11** (géolocalisation & cartes).
+Voir `docs/roadmap.md` — **Vague 8** (notifications) : push web réel (service worker) et SMS/WhatsApp transactionnels. **Vague 9** (location de matériel) : paiement intégral de la location par mobile money (hors caution). **Vague 10** (immobilier promoteurs) : plans d'étage interactifs. **Vague 11** (géolocalisation & cartes) : tranche 2 — géolocalisation des projets/prestataires et suivi de livraison sur carte.

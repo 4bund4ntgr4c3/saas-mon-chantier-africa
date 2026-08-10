@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Minus, Plus, Search, ShoppingCart, Truck, X } from "lucide-react";
+import { LocateFixed, MapPin, Minus, Plus, Search, ShoppingCart, Truck, X } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { ProductDetailDialog } from "@/components/product-compare";
+import { StoreMap } from "@/components/store-map";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { fcfa, labelOf, PRODUCT_UNITS } from "@/lib/format";
+import { formatDistance, haversineKm, useGeolocation } from "@/lib/geo";
 import {
   useAddToCart,
   useProductCategories,
@@ -24,6 +26,8 @@ import {
   useStores,
   type Product,
 } from "@/lib/data";
+
+const NEARBY_RADII = [2, 5, 10, 25] as const;
 
 export const Route = createFileRoute("/_authenticated/boutique")({
   head: () => ({
@@ -58,6 +62,9 @@ function BoutiquePage() {
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("relevance");
   const [selected, setSelected] = useState<Product | null>(null);
+  const [locate, setLocate] = useState(false);
+  const [radiusKm, setRadiusKm] = useState<number>(10);
+  const { position } = useGeolocation(locate);
 
   const allImages = useMemo(
     () => Array.from(new Set(products.flatMap((p) => p.images ?? []))),
@@ -68,10 +75,30 @@ function BoutiquePage() {
   const storeById = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
+  const storeDistances = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!position) return map;
+    for (const s of stores) {
+      if (s.lat == null || s.lng == null) continue;
+      map.set(s.id, haversineKm(position.lat, position.lng, s.lat, s.lng));
+    }
+    return map;
+  }, [position, stores]);
+
+  const nearbyStores = useMemo(() => {
+    if (!position) return new Set<string>();
+    const set = new Set<string>();
+    for (const [id, km] of storeDistances) {
+      if (km <= radiusKm) set.add(id);
+    }
+    return set;
+  }, [position, radiusKm, storeDistances]);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const list = products.filter((p) => {
       if (category !== "all" && p.category_id !== category) return false;
+      if (locate && position && !nearbyStores.has(p.store_id)) return false;
       if (!needle) return true;
       return [p.name, p.brand, p.reference, storeById.get(p.store_id)?.name]
         .filter(Boolean)
@@ -84,10 +111,16 @@ function BoutiquePage() {
         return [...list].sort((a, b) => Number(b.price) - Number(a.price));
       case "stock":
         return [...list].sort((a, b) => Number(b.stock) - Number(a.stock));
+      case "proximity":
+        return [...list].sort(
+          (a, b) =>
+            (storeDistances.get(a.store_id) ?? Infinity) -
+            (storeDistances.get(b.store_id) ?? Infinity),
+        );
       default:
         return list;
     }
-  }, [products, q, category, sort, storeById]);
+  }, [products, q, category, sort, storeById, locate, position, nearbyStores, storeDistances]);
 
   const lowStockCount = products.filter((p) => Number(p.stock) <= 0).length;
 
@@ -130,9 +163,45 @@ function BoutiquePage() {
             <SelectItem value="price-asc">Prix croissant</SelectItem>
             <SelectItem value="price-desc">Prix décroissant</SelectItem>
             <SelectItem value="stock">Stock disponible</SelectItem>
+            <SelectItem value="proximity" disabled={!position}>
+              Près de moi
+            </SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={locate ? "default" : "outline"}
+          onClick={() => setLocate((v) => !v)}
+          className={cn(locate && !position && "opacity-70")}
+        >
+          <LocateFixed className="size-4" />
+          {locate ? (position ? "Position activée" : "Localisation…") : "Près de moi"}
+        </Button>
+        {locate && position && (
+          <Select value={String(radiusKm)} onValueChange={(v) => setRadiusKm(Number(v))}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Rayon" />
+            </SelectTrigger>
+            <SelectContent>
+              {NEARBY_RADII.map((r) => (
+                <SelectItem key={r} value={String(r)}>
+                  Rayon {r} km
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
+
+      {locate && (
+        <div className="mb-5">
+          <StoreMap stores={stores} position={position} />
+          {position && nearbyStores.size > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {nearbyStores.size} boutique(s) dans un rayon de {radiusKm} km
+            </p>
+          )}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="panel p-10 text-center text-sm text-muted-foreground">
@@ -146,6 +215,7 @@ function BoutiquePage() {
               product={p}
               storeName={storeById.get(p.store_id)?.name}
               city={storeById.get(p.store_id)?.city ?? undefined}
+              distanceKm={position ? (storeDistances.get(p.store_id) ?? null) : null}
               deliveryAvailable={Boolean(storeById.get(p.store_id)?.delivery_available)}
               catName={catById.get(p.category_id ?? "")?.name}
               imageUrl={p.images?.[0] ? urls[p.images[0]] : undefined}
@@ -181,6 +251,7 @@ function ProductCard({
   product,
   storeName,
   city,
+  distanceKm,
   deliveryAvailable,
   catName,
   imageUrl,
@@ -191,6 +262,7 @@ function ProductCard({
   product: Product;
   storeName?: string | undefined;
   city?: string | undefined;
+  distanceKm?: number | null;
   deliveryAvailable: boolean;
   catName?: string | undefined;
   imageUrl?: string | undefined;
@@ -278,11 +350,18 @@ function ProductCard({
             {storeName ?? "Boutique"}
             {city ? ` · ${city}` : ""}
           </span>
-          {deliveryAvailable && (
-            <span className="flex shrink-0 items-center gap-1 text-success">
-              <Truck className="size-3.5" /> Livraison
-            </span>
-          )}
+          <span className="flex shrink-0 items-center gap-1">
+            {distanceKm != null && (
+              <span className="inline-flex items-center gap-0.5">
+                <MapPin className="size-3" /> à {formatDistance(distanceKm)}
+              </span>
+            )}
+            {deliveryAvailable && (
+              <span className="inline-flex items-center gap-1 text-success">
+                <Truck className="size-3.5" /> Livraison
+              </span>
+            )}
+          </span>
         </div>
 
         <Button className="mt-4 w-full" disabled={!inStock || adding} onClick={onAdd}>

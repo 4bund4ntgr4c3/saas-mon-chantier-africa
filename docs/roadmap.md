@@ -146,10 +146,10 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Paiement de l'acompte de réservation par mobile money (`deposit_paid`)
 - ⬜ Plans d'étage interactifs / visites
 
-## Vague 11 — Géolocalisation & cartes ⬜
+## Vague 11 — Géolocalisation & cartes 🔄
 
-- Couche cartes multi-fournisseurs, distances, rayon de livraison, recherche « près de moi »
-- (colonnes `lat`/`lng` déjà présentes sur projects/providers/stores/orders/deliveries)
+- ✅ Tranche 1 : rayon de livraison des boutiques (`stores.delivery_radius_km`), recherche « près de moi » (géolocalisation + filtre par rayon), **carte Leaflet multi-fournisseurs** (OSM / Esri / CARTO) avec marqueurs et cercles de livraison (`StoreMap`)
+- ⬜ Tranche 2 : géolocalisation des projets/providers, suivi de livraison sur carte (`orders`/`deliveries`), recherche « près de moi » des prestataires
 
 ## Vague 12 — Abonnements & commissions ⬜
 

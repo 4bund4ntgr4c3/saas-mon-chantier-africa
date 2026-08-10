@@ -151,7 +151,7 @@ erDiagram
 ### Marketplace (Phase 1)
 | Table | Rôle |
 | --- | --- |
-| `stores` | Boutiques gérées par les vendeurs (1-1 avec un profil). |
+| `stores` | Boutiques gérées par les vendeurs (1-1 avec un profil) ; géolocalisation `lat`/`lng`, **Vague 11** : `delivery_radius_km` (rayon de livraison, carte `StoreMap`). |
 | `product_categories` | Catégories de produits (gérées par les admins). |
 | `products` | Produits : nom, prix FCFA, unité, stock, catégorie, boutique. |
 | `product_prices` | **Vague 2** : historique des prix (trigger sur `products.price`). |
