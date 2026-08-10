@@ -6,6 +6,24 @@ Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️`
 
 ---
 
+## v0.28 — Vague 10 : Immobilier promoteurs (2ème tranche — acompte réservation mobile money) (2026-08-10)
+
+### Migration
+- `supabase/migrations/20260826000000_immobilier-promoteurs.sql` (amendée, non appliquée en base)
+  - ✅ Colonne `property_reservations.deposit_paid` (acompte de réservation payé)
+
+### Interface (`src/routes/_authenticated/immobilier.tsx`)
+- ✅ **Dossiers clients** : badge « Acompte payé » + bouton **« Payer l'acompte »** sur les dossiers en demande/confirmés sans acompte → `MobileMoneyDialog` (montant éditable, `onConfirmed` → `deposit_paid`)
+- 🔧 Refactor : extraction du composant `ReservationRow` (actions confirmer/vendre/annuler + paiement acompte)
+
+### Démo
+- 🔧 Seeds : dossier confirmé « Awa Sossou » → `deposit_paid: true`, dossier demande « Jean Mensah » → `deposit_paid: false` (bouton paiement visible)
+
+### Validation
+- ✅ `tsc --noEmit` 0 erreur · `npm run build` OK · `eslint .` 0 erreur (18 warnings préexistants) · **47 tests OK**
+
+---
+
 ## v0.27 — Vague 10 : Immobilier promoteurs (2026-08-10)
 
 ### Migration

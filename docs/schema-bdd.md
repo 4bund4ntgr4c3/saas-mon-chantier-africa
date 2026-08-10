@@ -116,7 +116,7 @@ erDiagram
 | `development_programs` | Programme immobilier : promoteur, nom, description, ville/adresse, `status` (planification/commercialisation/en_construction/livre), `budget_total` (objectif de ventes), dates. RLS : lecture tous connectés, écriture promoteur. |
 | `buildings` | Immeuble d'un programme : `program_id`, nom, `floor_count`, `status`. RLS : écriture via le promoteur du programme. |
 | `property_units` | Lot/appartement : `building_id`, étage, référence (`label`), `unit_type` (appartement/villa/boutique/bureau/terrain/garage/magasin), `surface_m2`, pièces, salles de bain, `price`, `status` (disponible/reserve/vendu). RLS : écriture via le promoteur. |
-| `property_reservations` | Dossier client (réservation/vente) : `unit_id`, auteur, chantier, nom/téléphone/email du client, `amount`, notes, `status` (demande → confirmee → vendue, + annulee). Confirmer → lot `reserve`, vendre → lot `vendu`, annuler → lot `disponible`. RLS : auteur + promoteur du programme. |
+| `property_reservations` | Dossier client (réservation/vente) : `unit_id`, auteur, chantier, nom/téléphone/email du client, `amount`, `deposit_paid` (acompte), notes, `status` (demande → confirmee → vendue, + annulee). Confirmer → lot `reserve`, vendre → lot `vendu`, annuler → lot `disponible`. RLS : auteur + promoteur du programme. |
 | `demo_requests` | Demandes d'accès à la démo commerciale. |
 
 ### Chantiers & suivi

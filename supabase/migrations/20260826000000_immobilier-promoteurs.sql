@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS public.property_reservations (
   client_phone text,
   client_email text,
   amount numeric(14,2) NOT NULL DEFAULT 0,
+  deposit_paid boolean NOT NULL DEFAULT false,
   notes text,
   status public.property_reservation_status NOT NULL DEFAULT 'demande',
   created_at timestamptz NOT NULL DEFAULT now(),

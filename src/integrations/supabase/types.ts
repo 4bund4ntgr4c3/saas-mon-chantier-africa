@@ -658,6 +658,7 @@ export type Database = {
           client_name: string;
           client_phone: string | null;
           created_at: string;
+          deposit_paid: boolean;
           id: string;
           notes: string | null;
           project_id: string | null;
@@ -672,6 +673,7 @@ export type Database = {
           client_name: string;
           client_phone?: string | null;
           created_at?: string;
+          deposit_paid?: boolean;
           id?: string;
           notes?: string | null;
           project_id?: string | null;
@@ -686,6 +688,7 @@ export type Database = {
           client_name?: string;
           client_phone?: string | null;
           created_at?: string;
+          deposit_paid?: boolean;
           id?: string;
           notes?: string | null;
           project_id?: string | null;

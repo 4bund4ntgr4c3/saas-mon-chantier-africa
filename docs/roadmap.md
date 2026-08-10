@@ -143,7 +143,8 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Budget / objectif de ventes par programme, avancement des ventes (vendus/réservés/dispo + montant encaissé, `computeProgramStats`)
 - ✅ Dossiers clients (`property_reservations`) : réservation, confirmation (lot réservé), vente (lot vendu), annulation (lot disponible)
 - ✅ Route `/immobilier` : programmes (CRUD + détail), immeubles & lots (CRUD), dossiers clients (par programme)
-- ⬜ Plans d'étage interactifs / visites, paiement acompte réservation par mobile money
+- ✅ Paiement de l'acompte de réservation par mobile money (`deposit_paid`)
+- ⬜ Plans d'étage interactifs / visites
 
 ## Vague 11 — Géolocalisation & cartes ⬜
 

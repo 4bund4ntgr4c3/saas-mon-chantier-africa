@@ -138,4 +138,4 @@ npm run test       # 47 tests (format 16, i18n 3, guest-mode 3, geo 4, data 21)
 
 ## 7. Prochaines étapes
 
-Voir `docs/roadmap.md` — **Vague 8** (notifications) : push web réel (service worker) et SMS/WhatsApp transactionnels. **Vague 9** (location de matériel) : paiement intégral de la location par mobile money (hors caution). **Vague 10** (immobilier promoteurs) : plans d'étage interactifs, paiement acompte réservation par mobile money. Ensuite **Vague 11** (géolocalisation & cartes).
+Voir `docs/roadmap.md` — **Vague 8** (notifications) : push web réel (service worker) et SMS/WhatsApp transactionnels. **Vague 9** (location de matériel) : paiement intégral de la location par mobile money (hors caution). **Vague 10** (immobilier promoteurs) : plans d'étage interactifs. Ensuite **Vague 11** (géolocalisation & cartes).

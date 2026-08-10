@@ -12,14 +12,15 @@ import {
   Pencil,
   Plus,
   RotateCcw,
+  ShieldCheck,
   Trash2,
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
+import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAccess } from "@/lib/roles";
 import { useCurrentProject } from "@/context/project-context";
@@ -723,61 +724,16 @@ function DossiersTab({ canEdit, projectId }: { canEdit: boolean; projectId: stri
       ) : (
         <ul className="space-y-2">
           {reservations.map((r) => (
-            <li
+            <ReservationRow
               key={r.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/30 p-3"
-            >
-              <div className="min-w-0">
-                <p className="text-sm">
-                  <span className="font-medium">{r.client_name}</span> ·{" "}
-                  {unitInfo.get(r.unit_id) ?? "Lot supprimé"} ·{" "}
-                  <span className="num font-semibold text-primary">{fcfa(Number(r.amount))}</span>
-                </p>
-                {(r.client_phone || r.client_email) && (
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {[r.client_phone, r.client_email].filter(Boolean).join(" · ")}
-                  </p>
-                )}
-                {r.notes && <p className="mt-0.5 text-xs text-muted-foreground">{r.notes}</p>}
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  <Badge variant="outline">
-                    {labelOf(PROPERTY_RESERVATION_STATUSES, r.status)}
-                  </Badge>
-                </p>
-              </div>
-              {canEdit && (
-                <div className="flex items-center gap-2">
-                  {r.status === "demande" && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="bg-success text-success-foreground hover:bg-success/80"
-                      onClick={() => updateStatus.mutate({ id: r.id, status: "confirmee" })}
-                    >
-                      <CheckCircle2 className="mr-1.5 size-4" /> Confirmer
-                    </Button>
-                  )}
-                  {r.status === "confirmee" && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => updateStatus.mutate({ id: r.id, status: "vendue" })}
-                    >
-                      <Landmark className="mr-1.5 size-4" /> Vendre
-                    </Button>
-                  )}
-                  {(r.status === "demande" || r.status === "confirmee") && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => updateStatus.mutate({ id: r.id, status: "annulee" })}
-                    >
-                      Annuler
-                    </Button>
-                  )}
-                </div>
-              )}
-            </li>
+              reservation={r}
+              unitLabel={unitInfo.get(r.unit_id) ?? "Lot supprimé"}
+              canEdit={canEdit}
+              projectId={projectId}
+              onConfirm={() => updateStatus.mutate({ id: r.id, status: "confirmee" })}
+              onSell={() => updateStatus.mutate({ id: r.id, status: "vendue" })}
+              onCancel={() => updateStatus.mutate({ id: r.id, status: "annulee" })}
+            />
           ))}
         </ul>
       )}
@@ -839,5 +795,93 @@ function NewReservationDialog({
       }
       onSubmit={submit}
     />
+  );
+}
+
+function ReservationRow({
+  reservation: r,
+  unitLabel,
+  canEdit,
+  projectId,
+  onConfirm,
+  onSell,
+  onCancel,
+}: {
+  reservation: PropertyReservation;
+  unitLabel: string;
+  canEdit: boolean;
+  projectId: string | null;
+  onConfirm: () => void;
+  onSell: () => void;
+  onCancel: () => void;
+}) {
+  const markDepositPaid = useSaveRow("property_reservations", "Acompte payé");
+  const [paying, setPaying] = useState(false);
+  const showDeposit =
+    canEdit &&
+    !r.deposit_paid &&
+    (r.status === "demande" || r.status === "confirmee") &&
+    Number(r.amount) > 0;
+
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/30 p-3">
+      <div className="min-w-0">
+        <p className="text-sm">
+          <span className="font-medium">{r.client_name}</span> · {unitLabel} ·{" "}
+          <span className="num font-semibold text-primary">{fcfa(Number(r.amount))}</span>
+        </p>
+        {(r.client_phone || r.client_email) && (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {[r.client_phone, r.client_email].filter(Boolean).join(" · ")}
+          </p>
+        )}
+        {r.notes && <p className="mt-0.5 text-xs text-muted-foreground">{r.notes}</p>}
+        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          <Badge variant="outline">{labelOf(PROPERTY_RESERVATION_STATUSES, r.status)}</Badge>
+          {r.deposit_paid && (
+            <Badge className="bg-success text-success-foreground">
+              <ShieldCheck className="mr-1 size-3" /> Acompte payé
+            </Badge>
+          )}
+        </p>
+      </div>
+      {canEdit && (
+        <div className="flex flex-wrap items-center gap-2">
+          {showDeposit && (
+            <Button size="sm" variant="secondary" onClick={() => setPaying(true)}>
+              <ShieldCheck className="mr-1.5 size-4" /> Payer l'acompte
+            </Button>
+          )}
+          {r.status === "demande" && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="bg-success text-success-foreground hover:bg-success/80"
+              onClick={onConfirm}
+            >
+              <CheckCircle2 className="mr-1.5 size-4" /> Confirmer
+            </Button>
+          )}
+          {r.status === "confirmee" && (
+            <Button size="sm" variant="secondary" onClick={onSell}>
+              <Landmark className="mr-1.5 size-4" /> Vendre
+            </Button>
+          )}
+          {(r.status === "demande" || r.status === "confirmee") && (
+            <Button size="sm" variant="ghost" onClick={onCancel}>
+              Annuler
+            </Button>
+          )}
+        </div>
+      )}
+      <MobileMoneyDialog
+        projectId={r.project_id ?? projectId}
+        amount={Number(r.amount)}
+        {...(r.client_name ? { beneficiary: r.client_name } : {})}
+        open={paying}
+        onOpenChange={setPaying}
+        onConfirmed={() => markDepositPaid.mutate({ id: r.id, values: { deposit_paid: true } })}
+      />
+    </li>
   );
 }

@@ -81,7 +81,7 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 ### Immobilier promoteurs
 - Programmes immobiliers décomposés en immeubles puis en lots/appartements (type, étage, surface, pièces, prix, statut)
 - Budget / objectif de ventes par programme avec barre d'avancement (vendus / réservés / disponibles + montant encaissé)
-- Dossiers clients : réservation, confirmation (lot réservé), vente (lot vendu), annulation
+- Dossiers clients : réservation, confirmation (lot réservé), vente (lot vendu), annulation, paiement de l'acompte par mobile money
 
 ### IA — Assistant conversationnel
 - Assistant par rôle (« Parler au chantier ») : dictée vocale (Web Speech), questions en français, réponses à base de règles sur vos données réelles
