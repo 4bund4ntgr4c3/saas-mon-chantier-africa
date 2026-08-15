@@ -4,6 +4,7 @@ import { Download, FileText, Loader2, Plus, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { InteractivePlanViewerDialog } from "@/components/interactive-plan-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
@@ -82,7 +83,8 @@ function PlansPage() {
         title="Plans du chantier"
         subtitle={`${plans.length} plan(s) · ${project.name}`}
         action={
-          <>
+          <div className="flex flex-wrap items-center gap-2">
+            <InteractivePlanViewerDialog planTitle={`Plan — ${project.name}`} />
             <input
               ref={fileRef}
               type="file"
@@ -99,7 +101,7 @@ function PlansPage() {
               )}
               Ajouter des plans
             </Button>
-          </>
+          </div>
         }
       />
 

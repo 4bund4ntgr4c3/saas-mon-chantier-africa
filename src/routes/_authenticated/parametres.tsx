@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
+import { SubscriptionPlansDialog } from "@/components/subscription-plans";
+import { InsuranceDialog } from "@/components/insurance-dialog";
+import { PaymentGatewayDialog } from "@/components/payment-gateway-dialog";
 import { RecordDialog, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -479,6 +482,13 @@ function SettingsPage() {
       <PageHeader
         title="Paramètres"
         subtitle="Vos informations, votre mot de passe et vos postes de dépenses personnalisés"
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <PaymentGatewayDialog />
+            <InsuranceDialog />
+            <SubscriptionPlansDialog />
+          </div>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

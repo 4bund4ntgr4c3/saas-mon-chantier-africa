@@ -11,6 +11,10 @@ import {
 } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
+import { MetreCalculatorDialog } from "@/components/metre-calculator";
+import { SolarCalculatorDialog } from "@/components/solar-calculator-dialog";
+import { TransportCostDialog } from "@/components/transport-cost-dialog";
+import { CarbonFootprintDialog } from "@/components/carbon-footprint-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -195,16 +199,36 @@ function MateriauxPage() {
         title="Matériaux chantier"
         subtitle={`${num(requirements.length)} besoin(s) · ${num(remainingTotal)} unité(s) restante(s) · ${fcfa(deliveredTotal)} livrés`}
         action={
-          <RecordDialog
-            title="Nouveau besoin en matériaux"
-            fields={reqFields}
-            onSubmit={submitRequirement}
-            trigger={
-              <Button size="sm">
-                <Plus className="mr-1.5 size-4" /> Ajouter un besoin
-              </Button>
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <CarbonFootprintDialog projectName={project.name} />
+            <TransportCostDialog />
+            <SolarCalculatorDialog />
+            <MetreCalculatorDialog
+              onApplyRequirements={async (summary) => {
+                if (!projectId) return;
+                await addRequirement.mutateAsync({
+                  project_id: projectId,
+                  name: `Estimation métré : ${summary.slice(0, 50)}...`,
+                  category: "gros_oeuvre",
+                  quantity_needed: 1,
+                  unit: "lot",
+                  unit_price: 0,
+                  supplier_id: null,
+                  notes: summary,
+                });
+              }}
+            />
+            <RecordDialog
+              title="Nouveau besoin en matériaux"
+              fields={reqFields}
+              onSubmit={submitRequirement}
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 size-4" /> Ajouter un besoin
+                </Button>
+              }
+            />
+          </div>
         }
       />
 

@@ -51,11 +51,13 @@ supabase db push
 ### Option B — Dashboard
 
 Pour chaque fichier de `supabase/migrations/` (dans l'ordre de nommage) :
+
 1. Ouvrez **SQL Editor** dans le dashboard.
 2. Collez le contenu du fichier.
 3. Exécutez.
 
 Ordre requis :
+
 1. `20260807213051_1ab95d08-….sql` — enums de base
 2. `20260807213112_….sql`
 3. `20260808073702_….sql` — audit
@@ -83,14 +85,14 @@ Ouvrez `http://localhost:3000`. Le mode invité (aperçu sans compte) est dispon
 
 ## 5. Scripts utiles
 
-| Commande | Action |
-| --- | --- |
-| `npm run dev` | Serveur de dev |
-| `npm run build` | Build de production (client + SSR + nitro) |
-| `npm run preview` | Prévisualisation du build |
-| `npm run lint` | ESLint |
-| `npm run test` | Tests unitaires Vitest |
-| `npm run test:watch` | Tests en mode watch |
+| Commande             | Action                                     |
+| -------------------- | ------------------------------------------ |
+| `npm run dev`        | Serveur de dev                             |
+| `npm run build`      | Build de production (client + SSR + nitro) |
+| `npm run preview`    | Prévisualisation du build                  |
+| `npm run lint`       | ESLint                                     |
+| `npm run test`       | Tests unitaires Vitest                     |
+| `npm run test:watch` | Tests en mode watch                        |
 
 ## Dépannage
 

@@ -26,6 +26,11 @@ import {
 } from "@/lib/data";
 import { fcfa, monthKey, monthLabel } from "@/lib/format";
 import { PosteDetailDialog } from "@/components/poste-detail";
+import { MetreCalculatorDialog } from "@/components/metre-calculator";
+import { TontineDialog } from "@/components/tontine-dialog";
+import { SolarCalculatorDialog } from "@/components/solar-calculator-dialog";
+import { InsuranceDialog } from "@/components/insurance-dialog";
+import { RentalYieldDialog } from "@/components/rental-yield-dialog";
 
 export const Route = createFileRoute("/_authenticated/budget")({
   head: () => ({
@@ -177,6 +182,14 @@ function BudgetPage() {
         subtitle={`${fcfa(planned)} planifiés · ${fcfa(spent)} dépensés · enveloppe projet ${fcfa(project.budget)}`}
         action={
           <div className="flex flex-wrap gap-2">
+            <RentalYieldDialog defaultBudget={project.budget ? Number(project.budget) : 35000000} />
+            <InsuranceDialog
+              defaultBudget={project.budget ? Number(project.budget) : 25000000}
+              projectName={project.name}
+            />
+            <SolarCalculatorDialog />
+            <TontineDialog projectName={project.name} />
+            <MetreCalculatorDialog />
             <Button
               variant="outline"
               onClick={() => runExport("pdf")}

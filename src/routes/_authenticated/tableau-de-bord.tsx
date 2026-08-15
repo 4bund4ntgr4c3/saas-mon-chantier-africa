@@ -35,6 +35,13 @@ import { StartupChecklist } from "@/components/startup-checklist";
 import { QuickExpenseDialog } from "@/components/quick-expense";
 import { ShareProjectButton } from "@/components/share-project";
 import { AiConseiller } from "@/components/ai-conseiller";
+import { WeatherSiteWidget } from "@/components/weather-widget";
+import { EscrowDialog } from "@/components/escrow-dialog";
+import { CostSimulatorDialog } from "@/components/cost-simulator-dialog";
+import { WhatsAppShareDialog } from "@/components/whatsapp-share-dialog";
+import { GanttScheduleDialog } from "@/components/gantt-schedule-dialog";
+import { SafetyAuditDialog } from "@/components/safety-audit-dialog";
+import { exportDossierChantierPdf } from "@/lib/dossier-export";
 
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -127,7 +134,7 @@ function Dashboard() {
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
   const { data: companies = [] } = useCompanies();
-  const [exporting, setExporting] = useState<"pdf" | "excel" | "recap" | null>(null);
+  const [exporting, setExporting] = useState<"pdf" | "excel" | "recap" | "dossier" | null>(null);
 
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   const catPhase = useMemo(() => new Map(categories.map((c) => [c.id, c.phase])), [categories]);
@@ -242,10 +249,30 @@ function Dashboard() {
     });
   }, [project, expenses, budget]);
 
-  const runExport = async (kind: "pdf" | "excel" | "recap") => {
+  const runExport = async (kind: "pdf" | "excel" | "recap" | "dossier") => {
     if (!project) return;
     setExporting(kind);
     try {
+      if (kind === "dossier") {
+        await exportDossierChantierPdf({
+          projectName: project.name,
+          location: [project.quartier, project.commune, project.city].filter(Boolean).join(", "),
+          clientName: "Maître d'ouvrage",
+          totalBudget: budget,
+          totalSpent,
+          progressPercent: Math.min(100, Math.round(progress)),
+          phases: byCategory.map((c) => ({
+            name: c.name,
+            status: "in_progress",
+            budget: 0,
+            spent: c.value,
+          })),
+          recentPhotosCount: 0,
+          summaryNotes: "Suivi certifié BâtiBénin",
+        });
+        toast.success("Dossier Banque & Diaspora généré !");
+        return;
+      }
       if (kind === "recap") {
         const { exportProjectSummaryPdf } = await import("@/lib/project-summary-export");
         await exportProjectSummaryPdf({
@@ -317,6 +344,15 @@ function Dashboard() {
             <Badge variant="outline" className="border-primary/40 text-primary">
               {num(progress, 1)} % d'avancement financier
             </Badge>
+            <CostSimulatorDialog />
+            <WhatsAppShareDialog projectName={project.name} />
+            <GanttScheduleDialog projectName={project.name} />
+            <SafetyAuditDialog projectName={project.name} />
+            <EscrowDialog
+              contractTitle={`Chantier ${project.name}`}
+              contractorName="Artisan & Entreprise"
+              totalAmount={budget > 0 ? budget : 2500000}
+            />
             <ShareProjectButton project={project} />
             <QuickExpenseDialog
               trigger={
@@ -327,6 +363,17 @@ function Dashboard() {
             />
             {canSeeBudget && (
               <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting !== null}
+                  onClick={() => runExport("dossier")}
+                  title="Dossier complet certifié pour banques ou proches à l'étranger"
+                  className="border-primary/40 text-primary font-medium"
+                >
+                  <FileText className="mr-2 size-4" />
+                  {exporting === "dossier" ? "Export…" : "Dossier Diaspora"}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -361,7 +408,14 @@ function Dashboard() {
         }
       />
 
-      <StartupChecklist project={project} />
+      <div className="grid gap-4 lg:grid-cols-3 mb-4">
+        <div className="lg:col-span-2">
+          <StartupChecklist project={project} />
+        </div>
+        <div>
+          <WeatherSiteWidget />
+        </div>
+      </div>
 
       <div data-tour="kpis" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {canSeeBudget && <Kpi label="Budget global" value={fcfa(budget)} tone="accent" />}

@@ -18,6 +18,7 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
+import { RentalYieldDialog } from "@/components/rental-yield-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -156,20 +157,23 @@ function ImmobilierPage() {
         title="Immobilier — Promoteurs"
         subtitle={`${programs.length} programme(s) · gestion des immeubles, lots et dossiers clients`}
         action={
-          canEdit ? (
-            <RecordDialog
-              title="Nouveau programme"
-              description="Créez un programme immobilier (immeubles, lots, objectif de ventes)."
-              fields={PROGRAM_FIELDS}
-              submitLabel="Créer"
-              trigger={
-                <Button size="sm">
-                  <Plus className="mr-1.5 size-4" /> Nouveau programme
-                </Button>
-              }
-              onSubmit={async (v) => saveProgram.mutateAsync({ values: toProgramPayload(v) })}
-            />
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-2">
+            <RentalYieldDialog />
+            {canEdit && (
+              <RecordDialog
+                title="Nouveau programme"
+                description="Créez un programme immobilier (immeubles, lots, objectif de ventes)."
+                fields={PROGRAM_FIELDS}
+                submitLabel="Créer"
+                trigger={
+                  <Button size="sm">
+                    <Plus className="mr-1.5 size-4" /> Nouveau programme
+                  </Button>
+                }
+                onSubmit={async (v) => saveProgram.mutateAsync({ values: toProgramPayload(v) })}
+              />
+            )}
+          </div>
         }
       />
 

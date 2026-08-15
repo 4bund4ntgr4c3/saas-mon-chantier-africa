@@ -23,13 +23,13 @@ Vérifiez la présence de `sw.js` et `manifest.json` dans `.output/public/` avan
 
 Définissez côté serveur/hébergeur les mêmes variables que `.env` :
 
-| Variable | Obligatoire | Usage |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | oui | Client (injectée au build) |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | oui | Client |
-| `VITE_SUPABASE_PROJECT_ID` | oui | Client |
-| `SUPABASE_URL` | oui | Serveur/nitro |
-| `SUPABASE_PUBLISHABLE_KEY` | oui | Serveur |
+| Variable                        | Obligatoire | Usage                      |
+| ------------------------------- | ----------- | -------------------------- |
+| `VITE_SUPABASE_URL`             | oui         | Client (injectée au build) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | oui         | Client                     |
+| `VITE_SUPABASE_PROJECT_ID`      | oui         | Client                     |
+| `SUPABASE_URL`                  | oui         | Serveur/nitro              |
+| `SUPABASE_PUBLISHABLE_KEY`      | oui         | Serveur                    |
 
 ## 3. Déploiement Cloudflare (recommandé)
 

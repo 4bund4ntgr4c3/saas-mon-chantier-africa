@@ -3,6 +3,7 @@ import { Copy, Plus, Search, Trash2, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
+import { CostSimulatorDialog } from "@/components/cost-simulator-dialog";
 import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Values } from "@/components/record-form";
 import {
@@ -188,20 +189,23 @@ function ProjectsPage() {
         title="Projets"
         subtitle="Tous vos chantiers de construction"
         action={
-          canEdit ? (
-            <RecordDialog
-              title="Nouveau projet"
-              description="Renseignez les informations du chantier."
-              fields={FIELDS}
-              initial={{ status: "en_cours", levels: "1" }}
-              trigger={
-                <Button>
-                  <Plus className="size-4" /> Nouveau projet
-                </Button>
-              }
-              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-            />
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-2">
+            <CostSimulatorDialog />
+            {canEdit && (
+              <RecordDialog
+                title="Nouveau projet"
+                description="Renseignez les informations du chantier."
+                fields={FIELDS}
+                initial={{ status: "en_cours", levels: "1" }}
+                trigger={
+                  <Button>
+                    <Plus className="size-4" /> Nouveau projet
+                  </Button>
+                }
+                onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+              />
+            )}
+          </div>
         }
       />
 

@@ -4,6 +4,8 @@ import { Plus, Receipt, Send } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
+import { EmecefInvoiceDialog } from "@/components/emecef-invoice-dialog";
+import { PaymentRemindersDialog } from "@/components/payment-reminders-dialog";
 import { RecordDialog, orNull, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -159,17 +161,21 @@ function FacturationPage() {
         title="Facturation client"
         subtitle={`${num(invoices.length)} facture(s) · restant dû ${fcfa(totals.due)}`}
         action={
-          <RecordDialog
-            title="Nouvelle facture"
-            fields={INVOICE_FIELDS}
-            initial={{ invoice_date: today() }}
-            onSubmit={createInvoice}
-            trigger={
-              <Button size="sm">
-                <Plus className="mr-1.5 size-4" /> Nouvelle facture
-              </Button>
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <PaymentRemindersDialog invoices={invoices} />
+            <EmecefInvoiceDialog />
+            <RecordDialog
+              title="Nouvelle facture"
+              fields={INVOICE_FIELDS}
+              initial={{ invoice_date: today() }}
+              onSubmit={createInvoice}
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 size-4" /> Nouvelle facture
+                </Button>
+              }
+            />
+          </div>
         }
       />
 

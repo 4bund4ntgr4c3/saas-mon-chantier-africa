@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { CarbonFootprintDialog } from "@/components/carbon-footprint-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -255,6 +256,7 @@ function ReportsPage() {
         subtitle={`Analyse du chantier « ${project.name} » · ${fcfa(total)} dépensés au total`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <CarbonFootprintDialog projectName={project.name} />
             <Select value={kind} onValueChange={(v) => setKind(v as ReportKind)}>
               <SelectTrigger className="w-64">
                 <SelectValue />

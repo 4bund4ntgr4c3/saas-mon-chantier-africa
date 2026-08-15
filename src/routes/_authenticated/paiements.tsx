@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Pencil, Plus, Smartphone, Trash2, Upload } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
+import { PaymentRemindersDialog } from "@/components/payment-reminders-dialog";
+import { PaymentGatewayDialog } from "@/components/payment-gateway-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { ImportDialog, type ImportColumn } from "@/components/import-csv";
 import { Button } from "@/components/ui/button";
@@ -158,9 +160,17 @@ function PaymentsPage() {
         subtitle={`${payments.length} versement(s) · ${fcfa(total)}`}
         action={
           <div className="flex flex-wrap gap-2">
+            <PaymentGatewayDialog />
+            <PaymentRemindersDialog />
             <Button variant="outline" onClick={() => setMmOpen(true)}>
-              <Smartphone className="size-4" /> Payer par mobile money
+              <Smartphone className="size-4 mr-1.5" /> Payer par mobile money
             </Button>
+            <MobileMoneyDialog
+              projectId={projectId}
+              amount={100000}
+              open={mmOpen}
+              onOpenChange={setMmOpen}
+            />
             <ImportDialog
               title="Importer des paiements"
               description="Téléversez un fichier CSV ou Excel de paiements pour ce chantier."

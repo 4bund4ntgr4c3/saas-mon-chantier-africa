@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Circle, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { InteractivePlanViewerDialog } from "@/components/interactive-plan-viewer";
 import { RecordDialog, orNull, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,17 +112,20 @@ function ReservesPage() {
         title="Réserves de chantier"
         subtitle={`${openCount} réserve(s) ouverte(s) sur ${reserves.length}`}
         action={
-          <RecordDialog
-            title="Nouvelle réserve"
-            fields={fields}
-            initial={{ priority: "moyenne" }}
-            onSubmit={submit}
-            trigger={
-              <Button size="sm">
-                <Plus className="mr-1.5 size-4" /> Nouvelle réserve
-              </Button>
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <InteractivePlanViewerDialog planTitle={`Réserves sur plan — ${project.name}`} />
+            <RecordDialog
+              title="Nouvelle réserve"
+              fields={fields}
+              initial={{ priority: "moyenne" }}
+              onSubmit={submit}
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 size-4" /> Nouvelle réserve
+                </Button>
+              }
+            />
+          </div>
         }
       />
 

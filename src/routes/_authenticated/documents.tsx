@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { ContractGeneratorDialog } from "@/components/contract-generator-dialog";
+import { AccessBadgeDialog } from "@/components/access-badge-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -123,14 +125,18 @@ function DocumentsPage() {
         title="Documents"
         subtitle={`${documents.length} pièce(s) archivée(s) · ${missingCount} catégorie(s) à compléter`}
         action={
-          canEdit && (
-            <UploadDialog
-              open={uploadOpen}
-              onOpenChange={setUploadOpen}
-              projectId={projectId!}
-              onAdd={addDocs.mutateAsync}
-            />
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            <AccessBadgeDialog projectName={project.name} />
+            <ContractGeneratorDialog projectName={project.name} />
+            {canEdit && (
+              <UploadDialog
+                open={uploadOpen}
+                onOpenChange={setUploadOpen}
+                projectId={projectId!}
+                onAdd={addDocs.mutateAsync}
+              />
+            )}
+          </div>
         }
       />
 

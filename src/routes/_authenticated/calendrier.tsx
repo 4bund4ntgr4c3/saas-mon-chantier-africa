@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, CircleAlert, CircleCheck } from "lucide-react";
 import { FeatureGate } from "@/components/feature-gate";
 import { PageHeader } from "@/components/app-shell";
+import { GanttScheduleDialog } from "@/components/gantt-schedule-dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { isGuestMode } from "@/lib/guest-mode";
@@ -148,7 +149,8 @@ function CalendrierPage() {
     <>
       <PageHeader
         title="Calendrier des échéances"
-        subtitle={`${events.length} échéance(s) — ${overdueCount} en retard · ${next7} sous 7 jours`}
+        subtitle={`${events.length} échéance(s) · ${overdueCount} en retard · ${next7} dans les 7 jours`}
+        action={<GanttScheduleDialog projectName={projects[0]?.name ?? "Mon Chantier"} />}
       />
 
       {events.length === 0 ? (

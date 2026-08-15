@@ -52,6 +52,7 @@ import { accessFor, accountTypeLabel, useAccountType, type Feature } from "@/lib
 import { Badge } from "@/components/ui/badge";
 import { exitGuestMode, useGuestMode } from "@/lib/guest-mode";
 import { GuestBanner } from "@/components/guest-banner";
+import { OfflineBanner } from "@/components/offline-banner";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { ProjectInvitesButton } from "@/components/project-invites";
 import { QuickExpenseDialog } from "@/components/quick-expense";
@@ -200,6 +201,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="min-w-0 flex-1">
+          <OfflineBanner />
           <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:px-8">
             <div className="flex items-center gap-2 lg:hidden">
               <Hammer className="size-5 text-primary" />

@@ -4,6 +4,7 @@ import path from "node:path";
 export default defineConfig({
   test: {
     environment: "jsdom",
+    pool: "threads",
     include: ["src/**/*.test.ts"],
   },
   resolve: {

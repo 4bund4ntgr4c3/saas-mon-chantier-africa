@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
+import { LaborManagementDialog } from "@/components/labor-management";
+import { SafetyAuditDialog } from "@/components/safety-audit-dialog";
 import { useAccess } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -195,11 +197,15 @@ function JournalPage() {
         title="Journal de chantier"
         subtitle={`${logs.length} entrée(s) · avancement déclaré ${latestProgress}% · ${withDifficulties} difficulté(s) signalée(s)`}
         action={
-          canEdit ? (
-            <Button onClick={openNew}>
-              <Plus className="size-4" /> Nouvelle entrée
-            </Button>
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-2">
+            <SafetyAuditDialog projectName={project.name} />
+            <LaborManagementDialog />
+            {canEdit && (
+              <Button onClick={openNew}>
+                <Plus className="size-4" /> Nouvelle entrée
+              </Button>
+            )}
+          </div>
         }
       />
 

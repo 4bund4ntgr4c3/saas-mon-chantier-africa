@@ -13,6 +13,7 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
+import { WhatsAppShareDialog } from "@/components/whatsapp-share-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -50,7 +51,11 @@ function CommandesPage() {
 
   return (
     <>
-      <PageHeader title="Mes commandes" subtitle={`${orders.length} commande(s) au total`} />
+      <PageHeader
+        title="Mes commandes"
+        subtitle={`${orders.length} commande(s) au total`}
+        action={<WhatsAppShareDialog projectName="Commande Quincaillerie" />}
+      />
 
       {orders.length === 0 ? (
         <div className="panel grid place-items-center px-6 py-16 text-center">

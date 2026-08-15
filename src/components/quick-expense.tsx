@@ -22,6 +22,8 @@ import {
 import { useCurrentProject } from "@/context/project-context";
 import { useCategories, useSaveRow } from "@/lib/data";
 import { PAYMENT_METHODS } from "@/lib/format";
+import { ReceiptScannerDialog } from "@/components/receipt-scanner";
+import type { ParsedReceipt } from "@/lib/ocr-receipt";
 
 /** Saisie rapide d'une dépense sur le chantier courant (2 champs essentiels + poste). */
 export function QuickExpenseDialog({
@@ -79,7 +81,21 @@ export function QuickExpenseDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display">Saisie rapide de dépense</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="font-display">Saisie rapide de dépense</DialogTitle>
+            <ReceiptScannerDialog
+              onApplyReceipt={(parsed: ParsedReceipt) => {
+                const itemSummary =
+                  parsed.items.length > 0
+                    ? parsed.items.map((i) => `${i.quantity}x ${i.designation}`).join(", ")
+                    : "";
+                setLabel(itemSummary ? `${parsed.vendorName} - ${itemSummary}` : parsed.vendorName);
+                if (parsed.totalAmount > 0) setAmount(String(parsed.totalAmount));
+                if (parsed.date) setDate(parsed.date);
+                if (parsed.paymentMethod) setMethod(parsed.paymentMethod);
+              }}
+            />
+          </div>
           <DialogDescription>
             {project ? `Chantier : ${project.name}` : "Sélectionnez d'abord un chantier."}
           </DialogDescription>

@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { ProductDetailDialog } from "@/components/product-compare";
 import { StoreMap } from "@/components/store-map";
+import { TransportCostDialog } from "@/components/transport-cost-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -129,6 +130,7 @@ function BoutiquePage() {
       <PageHeader
         title="Boutique de matériaux"
         subtitle={`${products.length} produit(s) · ${stores.length} boutique(s) · ${lowStockCount} en rupture`}
+        action={<TransportCostDialog />}
       />
 
       <div className="panel mb-5 flex flex-wrap items-center gap-3 p-3">

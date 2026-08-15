@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Gavel, Paperclip, Plus, RefreshCcw, ShieldAlert, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { ContractGeneratorDialog } from "@/components/contract-generator-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -153,21 +154,24 @@ function LitigesPage() {
         title="Litiges & médiation"
         subtitle={`${myDisputes.length} litige(s) ouvert(s) par vous · ${openCount} en cours de médiation`}
         action={
-          canEdit ? (
-            <RecordDialog
-              title="Ouvrir un litige"
-              description="Décrivez le problème rencontré : la médiation est gratuite et transparente."
-              fields={DISPUTE_FIELDS}
-              initial={{ related_type: "commande" }}
-              submitLabel="Ouvrir le litige"
-              trigger={
-                <Button size="sm">
-                  <Plus className="mr-1.5 size-4" /> Ouvrir un litige
-                </Button>
-              }
-              onSubmit={(v) => h.saveDispute.mutateAsync({ values: toPayload(v) })}
-            />
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-2">
+            <ContractGeneratorDialog projectName="Prestation BTP" />
+            {canEdit && (
+              <RecordDialog
+                title="Ouvrir un litige"
+                description="Signalez une non-conformité, un retard ou un défaut de livraison."
+                fields={DISPUTE_FIELDS}
+                initial={{ related_type: "commande" }}
+                submitLabel="Ouvrir le litige"
+                trigger={
+                  <Button size="sm">
+                    <Plus className="mr-1.5 size-4" /> Ouvrir un litige
+                  </Button>
+                }
+                onSubmit={(v) => h.saveDispute.mutateAsync({ values: toPayload(v) })}
+              />
+            )}
+          </div>
         }
       />
 

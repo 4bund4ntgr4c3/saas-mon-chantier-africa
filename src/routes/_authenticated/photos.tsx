@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { Camera, Image as ImageIcon, Trash2, Upload } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { BeforeAfterSliderDialog } from "@/components/before-after-slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -120,9 +121,12 @@ function PhotosPage() {
         title="Photos de chantier"
         subtitle={`${photos.length} photo(s) · ${grouped.length} phase(s)`}
         action={
-          <Button size="sm" onClick={() => setOpen(true)}>
-            <Upload className="mr-1.5 size-4" /> Ajouter des photos
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <BeforeAfterSliderDialog title={`Évolution — ${project.name}`} />
+            <Button size="sm" onClick={() => setOpen(true)}>
+              <Upload className="mr-1.5 size-4" /> Ajouter des photos
+            </Button>
+          </div>
         }
       />
 

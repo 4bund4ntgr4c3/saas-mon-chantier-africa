@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { AccessBadgeDialog } from "@/components/access-badge-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -153,18 +154,21 @@ function ProvidersPage() {
         title="Prestataires"
         subtitle={`${providers.length} prestataire(s) · ${certifiedCount} certifié(s)`}
         action={
-          <RecordDialog
-            title="Ajouter mon entreprise"
-            description="Votre fiche sera publiée dans le marketplace. La certification est validée par nos équipes."
-            fields={FIELDS}
-            submitLabel="Publier"
-            trigger={
-              <Button>
-                <Plus className="size-4" /> Ajouter mon entreprise
-              </Button>
-            }
-            onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AccessBadgeDialog />
+            <RecordDialog
+              title="Référencer un prestataire"
+              description="Ajoutez un artisan, bureau d'études ou entreprise du BTP à l'annuaire."
+              fields={FIELDS}
+              submitLabel="Publier"
+              trigger={
+                <Button>
+                  <Plus className="size-4" /> Ajouter mon entreprise
+                </Button>
+              }
+              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+            />
+          </div>
         }
       />
 

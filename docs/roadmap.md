@@ -8,21 +8,21 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 
 ## Fondations déjà en place (Phases 0-4)
 
-| Module | État |
-| --- | --- |
-| Paiement mobile money sandbox (Vague 4 fondations) | ✅ |
-| Comptes 7 types + rôles admin étendus | ✅ |
-| Gestion de chantier (projets, budget, dépenses, devis, paiements, facturation, stock, tâches, photos, journal, réserves, plans, documents, messages) | ✅ |
-| Marketplace prestataires + avis | ✅ |
-| Marketplace e-commerce (boutiques, produits, panier, commandes, livraison, transporteurs) | ✅ |
-| Back-office admin | ✅ |
-| PWA installable, i18n FR/EN (nav), multi-pays/devise, Conseil IA à base de règles | ✅ |
-| Lignes de devis & factures (Vague 5 — quote_items, invoice_items) | ✅ |
-| Demande de devis en ligne (Vague 5 — quote_requests, quote_bids) | ✅ |
-| Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds) | ✅ |
-| Confiance & vérification (Vague 6 — verification_documents, market_reviews, avis vérifiés) | ✅ |
-| IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales, achats multi-boutiques, prévision stock fournisseur, descriptions IA) | ✅ |
-| Tests unitaires (33), docs (schéma, installation, déploiement, changelog, stack) | ✅ |
+| Module                                                                                                                                                      | État |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| Paiement mobile money sandbox (Vague 4 fondations)                                                                                                          | ✅   |
+| Comptes 7 types + rôles admin étendus                                                                                                                       | ✅   |
+| Gestion de chantier (projets, budget, dépenses, devis, paiements, facturation, stock, tâches, photos, journal, réserves, plans, documents, messages)        | ✅   |
+| Marketplace prestataires + avis                                                                                                                             | ✅   |
+| Marketplace e-commerce (boutiques, produits, panier, commandes, livraison, transporteurs)                                                                   | ✅   |
+| Back-office admin                                                                                                                                           | ✅   |
+| PWA installable, i18n FR/EN (nav), multi-pays/devise, Conseil IA à base de règles                                                                           | ✅   |
+| Lignes de devis & factures (Vague 5 — quote_items, invoice_items)                                                                                           | ✅   |
+| Demande de devis en ligne (Vague 5 — quote_requests, quote_bids)                                                                                            | ✅   |
+| Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds)                                                                                   | ✅   |
+| Confiance & vérification (Vague 6 — verification_documents, market_reviews, avis vérifiés)                                                                  | ✅   |
+| IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales, achats multi-boutiques, prévision stock fournisseur, descriptions IA) | ✅   |
+| Tests unitaires (33), docs (schéma, installation, déploiement, changelog, stack)                                                                            | ✅   |
 
 ---
 
@@ -31,6 +31,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 **Objectif** : permettre à plusieurs comptes de collaborer sur un même chantier (au-delà du partage lecture seule par lien).
 
 **Tables** :
+
 - `organizations` : id, name, created_by, created_at
 - `organization_members` : id, organization_id, user_id, role (owner/admin/member), created_at
 - `project_members` : id, project_id, user_id (nullable), email (invitation en attente), role (owner/editor/viewer), created_at
@@ -40,6 +41,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 **Hooks** : `useProjectMembers(projectId)` (avec noms), `useMyProjectInvites`, `useAcceptProjectInvite`, `useAddProjectMember` (invitation par e-mail), `useUpdateProjectMember`, `useRemoveProjectMember`, `useMyOrganizations`.
 
 **UI** :
+
 - Bouton « Membres » (👥) sur chaque carte de projet → dialogue : invitation par e-mail + rôle, liste des membres avec changement de rôle, retrait, affichage des invitations en attente.
 - Cloche « Invitations » (🪖, avec badge) dans le header → liste des invitations reçues par e-mail + bouton Accepter (rattache le compte).
 
@@ -50,6 +52,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 ## Vague 2 — E-commerce avancé + comparateur ✅
 
 **Migration** `20260816000000_ecommerce.sql` :
+
 - `product_prices` : historique des prix (déclenché automatiquement sur `products.price` via trigger `track_product_price_change`)
 - `product_inventory` : mouvements de stock (`stock_init` / `sale` / `restock` / `adjustment` / `return` / `cancellation`)
 - RLS : prix lisibles par tous (transparence), écriture réservée au propriétaire du produit / admin
@@ -66,6 +69,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 ## Vague 3 — Matériaux & inventaire chantier ✅
 
 **Migration** `20260817000000_materiaux-inventaire.sql` :
+
 - `material_requirements` : besoins en matériaux d'un chantier (prévu / commandé / livré / consommé / restant, prix unitaire, fournisseur, statuts `besoin/commande/partiel/livre/termine`)
 - `material_deliveries` : livraisons de matériaux liées au chantier (quantité, prix unitaire, date, statuts `planifiee/en_route/partielle/livree/annulee`)
 - RLS propriétaire du chantier + admin
@@ -79,6 +83,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 ## Vague 4 — Paiement mobile money 🔄 (fondations ✅)
 
 **Migration** `20260818000000_mobile-money.sql` :
+
 - `payment_transactions` : montant, devise, `provider`, téléphone, statuts `initiee/en_attente/confirmee/echouee/annulee`, `reference`, `transaction_id`, `raw_response`
 - `payments` enrichis : `provider`, `transaction_id`, `status`
 - RLS propriétaire du chantier + admin ; index user/project/order/status ; trigger `updated_at`
@@ -151,15 +156,51 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Tranche 1 : rayon de livraison des boutiques (`stores.delivery_radius_km`), recherche « près de moi » (géolocalisation + filtre par rayon), **carte Leaflet multi-fournisseurs** (OSM / Esri / CARTO) avec marqueurs et cercles de livraison (`StoreMap`)
 - ⬜ Tranche 2 : géolocalisation des projets/providers, suivi de livraison sur carte (`orders`/`deliveries`), recherche « près de moi » des prestataires
 
-## Vague 12 — Abonnements & commissions ⬜
+## Vague 12 — Outillage BTP, Séquestre, OCR & Offline Sync ✅
 
-- `subscriptions`, `plans`, `commissions` : billing, mise en avant des vendeurs, freemium
+- ✅ **Calculateur de métré BTP & cubage** (`src/lib/metre.ts`, `src/components/metre-calculator.tsx`) : béton armé, sacs de ciment 50kg, sable, gravier, aciers HA, agglos et toiture.
+- ✅ **Séquestre / Escrow d'acomptes BTP** (`src/components/escrow-dialog.tsx`) : déblocage par jalons validés par photos et paiement Mobile Money.
+- ✅ **Scan OCR de reçus & factures** (`src/lib/ocr-receipt.ts`, `src/components/receipt-scanner.tsx`) : pré-remplissage automatique des dépenses.
+- ✅ **Météo de chantier & alertes coulage béton** (`src/lib/weather.ts`, `src/components/weather-widget.tsx`).
+- ✅ **Export Dossier Chantier Banque & Diaspora PDF** (`src/lib/dossier-export.ts`).
+- ✅ **Mode Hors-Ligne & Sync PWA** (`src/lib/offline-sync.ts`, `src/components/offline-banner.tsx`).
 
-## Vague 13 — Mobile & faible connexion ⬜
+## Vague 13 — RH Main d'œuvre, Plans 2D interactifs, Tontine & Abonnements SaaS ✅
 
-- App Expo/React Native (navigation Accueil/Projets/Marketplace/Commandes/Messages/Profil + bouton central `+`)
-- Mode offline : cache local, sync différée, compression images, upload en arrière-plan
-- Pointage d'équipe, accueils spécialisés (particulier / vendeur / artisan)
+- ✅ **Pointage ouvriers & Paie journalière** (`src/lib/labor.ts`, `src/components/labor-management.tsx`)
+- ✅ **Plans 2D interactifs & Pastilles de réserves** (`src/components/interactive-plan-viewer.tsx`)
+- ✅ **Tontine & Cagnotte de matériaux collaborative** (`src/lib/tontine.ts`, `src/components/tontine-dialog.tsx`)
+- ✅ **Comparateur d'avancement Avant/Après** (`src/components/before-after-slider.tsx`)
+- ✅ **Forfaits & Abonnements SaaS** (`src/components/subscription-plans.tsx`)
+
+## Vague 14 — Simulateur Coût Global, Solaire BTP, WhatsApp Pro & e-MECeF Bénin ✅
+
+- ✅ **Simulateur de Coût Global & Générateur de Projet en 1 clic** (`src/lib/simulator.ts`, `src/components/cost-simulator-dialog.tsx`)
+- ✅ **Calculateur de Dimensionnement Solaire & Forage Chantier** (`src/lib/solar.ts`, `src/components/solar-calculator-dialog.tsx`)
+- ✅ **Partageur WhatsApp Pro & Templates Automatisés** (`src/lib/whatsapp-templates.ts`, `src/components/whatsapp-share-dialog.tsx`)
+- ✅ **Facturation Normalisée e-MECeF Bénin DGI** (`src/lib/emecef.ts`, `src/components/emecef-invoice-dialog.tsx`)
+
+## Vague 15 — Contrats BTP, Planning Gantt, Transport, Assurance & Relances ✅
+
+- ✅ **Générateur de Contrats BTP & PV de Réception (Juridique & Anti-Litiges)** (`src/lib/contracts.ts`, `src/components/contract-generator-dialog.tsx`)
+- ✅ **Planning Prédictif Intelligent & Diagramme de Gantt BTP** (`src/lib/gantt-schedule.ts`, `src/components/gantt-schedule-dialog.tsx`)
+- ✅ **Simulateur Logistique & Coût de Transport de Matériaux** (`src/lib/transport-cost.ts`, `src/components/transport-cost-dialog.tsx`)
+- ✅ **Simulateur d'Assurance Chantier & Garantie Décennale (TRC)** (`src/lib/insurance.ts`, `src/components/insurance-dialog.tsx`)
+- ✅ **Centre de Relances Automatisées Factures & Impayés** (`src/lib/payment-reminders.ts`, `src/components/payment-reminders-dialog.tsx`)
+
+## Vague 16 — Rentabilité Locative, Sécurité HSE, Badges QR Code, Bilan Carbone & Passerelles Live ✅
+
+- ✅ **Simulateur de Rentabilité Locative & ROI Post-Construction** (`src/lib/rental-yield.ts`, `src/components/rental-yield-dialog.tsx`)
+- ✅ **Registre de Sécurité HSE & Check-list EPI Chantier** (`src/lib/safety-audit.ts`, `src/components/safety-audit-dialog.tsx`)
+- ✅ **Générateur de Badges d'Accès & QR Codes Intervenants** (`src/lib/access-badge.ts`, `src/components/access-badge-dialog.tsx`)
+- ✅ **Bilan Carbone BTP & Éco-Matériaux** (`src/lib/carbon-footprint.ts`, `src/components/carbon-footprint-dialog.tsx`)
+- ✅ **Passerelle de Paiement Live FedaPay / Kkiapay & Webhooks Automatisés** (`src/lib/payment-gateway.ts`, `src/components/payment-gateway-dialog.tsx`)
+
+## Vague 17 — Application Mobile Native Expo & Webhooks WhatsApp Cloud ⬜
+
+- Application mobile autonome sous Expo / React Native
+- Passerelle live WhatsApp Cloud API avec webhooks entrants
+- Intégration bancaire directe EBICS / UEMOA
 
 ---
 
