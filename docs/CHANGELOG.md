@@ -4,6 +4,67 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.47 — Actions rapides contextuelles dans les pop-ups de détail (2026-08-17)
+
+- ✅ **Matériaux** : le pop-up d'un besoin propose désormais **« Enregistrer une livraison »** (quantité restante > 0), **« Clôturer le besoin »** (quantité couverte) et **« Modifier »** — plus besoin de viser les petites icônes du tableau.
+- ✅ **Paiements** : le pop-up d'un paiement propose **« Marquer réglé »** (statut non confirmé), les **relances** (paiement à échéance non réglée) et **« Modifier »**.
+- 🔧 **Documents** : le pop-up d'une pièce ajoute **« Modifier »** (catégorie/échéance/notes) à côté de « Télécharger ».
+- ⚠️ Les workflows dédiés gardent leurs boutons propres (devis accepter/rejeter, demandes-devis attribuer, litiges décision, commandes avancer, locations confirmer/démarrer/retour).
+
+## v0.46 — Page 404 personnalisée « Chantier introuvable » (2026-08-17)
+
+- 🔧 Le composant `notFoundComponent` de la route racine (`__root.tsx`) n'est plus le boilerplate TanStack en anglais sans marque : il est remplacé par `NotFoundPage` (`src/components/not-found.tsx`).
+- ✅ Page 404 aux couleurs de la plateforme : header sticky avec logo BâtiBénin + bascule de thème, surtitre « Erreur 404 », grand titre « 4**0**4 » (police display), sous-titre « Chantier introuvable », message en français, et 3 actions — « Retour à l'accueil » (primaire), « Nouveautés » (`/changelog`), « Se connecter » (`/auth`).
+- ⚠️ Le statut HTTP 404 en SSR et la couverture de toutes les URL inconnues sont fournis par `notFoundComponent` sur la route racine (aucune route splat `$.tsx` ajoutée).
+
+## v0.45 — Notifications en mode sombre & exports PDF à l'identité BâtiBénin (2026-08-16)
+
+### Notifications & mode sombre
+
+- ✅ Composant partagé `NotificationKindIcon` (`src/components/notification-kind-icon.tsx`) : pastille arrondie **teintée par type de notification** (alerte rouge, commande ambre, livraison cyan, paiement vert, devis indigo, rapport slate, litige orange, vérification teal, assistant fuchsia) avec variants `dark:` — remplace les icônes « nues » dupliquées entre la cloche et la page.
+- 🔧 Cloche `NotificationsBell` : lignes non lues avec **barre latérale ambre + fond teinté renforcé en sombre** (`bg-primary/5 dark:bg-primary/10`), survol visible dans les deux modes (`hover:bg-muted/60 dark:hover:bg-white/5`), alertes métier avec pastille danger (rouge) ou surveillance (ambre).
+- 🔧 Page `/notifications` : mêmes pastilles par type, états non lus et survols harmonisés clair/sombre.
+- 🔧 Toasts `sonner` : teintes par type (succès vert, avertissement ambre, erreur rouge, info cyan) via les tokens `--success`/`--warning`/`--destructive`/`--accent`, bordure et fond teintés lisibles en clair comme en sombre.
+
+### Exports PDF professionnels unifiés
+
+- ✅ Module `src/lib/pdf-theme.ts` : **identité visuelle unique** pour tous les exports jsPDF — palette dérivée du design system (graphite zinc + accent ambre), **bandeau d'en-tête pleine largeur** (marque BÂTIBÉNIN, titre, sous-titre, barre ambre), **cartes KPI** colorées par ton (ambre/vert/rouge), titres de section à barre ambre, styles autoTable partagés (têtes graphite, zébrures subtiles, totaux sur fond ambre pâle) et **pied de page sur toutes les pages** (marque + note + pagination « Page X / Y ») — remplace les 3 identités incohérentes (zinc neutre / bleu / vert BTP).
+- 🔧 `report-export.ts`, `budget-export.ts` (KPI Enveloppe/Planifié/Réalisé/Écart, **écarts négatifs en rouge**), `project-summary-export.ts` (KPI + fiche caractéristiques sur 2 colonnes), `dossier-export.ts` (KPI, **statuts de phases colorés** Terminé/En cours/À venir, notes de synthèse encadrées, mention « déblocage bancaire » en pied de page), `contracts.ts` (contrats & PV passés en points pt pour réutiliser le thème, **parapheurs de signature avec lignes et mentions**, en-têtes de clauses ambre) — signatures de fonctions inchangées.
+- ✅ Tests `src/lib/pdf-exports.test.ts` : les 4 générateurs (rapport, budget, fiche, dossier) s'exécutent sans erreur (jsPDF `save` neutralisé via sous-classe).
+- ⚠️ Aucune migration BDD ; `contracts.test.ts` inchangé et toujours vert.
+
+## v0.44 — Sidebar : navigation regroupée en accordéon (2026-08-16)
+
+- 🔧 `app-shell.tsx` : le menu latéral (35 liens à plat) est désormais **regroupé en catégories repliables** pour supprimer le défilement — Tableau de bord et Projets restent en premier niveau, puis 8 sections accordéon : **Chantier** (journal, réserves, messages, échéances, photos, tâches), **Documents & plans**, **Finances** (budget, dépenses, devis, paiements, facturation), **Stock**, **Partenaires** (fournisseurs, entreprises), **Marketplace** (prestataires, demandes de devis, litiges, boutique, panier, commandes, ma boutique, location, immobilier), **Pilotage** (rapports, recherche, alertes, notifications, assistant IA), **Système** (audit, paramètres) — plus **Administration** pour les admins.
+- ✅ Accordéon Radix (`ui/accordion.tsx`, `type="multiple"`) : plusieurs sections peuvent rester ouvertes ; **la section contenant la page courante s'ouvre automatiquement** à la navigation (sans fermer celles ouvertes manuellement) et son en-tête est mis en évidence ; le conteneur du menu défile seul si besoin (`overflow-y-auto`).
+- 🔧 Filtrage par rôle conservé (`accessFor`) : les items interdits disparaissent et **une section vide est masquée entièrement** ; la barre de navigation mobile horizontale consomme la même liste aplatie (comportement inchangé).
+- ✅ Libellés de catégories traduits FR/EN (`nav.group.*` dans `src/lib/i18n.ts`).
+
+## v0.43 — Footer : toutes les routes publiques listées (2026-08-16)
+
+- 🔧 Footer de la landing : la colonne « Produit » regroupe désormais tous les accès publics au compte — « Se connecter » (`/auth`), « Créer un compte » (`/auth`, existant) et « Mot de passe oublié » (`/reset-password`).
+- ℹ️ Les autres routes publiques étaient déjà couvertes : « Nouveautés » (`/changelog`) dans « Découvrir » ; les pages dynamiques (`/partage/$token`, `/paiement/$reference`) ne sont pasliençables statiquement (URL par jeton/référence générée).
+
+## v0.42 — Page « Nouveautés » synchronisée sur ce changelog (2026-08-16)
+
+- 🔧 La page publique `/changelog` (lien « Nouveautés » du footer de la landing) n'est plus codée en dur — elle était restée bloquée aux versions v0.12→v0.14 : elle importe désormais `docs/CHANGELOG.md` en brut (`?raw`, inliné au build) et rend **les 41 versions** automatiquement.
+- ✅ Parser pur `src/lib/changelog.ts` : `parseChangelog(source)` (entrées `## vX.Y — titre (date)`, sous-sections `###`, puces simples et imbriquées, icônes de convention extraites comme marqueurs, icône d'entrée dérivée — premier `✅` —, sections annexes « Base de référence » / « Règle de mise à jour » ignorées) et `formatChangelogDate(iso)` (→ « 16 août 2026 », sans dépendre du fuseau horaire).
+- ✅ Rendu enrichi : légende des conventions (✅ Ajouté · 🔧 Amélioré · …) sous le titre, compteur de versions, sections avec libellés, puces imbriquées indentées, mise en forme inline du markdown (`**gras**`, `` `code` ``).
+- ✅ Tests unitaires `src/lib/changelog.test.ts` (7 tests : versions/titres/dates, icônes, sous-sections, imbrication, sections annexes, icône dérivée, formatage de date).
+- ⚠️ La page reflète le markdown au moment du build : la règle « mettre à jour `docs/CHANGELOG.md` avant chaque push » suffit désormais à tenir la page à jour — plus aucune duplication manuelle des entrées dans le composant.
+
+## v0.41 — Saisie guidée pas-à-pas & dictée vocale pour ajouter des éléments (2026-08-16)
+
+- ✅ Hook `useDictation` (`src/lib/use-dictation.ts`) : dictée Web Speech API (`fr-FR`) factorisée depuis l'assistant, réutilisable partout (`supported/listening/start/stop/toggle`), arrêt propre à l'unmount.
+- ✅ Composant `DictationButton` (`src/components/dictation-button.tsx`) : bouton micro (Mic/MicOff, désactivé si navigateur non compatible) partagé par l'assistant et le wizard.
+- ✅ Parseur vocal `src/lib/spoken-item.ts` (+ 13 tests unitaires `spoken-item.test.ts`) : analyse d'une phrase dictée (« 10 sacs de ciment à 4500 francs ») → désignation / quantité / unité / prix ; nombres en lettres (« quatre mille cinq cents » → 4500), unités BTP canonisées (sac, barre, m², m³, tonne, voyage…), prix (« à », « prix unitaire », francs/FCFA, « l'unité »), multi-éléments (« … et 20 barres de fer 12 à 3800 » → 2 éléments).
+- ✅ Wizard `QuickAddWizard` (`src/components/quick-add-wizard.tsx`) : ajout guidé pensé débutant — dictée de l'élément **en une phrase** analysée automatiquement (repli silencieux champ par champ), puis **un champ par étape** (dictée sur chaque champ, conversion des nombres en lettres, sélection des options de select à la voix), progression « Étape X / N », récapitulatif avant enregistrement, et **mode continu** : « Ajouter un autre… » réouvre la saisie dès qu'un élément est enregistré. Plusieurs éléments reconnus dans une phrase → enregistrement en série.
+- 🔧 Stock & matériaux : « Ajouter un matériau » ouvre le wizard guidé ; le formulaire d'origine reste via « Formulaire complet » (outline).
+- 🔧 Matériaux chantier : « Ajouter un besoin » ouvre le wizard guidé (mapping quantité → `quantity_needed`) ; formulaire complet conservé.
+- 🔧 Devis : « Ajouter une ligne » d'un devis ouvre le wizard guidé (payload `quote_items` inchangé, quantité 1 / unité « forfait » par défaut).
+- 🔧 Assistant : le micro du composer passe par `DictationButton` (code dupliqué supprimé, comportement inchangé).
+- ⚠️ Dictée disponible sur les navigateurs avec Web Speech (Chrome/Edge/Safari récents) ; sinon bouton grisé et repli clavier. Aucune migration BDD (payloads `useSaveRow`/`useAddMaterialRequirement` réutilisés tels quels).
+
 ## v0.40 — Pop-ups de détail au clic sur les éléments de liste (2026-08-16)
 
 - ✅ Composant générique `EntityDetailDialog` (`src/components/entity-detail-dialog.tsx`) : pop-up de détail réutilisable (titre + badge + grille de champs libellé/valeur + contenu libre + actions), avec helper `openDetailUnlessInteractive` (ignore les clics sur boutons/inputs internes).

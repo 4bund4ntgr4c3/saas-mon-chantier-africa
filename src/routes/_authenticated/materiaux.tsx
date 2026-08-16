@@ -544,6 +544,26 @@ function MateriauxPage() {
               </div>
             );
           })()}
+          footer=
+          {
+            <>
+              {Number(detail.quantity_needed) - Number(detail.quantity_delivered) > 0 && (
+                <Button size="sm" onClick={() => setDelivering(detail)}>
+                  <Truck className="mr-1.5 size-4" /> Enregistrer une livraison
+                </Button>
+              )}
+              {Number(detail.quantity_needed) - Number(detail.quantity_delivered) <= 0 &&
+                detail.status !== "termine" && (
+                  <Button size="sm" onClick={() => markTerminated(detail)}>
+                    <CheckCircle2 className="mr-1.5 size-4 text-emerald-600 dark:text-emerald-400" />{" "}
+                    Clôturer le besoin
+                  </Button>
+                )}
+              <Button size="sm" variant="outline" onClick={() => setEditing(detail)}>
+                <Pencil className="mr-1.5 size-4" /> Modifier
+              </Button>
+            </>
+          }
         </EntityDetailDialog>
       )}
 

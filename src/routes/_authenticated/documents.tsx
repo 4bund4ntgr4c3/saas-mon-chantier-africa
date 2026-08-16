@@ -285,13 +285,19 @@ function DocumentsPage() {
             { label: "Notes", value: detail.notes ?? "—", full: true },
           ]}
           footer={
-            detail.file_path && urls[detail.file_path] ? (
-              <Button asChild size="sm" variant="secondary">
-                <a href={urls[detail.file_path]} target="_blank" rel="noreferrer">
-                  <Download className="size-4" /> Télécharger
-                </a>
-              </Button>
-            ) : undefined
+            <>
+              {detail.file_path && urls[detail.file_path] ? (
+                <Button asChild size="sm" variant="secondary">
+                  <a href={urls[detail.file_path]} target="_blank" rel="noreferrer">
+                    <Download className="size-4" /> Télécharger
+                  </a>
+                </Button>
+              ) : null}
+              <EditDialog
+                doc={detail}
+                onSave={(v) => editDoc.mutateAsync({ id: detail.id, values: v })}
+              />
+            </>
           }
         />
       )}

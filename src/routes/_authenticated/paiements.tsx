@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FeatureGate } from "@/components/feature-gate";
 import { useMemo, useState } from "react";
-import { Pencil, Plus, Smartphone, Trash2, Upload } from "lucide-react";
+import { Check, Pencil, Plus, Smartphone, Trash2, Upload } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { PaymentRemindersDialog } from "@/components/payment-reminders-dialog";
@@ -433,6 +433,24 @@ function PaymentsPage() {
                 { label: "Notes", value: detail.notes ?? "—", full: true },
               ]
             : []
+        }
+        footer={
+          detail ? (
+            <>
+              {detail.status !== "confirmee" && (
+                <Button
+                  size="sm"
+                  onClick={() => save.mutate({ id: detail.id, values: { status: "confirmee" } })}
+                >
+                  <Check className="mr-1.5 size-4" /> Marquer réglé
+                </Button>
+              )}
+              {detail.due_date && detail.status !== "confirmee" && <PaymentRemindersDialog />}
+              <Button size="sm" variant="outline" onClick={() => setEditing(detail)}>
+                <Pencil className="mr-1.5 size-4" /> Modifier
+              </Button>
+            </>
+          ) : undefined
         }
       />
 
