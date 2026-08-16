@@ -4,6 +4,15 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.40 — Pop-ups de détail au clic sur les éléments de liste (2026-08-16)
+
+- ✅ Composant générique `EntityDetailDialog` (`src/components/entity-detail-dialog.tsx`) : pop-up de détail réutilisable (titre + badge + grille de champs libellé/valeur + contenu libre + actions), avec helper `openDetailUnlessInteractive` (ignore les clics sur boutons/inputs internes).
+- ✅ **Paiements** : clic sur une ligne de paiement → détail complet (montant, type, méthode, statut, échéance, référence, passerelle, transaction, téléphone, bénéficiaire, notes) ; clic sur une transaction mobile money → détail (fournisseur, statut, téléphone, référence).
+- ✅ **Matériaux** : clic sur une ligne de besoin → détail (quantités prévu/livré/consommé/reste, prix unitaire, montant estimé, fournisseur) + liste des **livraisons liées** avec montants.
+- ✅ **Documents** : clic sur une carte → détail (catégorie, taille, échéance, dates, type MIME, notes) avec bouton Télécharger.
+- 🔧 **Budget** : clic n'importe où sur la ligne d'un poste ouvre le `PosteDetailDialog` (le bouton œil reste disponible).
+- ⚠️ Les contrôles internes (édition du budget prévu, boutons d'action) ne déclenchent pas l'ouverture du pop-up.
+
 ## v0.39 — Projets : fiche détail au clic sur une carte (2026-08-16)
 
 - 🔧 Page Projets : cliquer sur une carte chantier ouvre désormais une **fiche détail** (`ProjectDetailDialog`) au lieu de ne rien faire — budget consommé (barre de progression dépensé/planifié), résumé financier (budget global, dépenses, tâches), caractéristiques (surfaces, niveaux, type, dates, durée, adresse complète), checklist de démarrage, et actions rapides (Activer ce chantier, Modifier, Membres).

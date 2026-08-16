@@ -26,6 +26,7 @@ import {
 } from "@/lib/data";
 import { fcfa, monthKey, monthLabel } from "@/lib/format";
 import { PosteDetailDialog } from "@/components/poste-detail";
+import { openDetailUnlessInteractive } from "@/components/entity-detail-dialog";
 import { MetreCalculatorDialog } from "@/components/metre-calculator";
 import { TontineDialog } from "@/components/tontine-dialog";
 import { SolarCalculatorDialog } from "@/components/solar-calculator-dialog";
@@ -326,7 +327,8 @@ function BudgetPage() {
                 return (
                   <div
                     key={c.id}
-                    className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5"
+                    className="flex cursor-pointer flex-col gap-3 p-4 transition-colors hover:bg-secondary/30 sm:flex-row sm:items-center sm:gap-5"
+                    onClick={(e) => openDetailUnlessInteractive(e, () => setDetailCategory(c))}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{c.name}</p>

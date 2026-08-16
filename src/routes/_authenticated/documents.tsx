@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { ContractGeneratorDialog } from "@/components/contract-generator-dialog";
 import { AccessBadgeDialog } from "@/components/access-badge-dialog";
+import { EntityDetailDialog, openDetailUnlessInteractive } from "@/components/entity-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -95,6 +96,7 @@ function DocumentsPage() {
 
   const [catFilter, setCatFilter] = useState("all");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [detail, setDetail] = useState<Document | null>(null);
 
   const paths = useMemo(
     () => documents.map((d) => d.file_path).filter((p): p is string => !!p),
@@ -197,7 +199,11 @@ function DocumentsPage() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((d) => (
-            <article key={d.id} className="panel flex flex-col p-4">
+            <article
+              key={d.id}
+              className="panel flex cursor-pointer flex-col p-4 transition-colors hover:border-primary/50"
+              onClick={(e) => openDetailUnlessInteractive(e, () => setDetail(d))}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
                   {fileIcon(d.mime_type)}
@@ -260,6 +266,34 @@ function DocumentsPage() {
             </article>
           ))}
         </div>
+      )}
+
+      {detail && (
+        <EntityDetailDialog
+          open={!!detail}
+          onOpenChange={(o) => !o && setDetail(null)}
+          title={detail.name}
+          subtitle={detail.mime_type ?? undefined}
+          badge={labelOf(DOCUMENT_CATEGORIES, detail.category)}
+          fields={[
+            { label: "Catégorie", value: labelOf(DOCUMENT_CATEGORIES, detail.category) },
+            { label: "Taille", value: formatBytes(detail.size_bytes) },
+            { label: "Échéance", value: detail.expiry_date ? frDate(detail.expiry_date) : "—" },
+            { label: "Déposé le", value: frDate(detail.created_at) },
+            { label: "Mis à jour", value: frDate(detail.updated_at) },
+            { label: "Type MIME", value: detail.mime_type ?? "—" },
+            { label: "Notes", value: detail.notes ?? "—", full: true },
+          ]}
+          footer={
+            detail.file_path && urls[detail.file_path] ? (
+              <Button asChild size="sm" variant="secondary">
+                <a href={urls[detail.file_path]} target="_blank" rel="noreferrer">
+                  <Download className="size-4" /> Télécharger
+                </a>
+              </Button>
+            ) : undefined
+          }
+        />
       )}
     </>
   );

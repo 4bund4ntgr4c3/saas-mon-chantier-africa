@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import {
   CheckCircle2,
   ClipboardList,
+  ListPlus,
   PackagePlus,
   Pencil,
   Plus,
@@ -15,6 +16,8 @@ import { MetreCalculatorDialog } from "@/components/metre-calculator";
 import { SolarCalculatorDialog } from "@/components/solar-calculator-dialog";
 import { TransportCostDialog } from "@/components/transport-cost-dialog";
 import { CarbonFootprintDialog } from "@/components/carbon-footprint-dialog";
+import { QuickAddWizard } from "@/components/quick-add-wizard";
+import { EntityDetailDialog, openDetailUnlessInteractive } from "@/components/entity-detail-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +96,7 @@ function MateriauxPage() {
 
   const [editing, setEditing] = useState<MaterialRequirement | null>(null);
   const [delivering, setDelivering] = useState<MaterialRequirement | null>(null);
+  const [detail, setDetail] = useState<MaterialRequirement | null>(null);
 
   const supplierName = useMemo(() => new Map(suppliers.map((s) => [s.id, s.name])), [suppliers]);
 
@@ -218,13 +222,31 @@ function MateriauxPage() {
                 });
               }}
             />
+            <QuickAddWizard
+              title="Nouveau besoin en matériaux"
+              description="Dictez le besoin en une phrase, ou avancez champ par champ."
+              fields={reqFields}
+              itemNoun="besoin"
+              parseMapping={{
+                designation: "name",
+                quantity: "quantity_needed",
+                unit: "unit",
+                unitPrice: "unit_price",
+              }}
+              onSubmit={submitRequirement}
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 size-4" /> Ajouter un besoin
+                </Button>
+              }
+            />
             <RecordDialog
               title="Nouveau besoin en matériaux"
               fields={reqFields}
               onSubmit={submitRequirement}
               trigger={
-                <Button size="sm">
-                  <Plus className="mr-1.5 size-4" /> Ajouter un besoin
+                <Button size="sm" variant="outline">
+                  <ListPlus className="mr-1.5 size-4" /> Formulaire complet
                 </Button>
               }
             />
@@ -288,7 +310,11 @@ function MateriauxPage() {
                       ? Math.round((Number(r.quantity_delivered) / Number(r.quantity_needed)) * 100)
                       : 0;
                   return (
-                    <tr key={r.id}>
+                    <tr
+                      key={r.id}
+                      className="cursor-pointer transition-colors hover:bg-secondary/40"
+                      onClick={(e) => openDetailUnlessInteractive(e, () => setDetail(r))}
+                    >
                       <td className="py-3 pr-4">
                         <p className="font-medium">{r.name}</p>
                         {r.notes && <p className="text-xs text-muted-foreground">{r.notes}</p>}
@@ -441,6 +467,84 @@ function MateriauxPage() {
           }}
           onSubmit={submitRequirement}
         />
+      )}
+
+      {detail && (
+        <EntityDetailDialog
+          open={!!detail}
+          onOpenChange={(o) => !o && setDetail(null)}
+          title={detail.name}
+          subtitle={detail.category ?? undefined}
+          badge={STATUS_META[detail.status]?.label ?? detail.status}
+          fields={[
+            {
+              label: "Quantité prévue",
+              value: `${num(Number(detail.quantity_needed))} ${detail.unit ?? ""}`,
+            },
+            {
+              label: "Livrée",
+              value: `${num(Number(detail.quantity_delivered))} ${detail.unit ?? ""}`,
+            },
+            {
+              label: "Consommée",
+              value: `${num(Number(detail.quantity_consumed))} ${detail.unit ?? ""}`,
+            },
+            {
+              label: "Reste",
+              value:
+                Math.max(Number(detail.quantity_needed) - Number(detail.quantity_delivered), 0) >
+                0 ? (
+                  <span className="text-destructive">
+                    {num(Number(detail.quantity_needed) - Number(detail.quantity_delivered))}{" "}
+                    {detail.unit ?? ""}
+                  </span>
+                ) : (
+                  "Couvert"
+                ),
+            },
+            { label: "Prix unitaire", value: fcfa(Number(detail.unit_price)) },
+            {
+              label: "Montant estimé",
+              value: (
+                <span className="num text-primary">
+                  {fcfa(Number(detail.quantity_needed) * Number(detail.unit_price))}
+                </span>
+              ),
+            },
+            {
+              label: "Fournisseur",
+              value: (detail.supplier_id && supplierName.get(detail.supplier_id)) || "—",
+            },
+            { label: "Notes", value: detail.notes ?? "—", full: true },
+          ]}
+        >
+          {(() => {
+            const rel = deliveries.filter((d) => d.requirement_id === detail.id);
+            if (rel.length === 0)
+              return <p className="text-xs text-muted-foreground">Aucune livraison enregistrée.</p>;
+            return (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Livraisons ({rel.length})
+                </p>
+                <ul className="divide-y divide-border rounded-md border border-border">
+                  {rel.map((d) => (
+                    <li key={d.id} className="flex flex-wrap justify-between gap-2 p-2 text-xs">
+                      <span>
+                        {frDate(d.delivered_at ?? d.created_at)} · {num(Number(d.quantity))}{" "}
+                        {detail.unit ?? ""} ·{" "}
+                        {(d.supplier_id && supplierName.get(d.supplier_id)) || "—"}
+                      </span>
+                      <span className="num text-primary">
+                        {fcfa(Number(d.quantity) * Number(d.unit_price))}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
+        </EntityDetailDialog>
       )}
 
       {delivering && (

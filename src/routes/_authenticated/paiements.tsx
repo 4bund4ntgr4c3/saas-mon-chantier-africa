@@ -8,6 +8,7 @@ import { PaymentRemindersDialog } from "@/components/payment-reminders-dialog";
 import { PaymentGatewayDialog } from "@/components/payment-gateway-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { ImportDialog, type ImportColumn } from "@/components/import-csv";
+import { EntityDetailDialog, openDetailUnlessInteractive } from "@/components/entity-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
@@ -20,6 +21,7 @@ import {
   useSaveRow,
   useSuppliers,
   type Payment,
+  type PaymentTransaction,
 } from "@/lib/data";
 import {
   fcfa,
@@ -63,6 +65,8 @@ function PaymentsPage() {
   const save = useSaveRow("payments", "Paiement enregistré");
   const remove = useDeleteRow("payments");
   const [editing, setEditing] = useState<Payment | null>(null);
+  const [detail, setDetail] = useState<Payment | null>(null);
+  const [txDetail, setTxDetail] = useState<PaymentTransaction | null>(null);
   const [mmOpen, setMmOpen] = useState(false);
 
   const fields: Field[] = useMemo(
@@ -251,7 +255,11 @@ function PaymentsPage() {
               </tr>
             ) : (
               payments.map((p) => (
-                <tr key={p.id} className="transition-colors hover:bg-secondary/40">
+                <tr
+                  key={p.id}
+                  className="cursor-pointer transition-colors hover:bg-secondary/40"
+                  onClick={(e) => openDetailUnlessInteractive(e, () => setDetail(p))}
+                >
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                     {frDate(p.payment_date)}
                   </td>
@@ -331,7 +339,11 @@ function PaymentsPage() {
               </tr>
             ) : (
               transactions.map((t) => (
-                <tr key={t.id} className="transition-colors hover:bg-secondary/40">
+                <tr
+                  key={t.id}
+                  className="cursor-pointer transition-colors hover:bg-secondary/40"
+                  onClick={(e) => openDetailUnlessInteractive(e, () => setTxDetail(t))}
+                >
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                     {frDate(t.created_at)}
                   </td>
@@ -377,6 +389,74 @@ function PaymentsPage() {
         amount={total}
         open={mmOpen}
         onOpenChange={setMmOpen}
+      />
+
+      <EntityDetailDialog
+        open={!!detail}
+        onOpenChange={(o) => !o && setDetail(null)}
+        title={
+          detail
+            ? (detail.supplier_id && supName.get(detail.supplier_id)) ||
+              (detail.company_id && compName.get(detail.company_id)) ||
+              "Paiement"
+            : ""
+        }
+        subtitle={detail ? `Payé le ${frDate(detail.payment_date)}` : ""}
+        badge={detail ? labelOf(PAYMENT_TYPES, detail.kind) : ""}
+        fields={
+          detail
+            ? [
+                {
+                  label: "Montant",
+                  value: <span className="num text-primary">{fcfa(Number(detail.amount))}</span>,
+                },
+                { label: "Type", value: labelOf(PAYMENT_TYPES, detail.kind) },
+                { label: "Méthode", value: labelOf(PAYMENT_METHODS, detail.method) },
+                { label: "Statut", value: <TransactionBadge status={detail.status} /> },
+                { label: "Échéance", value: detail.due_date ? frDate(detail.due_date) : "—" },
+                { label: "Référence", value: detail.reference ?? "—" },
+                {
+                  label: "Passerelle",
+                  value: detail.provider ? labelOf(PAYMENT_PROVIDERS, detail.provider) : "—",
+                },
+                { label: "Transaction", value: detail.transaction_id ?? "—" },
+                { label: "Téléphone", value: detail.phone ?? "—" },
+                {
+                  label: "Bénéficiaire",
+                  value:
+                    (detail.supplier_id && supName.get(detail.supplier_id)) ||
+                    (detail.company_id && compName.get(detail.company_id)) ||
+                    "—",
+                },
+                { label: "Créé le", value: frDate(detail.created_at) },
+                { label: "Mis à jour", value: frDate(detail.updated_at) },
+                { label: "Notes", value: detail.notes ?? "—", full: true },
+              ]
+            : []
+        }
+      />
+
+      <EntityDetailDialog
+        open={!!txDetail}
+        onOpenChange={(o) => !o && setTxDetail(null)}
+        title={txDetail ? `Transaction ${txDetail.reference ?? ""}`.trim() : ""}
+        subtitle={txDetail ? `Initiée le ${frDate(txDetail.created_at)}` : ""}
+        badge={txDetail ? labelOf(PAYMENT_PROVIDERS, txDetail.provider) : ""}
+        fields={
+          txDetail
+            ? [
+                {
+                  label: "Montant",
+                  value: <span className="num text-primary">{fcfa(Number(txDetail.amount))}</span>,
+                },
+                { label: "Statut", value: <TransactionBadge status={txDetail.status} /> },
+                { label: "Téléphone", value: txDetail.phone ?? "—" },
+                { label: "Transaction", value: txDetail.transaction_id ?? "—" },
+                { label: "Devise", value: txDetail.currency ?? "XOF" },
+                { label: "Mis à jour", value: frDate(txDetail.updated_at) },
+              ]
+            : []
+        }
       />
     </>
   );
