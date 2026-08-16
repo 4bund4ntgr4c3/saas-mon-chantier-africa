@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { AlertTriangle, Boxes, Minus, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Boxes, ListPlus, Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
+import { QuickAddWizard } from "@/components/quick-add-wizard";
 import { RecordDialog, toNumber, orNull, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -104,16 +105,30 @@ function StockPage() {
         title="Stock & matériaux"
         subtitle={`${num(materials.length)} référence(s) · valeur du stock ${fcfa(totalValue)}`}
         action={
-          <RecordDialog
-            title="Nouveau matériau"
-            fields={fields}
-            onSubmit={submit}
-            trigger={
-              <Button size="sm">
-                <Plus className="mr-1.5 size-4" /> Ajouter un matériau
-              </Button>
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <QuickAddWizard
+              title="Ajouter un matériau"
+              description="Dictez le matériau en une phrase, ou avancez champ par champ."
+              fields={fields}
+              itemNoun="matériau"
+              onSubmit={submit}
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 size-4" /> Ajouter un matériau
+                </Button>
+              }
+            />
+            <RecordDialog
+              title="Nouveau matériau"
+              fields={fields}
+              onSubmit={submit}
+              trigger={
+                <Button size="sm" variant="outline">
+                  <ListPlus className="mr-1.5 size-4" /> Formulaire complet
+                </Button>
+              }
+            />
+          </div>
         }
       />
 

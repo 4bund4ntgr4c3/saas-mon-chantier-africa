@@ -44,6 +44,7 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 - **Données** : `src/lib/data.ts` centralise tous les hooks (queries TanStack Query + mutations Supabase). **Ne pas disperser les requêtes SQL dans les pages.**
 - **Couches** : routes (UI) → `data.ts` (hooks) → `supabase` (client + types) ; `demo-store.ts` simule Supabase en mode invité.
 - **Préférences** : `src/context/preferences-context.tsx` (`usePreferences()` : `lang`, `country`, persistés localStorage `batibenin.lang` / `batibenin.country`).
+- **Page « Nouveautés »** : `src/routes/changelog.tsx` importe `docs/CHANGELOG.md` en brut (`?raw`, inliné au build) et le rend via le parser pur `src/lib/changelog.ts` (`parseChangelog`, `formatChangelogDate` — tests `changelog.test.ts`). Ne **jamais** recopier les entrées du changelog dans le composant : mettre à jour `docs/CHANGELOG.md` suffit.
 - **Composants UI** : `src/components/ui/**` (shadcn/Radix) ; composants métier dans `src/components/**`.
 
 ### Contraintes TypeScript (critical)
@@ -75,14 +76,25 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 
 - `src/lib/format.ts` : `fcfa()` **résout la devise par pays** (XOF défaut, XAF pour `cg`, CDF pour `cd`) ; listes `ORDER_STATUSES`, `DELIVERY_STATUSES`, `PRODUCT_UNITS`, `DOCUMENT_CATEGORIES`, `QUOTE_STATUSES`, `PAYMENT_METHODS`, `RESERVE_STATUSES`, `RESERVE_PRIORITIES`, `PROVIDER_DOMAINS`, `PROJECT_STATUSES`.
 - i18n : `src/lib/i18n.ts` (`tr(lang, key)`, `I18nKey`) — **navigation/header traduits**, écrans en FR.
+- Navigation : sidebar `src/components/app-shell.tsx` — 2 entrées de premier niveau (tableau de bord, projets) + **sections repliables** (`ui/accordion.tsx`, `type="multiple"`) définies dans `NAV_SECTIONS`/`ADMIN_SECTION` ; filtrage par rôle via `accessFor` (section vide = masquée), la section contenant la route active s'ouvre automatiquement ; la barre mobile horizontale consomme la même liste aplatie.
 - Géolocalisation : `src/lib/geo.ts` (`haversineKm`, `useGeolocation`, `distanceKm`, `withinRadius`, `formatDistance`) — comparateur « près de moi » + recherche par rayon en boutique et prestataires.
 - Cartes : `src/components/store-map.tsx` (`StoreMap`) — **Leaflet** (`react-leaflet` v5, `leaflet` ^1.9.4) multi-fournisseurs (OpenStreetMap / Esri World / CARTO Voyager), marqueurs, cercles de rayon de livraison, position utilisateur. `src/components/points-map.tsx` (`PointsMap`) — carte générique réutilisable (projets, prestataires, suivi livraison), points typés (pin/project/provider/truck/target), polyligne itinéraire. Sélecteur de fond de carte partagé (`MAP_PROVIDERS`). La carte n'est montée qu'à la demande (pas de SSR).
+
+### Exports PDF (thème partagé)
+
+- `src/lib/pdf-theme.ts` : **identité visuelle unique** de tous les exports jsPDF — palette `pdfColors` (graphite zinc + accent ambre du design system), `pdfHeader` (bandeau + barre ambre + méta), `pdfSectionTitle` (barre ambre), `pdfKpiRow` (cartes KPI tonales ink/amber/green/red), `pdfTableTheme` (styles autoTable : têtes graphite, zébrures subtiles, totaux ambre pâle, marge basse réservée au pied de page), `pdfFooter` (marque + note + pagination « Page X / Y » sur toutes les pages), `slug`/`fileStamp`. Unité : **points (pt)**, format A4.
+- Tout nouvel export PDF DOIT réutiliser ce module — **pas de palette locale** (les anciennes identités zinc neutre / bleu / vert BTP ont été supprimées).
+- Générateurs sur le thème : `report-export.ts` (rapports génériques), `budget-export.ts` (KPI + écarts négatifs en rouge), `project-summary-export.ts` (KPI + fiche 2 colonnes), `dossier-export.ts` (statuts de phases colorés, notes encadrées), `contracts.ts` (contrats/PV en pt, parapheurs de signature).
+- Tests : `src/lib/pdf-exports.test.ts` (les 4 exportateurs exécutés, `save` neutralisé via sous-classe — jsPDF attache `save` à l'instance, pas au prototype).
 
 ### Composants partagés réutilisés (ne pas dupliquer)
 
 - `ProductCard` / `QtyStepper` / `CloseButton` (`boutique.tsx`, exportés)
 - `StatusBadge` (`commandes.tsx`, importé par `ma-boutique.tsx` et `store-analytics.tsx`)
 - `PageHeader`, `FeatureGate`, `Badge`, `ProductDetailDialog` (`product-compare.tsx`), `StoreAnalytics`/`TopProducts`/`RecentSales`/`ProductMovement` (`store-analytics.tsx`), `ProjectMembersButton` (`project-members.tsx`), `ProjectInvitesButton` (`project-invites.tsx`)
+- `RecordDialog` (`record-form.tsx`) : formulaire générique déclaratif (`Field[]`) + `toNumber`/`orNull`
+- `NotificationKindIcon` (`notification-kind-icon.tsx`) : pastille teintée par type de notification (`AppNotificationKind`), variants clair/sombre — utilisée par la cloche et `/notifications` ; ne pas réimplémenter d'icônes de kind localement
+- Saisie guidée & dictée : `QuickAddWizard` (`quick-add-wizard.tsx`, wizard pas-à-pas acceptant les mêmes `Field[]` que `RecordDialog` + `parseMapping`), `DictationButton` (`dictation-button.tsx`), hook `useDictation` + `isDictationSupported` (`src/lib/use-dictation.ts`), parseur de phrases dictées `parseSpokenItems`/`normalizeSpokenNumber` (`src/lib/spoken-item.ts`, tests `spoken-item.test.ts`). Ne jamais réimplémenter l'API Web Speech dans les pages — passer par `useDictation`/`DictationButton`.
 
 ### UI — contraintes (déjà posées)
 
@@ -140,14 +152,15 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | Immobilier promoteurs (Vague 10)    | `/immobilier` (programmes, immeubles & lots, dossiers clients)                                                                                                                                                | `useMyDevelopmentPrograms`, `useBuildings`, `useProgramUnits`, `useMyPropertyReservations`, `useCreatePropertyReservation`, `useUpdatePropertyReservationStatus`, `computeProgramStats`                                                                 |
 | Admin                               | admin/, admin/utilisateurs, admin/demandes-demo, admin/verifications, audit                                                                                                                                   | `useAdminStats`, `useAdminUsers`, `useSetAccountType`, `useToggleAdmin`, `useAuditLogs`                                                                                                                                                                 |
 | IA (règles)                         | tableau-de-bord (Conseiller)                                                                                                                                                                                  | —                                                                                                                                                                                                                                                       |
+| Saisie guidée & dictée vocale       | stock, materiaux (wizard guidé + « Formulaire complet »), devis (lignes)                                                                                                                                      | `useDictation`, `isDictationSupported` (`use-dictation.ts`), `parseSpokenItems`/`normalizeSpokenNumber` (`spoken-item.ts`) — aucun hook data nouveau, payloads `useSaveRow`/`useAddMaterialRequirement` inchangés                                       |
 
 ## 6. Contrôles qualité (commandes)
 
 ```sh
 npm run build      # génère routeTree.gen.ts + build complet
 npx tsc --noEmit   # 0 erreur attendue
-npx eslint .       # 0 erreur (18 warnings fast-refresh tolérés)
-npm run test       # 53 tests (format 16, i18n 3, guest-mode 3, geo 10, data 21)
+npx eslint .       # 0 erreur (warnings fast-refresh tolérés)
+npm run test       # 112 tests (dont spoken-item 13 — parseur vocal)
 ```
 
 ## 7. Prochaines étapes

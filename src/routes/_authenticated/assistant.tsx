@@ -3,8 +3,6 @@ import { useState } from "react";
 import {
   ArrowRight,
   ShoppingCart,
-  Mic,
-  MicOff,
   Sparkles,
   TrendingUp,
   Wallet,
@@ -14,6 +12,7 @@ import {
   PackageSearch,
 } from "lucide-react";
 import { useCurrentProject } from "@/context/project-context";
+import { DictationButton } from "@/components/dictation-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -352,40 +351,13 @@ function Composer({
   onSend: () => void;
   disabled: boolean;
 }) {
-  const [listening, setListening] = useState(false);
-  const win = typeof window !== "undefined" ? (window as unknown as Record<string, unknown>) : null;
-  const supported = Boolean(win?.["webkitSpeechRecognition"] || win?.["SpeechRecognition"]);
-
-  function toggleListening() {
-    if (!win) return;
-    const Ctor = (win["SpeechRecognition"] ?? win["webkitSpeechRecognition"]) as
-      (new () => SpeechRecognitionLike) | undefined;
-    if (!Ctor) return;
-    const rec = new Ctor();
-    rec.lang = "fr-FR";
-    rec.interimResults = false;
-    setListening(true);
-    rec.onresult = (e) => {
-      const transcript = e.results[0]?.[0]?.transcript ?? "";
-      onChange(value ? `${value} ${transcript}` : transcript);
-    };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
-    rec.start();
-  }
-
   return (
     <div className="flex items-end gap-2">
-      <Button
-        variant="outline"
-        size="icon"
+      <DictationButton
         className="shrink-0"
-        title="Parler au chantier (reconnaissance vocale)"
-        onClick={toggleListening}
-        disabled={!supported}
-      >
-        {listening ? <MicOff className="size-4 text-destructive" /> : <Mic className="size-4" />}
-      </Button>
+        label="Parler au chantier (reconnaissance vocale)"
+        onTranscript={(transcript) => onChange(value ? `${value} ${transcript}` : transcript)}
+      />
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -404,15 +376,6 @@ function Composer({
     </div>
   );
 }
-
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-  onend: () => void;
-  onerror: () => void;
-  start: () => void;
-};
 
 function AiActionsPanel({
   actions,

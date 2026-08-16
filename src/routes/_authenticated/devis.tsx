@@ -5,6 +5,7 @@ import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
 import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
+import { QuickAddWizard } from "@/components/quick-add-wizard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -284,10 +285,12 @@ function QuotesPage() {
       )}
 
       {addingItemTo && (
-        <RecordDialog
+        <QuickAddWizard
           open
           onOpenChange={(o) => !o && setAddingItemTo(null)}
           title={`Ajouter une ligne — ${addingItemTo.label}`}
+          description="Dictez la ligne en une phrase, ou avancez champ par champ."
+          itemNoun="ligne"
           fields={[
             { name: "designation", label: "Désignation", required: true, full: true },
             { name: "quantity", label: "Quantité", type: "number", required: true },
@@ -295,6 +298,12 @@ function QuotesPage() {
             { name: "unit_price", label: "Prix unitaire (FCFA)", type: "number", required: true },
           ]}
           initial={{ quantity: "1", unit: "forfait" }}
+          parseMapping={{
+            designation: "designation",
+            quantity: "quantity",
+            unit: "unit",
+            unitPrice: "unit_price",
+          }}
           onSubmit={async (v) =>
             addItem.mutateAsync({
               values: {

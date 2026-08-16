@@ -22,6 +22,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 | Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds)                                                                                   | ✅   |
 | Confiance & vérification (Vague 6 — verification_documents, market_reviews, avis vérifiés)                                                                  | ✅   |
 | IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales, achats multi-boutiques, prévision stock fournisseur, descriptions IA) | ✅   |
+| Saisie guidée pas-à-pas & dictée vocale (ajout de matériaux, besoins et lignes de devis — wizard + parseur de phrases dictées)                              | ✅   |
 | Tests unitaires (33), docs (schéma, installation, déploiement, changelog, stack)                                                                            | ✅   |
 
 ---

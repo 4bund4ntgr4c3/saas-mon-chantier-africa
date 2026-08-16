@@ -110,6 +110,7 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 ### Expérience
 
 - PWA installable, i18n FR/EN (navigation), multi-pays/devise (FCFA/XOF, XAF, CDF), mode invité démo, tour guidé, conseiller IA à base de règles, page publique « Nouveautés » (changelog)
+- **Saisie guidée pas-à-pas avec dictée vocale** : ajoutez un matériau, un besoin ou une ligne de devis en dictant une seule phrase (« 10 sacs de ciment à 4500 francs ») — quantité, unité et prix reconnus automatiquement, ou champ par champ avec micro sur chaque étape, puis « Ajouter un autre… » pour enchaîner
 
 ## Technologies (détail)
 
