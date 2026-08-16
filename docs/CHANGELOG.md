@@ -4,6 +4,13 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.37 — Vague 10 (clôture) : Plans d'étage interactifs & visites (2026-08-16)
+
+- ✅ Composant `FloorPlanViewer` (`src/components/floor-plan-viewer.tsx`) : plan d'étage interactif alimenté par les vrais lots (`property_units`) — sélecteur d'étage (RDC + étages), lots colorés par statut (disponible / réservé / vendu), surface/pièces/prix, compteur par étage, légende.
+- ✅ Fiche lot sélectionnée : détail complet + **« Planifier une visite »** (message WhatsApp pré-rempli avec lot, type, surface, prix, immeuble) + changement rapide de statut (Marquer réservé → Marquer vendu) pour le promoteur.
+- ✅ Intégration dans l'onglet Immeubles d'`immobilier.tsx` : bouton « Plan d'étage » par immeuble, synchronisé avec les statuts des lots.
+- ⚠️ Les visites se planifient par WhatsApp (pas de table dédiée) — choix assumé pour rester sans migration.
+
 ## v0.36 — Vague 9 (clôture) : Paiement intégral de la location de matériel par mobile money (2026-08-16)
 
 - ✅ Migration `20260829000000_location-paiement-integral.sql` : colonnes `total_paid` (boolean, défaut false) et `total_paid_at` (timestamptz) sur `equipment_rentals`.

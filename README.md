@@ -95,6 +95,7 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 ### Immobilier promoteurs
 
 - Programmes immobiliers décomposés en immeubles puis en lots/appartements (type, étage, surface, pièces, prix, statut)
+- Plans d'étage interactifs : lots colorés par statut, fiche lot, planification de visite par WhatsApp (`FloorPlanViewer`)
 - Budget / objectif de ventes par programme avec barre d'avancement (vendus / réservés / disponibles + montant encaissé)
 - Dossiers clients : réservation, confirmation (lot réservé), vente (lot vendu), annulation, paiement de l'acompte par mobile money
 

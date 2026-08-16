@@ -8,6 +8,7 @@ import {
   DoorOpen,
   Home,
   Landmark,
+  Layers,
   PackageX,
   Pencil,
   Plus,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
+import { FloorPlanViewer } from "@/components/floor-plan-viewer";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { RentalYieldDialog } from "@/components/rental-yield-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
@@ -291,6 +293,7 @@ function ProgramDetail({
   const removeBuilding = useDeleteRow("buildings");
   const saveUnit = useSaveRow("property_units", "Lot enregistré");
   const removeUnit = useDeleteRow("property_units");
+  const [planOpen, setPlanOpen] = useState<Record<string, boolean>>({});
   const stats = useMemo(() => computeProgramStats(units), [units]);
   const budget = Number(program.budget_total);
   const budgetPct = budget > 0 ? Math.min(100, Math.round((stats.montantVendu / budget) * 100)) : 0;
@@ -469,6 +472,13 @@ function ProgramDetail({
               </p>
               {canEdit && (
                 <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={planOpen[b.id] ? "default" : "outline"}
+                    onClick={() => setPlanOpen((p) => ({ ...p, [b.id]: !p[b.id] }))}
+                  >
+                    <Layers className="mr-1.5 size-4" /> Plan d'étage
+                  </Button>
                   <RecordDialog
                     title={`Ajouter un lot — ${b.name}`}
                     description="Décrivez un lot (appartement, boutique, garage…)."
@@ -514,6 +524,16 @@ function ProgramDetail({
                 </div>
               )}
             </div>
+
+            {planOpen[b.id] && (
+              <FloorPlanViewer
+                className="mt-3"
+                building={b}
+                units={unitsByBuilding.get(b.id) ?? []}
+                canEdit={canEdit}
+                onStatus={(unitId, status) => saveUnit.mutate({ id: unitId, values: { status } })}
+              />
+            )}
 
             <div className="mt-3">
               {(unitsByBuilding.get(b.id) ?? []).length === 0 ? (

@@ -149,7 +149,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Dossiers clients (`property_reservations`) : réservation, confirmation (lot réservé), vente (lot vendu), annulation (lot disponible)
 - ✅ Route `/immobilier` : programmes (CRUD + détail), immeubles & lots (CRUD), dossiers clients (par programme)
 - ✅ Paiement de l'acompte de réservation par mobile money (`deposit_paid`)
-- ⬜ Plans d'étage interactifs / visites
+- ✅ Plans d'étage interactifs / visites — `FloorPlanViewer` (`src/components/floor-plan-viewer.tsx`) : sélecteur d'étage, lots colorés par statut, fiche lot, planification de visite par WhatsApp pré-rempli, changement rapide de statut promoteur ; intégré à l'onglet Immeubles
 
 ## Vague 11 — Géolocalisation & cartes 🔄
 
