@@ -522,6 +522,8 @@ export type Database = {
           scheduled_at: string | null;
           start_date: string;
           status: Database["public"]["Enums"]["equipment_rental_status"];
+          total_paid: boolean;
+          total_paid_at: string | null;
           total_price: number;
           updated_at: string;
           user_id: string;
@@ -544,6 +546,8 @@ export type Database = {
           scheduled_at?: string | null;
           start_date: string;
           status?: Database["public"]["Enums"]["equipment_rental_status"];
+          total_paid?: boolean;
+          total_paid_at?: string | null;
           total_price?: number;
           updated_at?: string;
           user_id: string;
@@ -566,6 +570,8 @@ export type Database = {
           scheduled_at?: string | null;
           start_date?: string;
           status?: Database["public"]["Enums"]["equipment_rental_status"];
+          total_paid?: boolean;
+          total_paid_at?: string | null;
           total_price?: number;
           updated_at?: string;
           user_id?: string;

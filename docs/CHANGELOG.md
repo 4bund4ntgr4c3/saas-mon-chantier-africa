@@ -4,6 +4,15 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.36 — Vague 9 (clôture) : Paiement intégral de la location de matériel par mobile money (2026-08-16)
+
+- ✅ Migration `20260829000000_location-paiement-integral.sql` : colonnes `total_paid` (boolean, défaut false) et `total_paid_at` (timestamptz) sur `equipment_rentals`.
+- ✅ Helper `rentalTotalDue` (`src/lib/data.ts`) : montant intégral dû = loyer (`total_price`) + frais de livraison (`delivery_fee`), hors caution — gère les montants numériques et textuels (mode invité).
+- ✅ Onglet « Mes locations » (`location.tsx`) : bouton **Payer la location (XOF)** pour les locations `confirmee`/`en_cours` non réglées, dialogue `MobileMoneyDialog` (bénéficiaire = propriétaire du matériel), badge « Location payée » et montant « À payer » sinon.
+- ✅ Tests unitaires `rentalTotalDue` (`src/lib/data.test.ts`) : loyer + livraison, livraison nulle/absente, montants textuels.
+- ✅ Seed démo : location bétonnière `en_cours` impayée + groupe électrogène `confirmee` (caution payée, intégral en attente).
+- ⚠️ La caution et le loyer sont payés séparément (deux transactions) ; le paiement intégral crée une trace `payments` si la location est rattachée à un chantier (`project_id`).
+
 ## v0.35 — Vague 11 (tranche 2) : Géolocalisation projets/prestataires & Suivi de livraison sur carte (2026-08-16)
 
 ### Géolocalisation des projets (`projects.lat`, `projects.lng`)

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
+  Banknote,
   CalendarDays,
   CheckCircle2,
   Copy,
@@ -34,6 +35,7 @@ import { useAccess } from "@/lib/roles";
 import { useCurrentProject } from "@/context/project-context";
 import {
   hasRentalConflict,
+  rentalTotalDue,
   useCreateEquipmentRental,
   useDeleteRow,
   useEquipment,
@@ -631,11 +633,17 @@ function MyRentalRow({
 }) {
   const updateStatus = useUpdateEquipmentRentalStatus();
   const markDepositPaid = useSaveRow("equipment_rentals", "Caution payée");
+  const markTotalPaid = useSaveRow("equipment_rentals", "Location payée");
   const [paying, setPaying] = useState(false);
+  const [payingTotal, setPayingTotal] = useState(false);
 
   const showQr = rental.status === "en_cours" || rental.status === "retour_en_cours";
   const showDeposit =
     canEdit && rental.status === "confirmee" && !rental.deposit_paid && Number(rental.deposit) > 0;
+  const showTotalPayment =
+    canEdit &&
+    !rental.total_paid &&
+    (rental.status === "confirmee" || rental.status === "en_cours");
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/30 p-3">
@@ -654,6 +662,14 @@ function MyRentalRow({
             </Badge>
           ) : (
             Number(rental.deposit) > 0 && `Caution : ${fcfa(Number(rental.deposit))}`
+          )}
+          {rental.total_paid ? (
+            <Badge className="bg-success text-success-foreground">
+              <Banknote className="mr-1 size-3" /> Location payée
+            </Badge>
+          ) : (
+            (rental.status === "confirmee" || rental.status === "en_cours") &&
+            `À payer : ${fcfa(rentalTotalDue(rental))}`
           )}
         </p>
         {showQr && rental.return_code && (
@@ -687,6 +703,12 @@ function MyRentalRow({
             <ShieldCheck className="mr-1.5 size-4" /> Payer la caution
           </Button>
         )}
+        {showTotalPayment && (
+          <Button size="sm" variant="secondary" onClick={() => setPayingTotal(true)}>
+            <Banknote className="mr-1.5 size-4" /> Payer la location ({fcfa(rentalTotalDue(rental))}
+            )
+          </Button>
+        )}
         {canEdit && (rental.status === "demande" || rental.status === "confirmee") && (
           <Button
             size="sm"
@@ -705,6 +727,19 @@ function MyRentalRow({
         onOpenChange={setPaying}
         onConfirmed={() =>
           markDepositPaid.mutate({ id: rental.id, values: { deposit_paid: true } })
+        }
+      />
+      <MobileMoneyDialog
+        projectId={projectId}
+        amount={rentalTotalDue(rental)}
+        {...(eq ? { beneficiary: eq.name } : {})}
+        open={payingTotal}
+        onOpenChange={setPayingTotal}
+        onConfirmed={() =>
+          markTotalPaid.mutate({
+            id: rental.id,
+            values: { total_paid: true, total_paid_at: new Date().toISOString() },
+          })
         }
       />
     </li>

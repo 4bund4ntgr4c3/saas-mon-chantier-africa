@@ -1502,6 +1502,14 @@ export function computeRentalPrice(
   };
 }
 
+/** Montant intégral dû pour une location (loyer + livraison), hors caution. */
+export function rentalTotalDue(rental: {
+  total_price: number | string;
+  delivery_fee: number | string | null;
+}): number {
+  return Number(rental.total_price) + Number(rental.delivery_fee ?? 0);
+}
+
 const RENTAL_ACTIVE_STATUSES: EquipmentRentalStatus[] = [
   "demande",
   "confirmee",

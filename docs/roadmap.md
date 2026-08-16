@@ -140,7 +140,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Chevauchement de périodes : `hasRentalConflict` (blocage côté client + vérification propriétaire à la confirmation)
 - ✅ QR code de remise du matériel (`return_code` + lib `qrcode`) et validation du retour par code
 - ✅ Paiement de la caution par mobile money (`MobileMoneyDialog` + `deposit_paid`)
-- ⬜ Paiement intégral de la location par mobile money (hors caution)
+- ✅ Paiement intégral de la location par mobile money (hors caution) — `total_paid`/`total_paid_at` (migration `20260829000000_location-paiement-integral.sql`), helper `rentalTotalDue` (loyer + livraison), bouton « Payer la location » et badge « Location payée » dans Mes locations
 
 ## Vague 10 — Immobilier promoteurs 🔄
 

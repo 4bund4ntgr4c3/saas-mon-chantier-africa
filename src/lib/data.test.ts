@@ -5,6 +5,7 @@ import {
   computeStockForecast,
   generateReturnCode,
   hasRentalConflict,
+  rentalTotalDue,
   suggestProductDescription,
 } from "@/lib/data";
 
@@ -146,6 +147,21 @@ describe("computeRentalPrice", () => {
     const r = computeRentalPrice(10000, 50000, "2026-08-01", "2026-08-01");
     expect(r.days).toBe(1);
     expect(r.total).toBe(10000);
+  });
+});
+
+describe("rentalTotalDue", () => {
+  it("additionne le loyer et les frais de livraison (hors caution)", () => {
+    expect(rentalTotalDue({ total_price: 360000, delivery_fee: 25000 })).toBe(385000);
+  });
+
+  it("gère une livraison gratuite (delivery_fee absente ou nulle)", () => {
+    expect(rentalTotalDue({ total_price: 360000, delivery_fee: 0 })).toBe(360000);
+    expect(rentalTotalDue({ total_price: 360000, delivery_fee: null })).toBe(360000);
+  });
+
+  it("convertit les montants textuels (mode démo)", () => {
+    expect(rentalTotalDue({ total_price: "360000", delivery_fee: "25000" })).toBe(385000);
   });
 });
 
