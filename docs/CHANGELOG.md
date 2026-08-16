@@ -4,6 +4,40 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.35 — Vague 11 (tranche 2) : Géolocalisation projets/prestataires & Suivi de livraison sur carte (2026-08-16)
+
+### Géolocalisation des projets (`projects.lat`, `projects.lng`)
+
+- ✅ Migration `20260828000000_geo-projets-prestataires-suivi.sql` : colonnes `lat`/`lng` sur `projects` et `providers`, `current_lat`/`current_lng`/`position_updated_at` sur `deliveries`.
+- ✅ Page Projets : bouton **Carte** affichant tous les chantiers géolocalisés sur carte Leaflet multi-fournisseurs (PointsMap).
+- ✅ Formulaire projet : champs latitude/longitude optionnels (création et édition).
+
+### Géolocalisation des prestataires & Recherche « près de moi » (`providers.lat`, `providers.lng`)
+
+- ✅ Page Prestataires : bouton **Près de moi** (géolocalisation navigateur), filtrage par rayon (2/5/10/25 km), tri par distance.
+- ✅ Badge de distance dans les cartes prestataires (« à X km »).
+- ✅ Carte Leaflet des prestataires filtrés avec marqueurs et badges.
+- ✅ Formulaire prestataire : champs latitude/longitude optionnels.
+
+### Suivi de livraison sur carte (`deliveries.current_lat`, `deliveries.current_lng`)
+
+- ✅ Page Commandes : carte de suivi livraison (PointMap) avec marqueur transporteur + destination + itinéraire pointillé.
+- ✅ Hook `useUpdateDeliveryPosition` : mise à jour de la position temps réel du transporteur.
+- ✅ Bouton « Simuler déplacement » en mode démo (avance le camion de 20 % vers la destination).
+- ✅ Horodatage de la dernière position affiché dans le bloc livraison.
+
+### Composant carte générique
+
+- ✅ `PointsMap` (`src/components/points-map.tsx`) : carte Leaflet réutilisable avec points typés (`pin`, `project`, `provider`, `truck`, `target`), polyligne optionnelle, sélecteur de fond de carte partagé avec StoreMap.
+- ✅ Types `MapPoint` et `MapPointKind` exportés.
+
+### Seed démo
+
+- ✅ Projet démo : coordonnées Godomey (6.4482, 2.3556).
+- ✅ Prestataires : coordonnées déterministes avec dispersion (Cotonou / Abomey-Calavi).
+- ✅ Commande démo : statut `en_livraison` avec livraison associée et position transporteur.
+- ✅ Tests existants couvrant haversineKm, withinRadius, formatDistance (`geo.test.ts`).
+
 ## v0.34 — Vague 16 : Rentabilité Locative, Sécurité HSE, Badges QR Code, Bilan Carbone & Passerelles Live (2026-08-14)
 
 ### Simulateur de Rentabilité Locative Post-Construction (`src/lib/rental-yield.ts`, `src/components/rental-yield-dialog.tsx`)

@@ -154,7 +154,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 ## Vague 11 — Géolocalisation & cartes 🔄
 
 - ✅ Tranche 1 : rayon de livraison des boutiques (`stores.delivery_radius_km`), recherche « près de moi » (géolocalisation + filtre par rayon), **carte Leaflet multi-fournisseurs** (OSM / Esri / CARTO) avec marqueurs et cercles de livraison (`StoreMap`)
-- ⬜ Tranche 2 : géolocalisation des projets/providers, suivi de livraison sur carte (`orders`/`deliveries`), recherche « près de moi » des prestataires
+- ✅ Tranche 2 : géolocalisation des projets (`projects.lat`/`lng`, carte projets via PointsMap) et prestataires (`providers.lat`/`lng`, recherche « près de moi » + badge distance + carte), suivi de livraison sur carte (`deliveries.current_lat`/`current_lng`, itinéraire transporteur→destination, hook `useUpdateDeliveryPosition`, simulation déplacement)
 
 ## Vague 12 — Outillage BTP, Séquestre, OCR & Offline Sync ✅
 

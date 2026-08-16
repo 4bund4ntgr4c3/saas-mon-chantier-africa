@@ -4376,6 +4376,36 @@ export function useUpdateDeliveryStatus() {
   });
 }
 
+/** Met à jour la position temps réel du transporteur pour une livraison en cours. */
+export function useUpdateDeliveryPosition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { id: string; lat: number; lng: number }) => {
+      if (isGuestMode()) {
+        demoUpdate("deliveries", values.id, {
+          current_lat: values.lat,
+          current_lng: values.lng,
+          position_updated_at: new Date().toISOString(),
+        });
+        return;
+      }
+      const { error } = await supabase
+        .from("deliveries")
+        .update({
+          current_lat: values.lat,
+          current_lng: values.lng,
+          position_updated_at: new Date().toISOString(),
+        })
+        .eq("id", values.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["deliveries"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 /* ---------- Plans de chantier ---------- */
 
 /** Téléverse des plans dans le dossier documents et renvoie leurs chemins. */

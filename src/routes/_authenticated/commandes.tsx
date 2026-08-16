@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   CheckCircle2,
+  MapPin,
   MessageSquareText,
   Package,
   Receipt,
@@ -13,6 +14,7 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
+import { PointsMap, type MapPoint } from "@/components/points-map";
 import { WhatsAppShareDialog } from "@/components/whatsapp-share-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +27,7 @@ import {
   useOrders,
   useProducts,
   useStores,
+  useUpdateDeliveryPosition,
   useUpdateDeliveryStatus,
   useUpdateOrderStatus,
   type Order,
@@ -286,7 +289,21 @@ function OrderDetail({ order }: { order: Order }) {
             <span className="mt-1">
               Statut : <Badge variant="outline">{labelOf(DELIVERY, delivery.status)}</Badge>
             </span>
+            {delivery.position_updated_at && (
+              <span className="text-xs text-muted-foreground">
+                <MapPin className="mr-1 inline-block size-3" />
+                Dernière position :{" "}
+                {new Date(delivery.position_updated_at).toLocaleTimeString("fr-FR")}
+              </span>
+            )}
           </div>
+
+          {(delivery.lat != null && delivery.lng != null) ||
+          (delivery.current_lat != null && delivery.current_lng != null) ? (
+            <div className="mt-3">
+              <DeliveryMap delivery={delivery} order={order} />
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -360,6 +377,85 @@ const DELIVERY = [
   { value: "livree", label: "Livrée" },
   { value: "annulee", label: "Annulée" },
 ] as const;
+
+function DeliveryMap({ delivery, order }: { delivery: Record<string, unknown>; order: Order }) {
+  const d = delivery as {
+    id: string;
+    lat: number | null;
+    lng: number | null;
+    current_lat: number | null;
+    current_lng: number | null;
+    status: string;
+    to_address: string | null;
+  };
+  const updatePosition = useUpdateDeliveryPosition();
+
+  const points: MapPoint[] = [];
+  const path: [number, number][] = [];
+
+  // Origine (boutique / point de départ)
+  if (d.lat != null && d.lng != null) {
+    points.push({
+      id: "origin",
+      lat: d.lat,
+      lng: d.lng,
+      title: "Point de départ",
+      kind: "pin",
+    });
+  }
+
+  // Position actuelle du transporteur
+  if (d.current_lat != null && d.current_lng != null) {
+    points.push({
+      id: "truck",
+      lat: d.current_lat,
+      lng: d.current_lng,
+      title: "Transporteur",
+      subtitle: d.status === "en_livraison" ? "En route" : null,
+      kind: "truck",
+      badges: [labelOf(DELIVERY, d.status)],
+    });
+    // Tracé itinéraire : position → destination
+    if (order.lat != null && order.lng != null) {
+      path.push([d.current_lat, d.current_lng], [order.lat, order.lng]);
+    }
+  }
+
+  // Destination (adresse de livraison)
+  if (order.lat != null && order.lng != null) {
+    points.push({
+      id: "destination",
+      lat: order.lat,
+      lng: order.lng,
+      title: "Destination",
+      subtitle: order.delivery_address ?? null,
+      kind: "target",
+    });
+  }
+
+  if (points.length === 0) return null;
+
+  const simPosition = () => {
+    if (d.current_lat == null || d.current_lng == null || order.lat == null || order.lng == null)
+      return;
+    // Simuler un pas vers la destination (20 %)
+    const newLat = d.current_lat + (order.lat - d.current_lat) * 0.2;
+    const newLng = d.current_lng + (order.lng - d.current_lng) * 0.2;
+    updatePosition.mutate({ id: d.id, lat: newLat, lng: newLng });
+    toast.success("Position du transporteur mise à jour");
+  };
+
+  return (
+    <div className="space-y-2">
+      <PointsMap points={points} path={path} title="Suivi de livraison" height="h-[300px]" />
+      {d.status === "en_livraison" && (
+        <Button size="sm" variant="outline" onClick={simPosition}>
+          <Truck className="size-4" /> Simuler déplacement
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export function StatusBadge({ status }: { status: string }) {
   const tone: Record<string, string> = {

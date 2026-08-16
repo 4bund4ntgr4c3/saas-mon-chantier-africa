@@ -1594,7 +1594,9 @@ export type Database = {
           house_type: string | null;
           id: string;
           land_area: number | null;
+          lat: number | null;
           levels: number | null;
+          lng: number | null;
           name: string;
           quartier: string | null;
           share_token: string | null;
@@ -1615,7 +1617,9 @@ export type Database = {
           house_type?: string | null;
           id?: string;
           land_area?: number | null;
+          lat?: number | null;
           levels?: number | null;
+          lng?: number | null;
           name: string;
           quartier?: string | null;
           share_token?: string | null;
@@ -1636,7 +1640,9 @@ export type Database = {
           house_type?: string | null;
           id?: string;
           land_area?: number | null;
+          lat?: number | null;
           levels?: number | null;
+          lng?: number | null;
           name?: string;
           quartier?: string | null;
           share_token?: string | null;
@@ -2092,6 +2098,8 @@ export type Database = {
           created_at: string;
           email: string | null;
           id: string;
+          lat: number | null;
+          lng: number | null;
           name: string;
           phone: string | null;
           rating: number;
@@ -2114,6 +2122,8 @@ export type Database = {
           created_at?: string;
           email?: string | null;
           id?: string;
+          lat?: number | null;
+          lng?: number | null;
           name: string;
           phone?: string | null;
           rating?: number;
@@ -2136,6 +2146,8 @@ export type Database = {
           created_at?: string;
           email?: string | null;
           id?: string;
+          lat?: number | null;
+          lng?: number | null;
           name?: string;
           phone?: string | null;
           rating?: number;
@@ -2255,6 +2267,8 @@ export type Database = {
         Row: {
           confirmation_code: string | null;
           created_at: string;
+          current_lat: number | null;
+          current_lng: number | null;
           delivered_at: string | null;
           driver_id: string | null;
           fee: number;
@@ -2264,6 +2278,7 @@ export type Database = {
           lng: number | null;
           order_id: string;
           phone: string | null;
+          position_updated_at: string | null;
           proof_photo: string | null;
           scheduled_at: string | null;
           signature_path: string | null;
@@ -2277,6 +2292,8 @@ export type Database = {
         Insert: {
           confirmation_code?: string | null;
           created_at?: string;
+          current_lat?: number | null;
+          current_lng?: number | null;
           delivered_at?: string | null;
           driver_id?: string | null;
           fee?: number;
@@ -2286,6 +2303,7 @@ export type Database = {
           lng?: number | null;
           order_id: string;
           phone?: string | null;
+          position_updated_at?: string | null;
           proof_photo?: string | null;
           scheduled_at?: string | null;
           signature_path?: string | null;
@@ -2299,6 +2317,8 @@ export type Database = {
         Update: {
           confirmation_code?: string | null;
           created_at?: string;
+          current_lat?: number | null;
+          current_lng?: number | null;
           delivered_at?: string | null;
           driver_id?: string | null;
           fee?: number;
@@ -2308,6 +2328,7 @@ export type Database = {
           lng?: number | null;
           order_id?: string;
           phone?: string | null;
+          position_updated_at?: string | null;
           proof_photo?: string | null;
           scheduled_at?: string | null;
           signature_path?: string | null;

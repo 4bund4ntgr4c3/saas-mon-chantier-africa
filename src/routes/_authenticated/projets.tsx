@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Copy, Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Copy, Map as MapIcon, Plus, Search, Trash2, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
 import { CostSimulatorDialog } from "@/components/cost-simulator-dialog";
+import { PointsMap } from "@/components/points-map";
 import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Values } from "@/components/record-form";
 import {
@@ -53,6 +54,8 @@ const FIELDS = [
   { name: "arrondissement", label: "Arrondissement" },
   { name: "quartier", label: "Quartier" },
   { name: "address", label: "Adresse", full: true },
+  { name: "lat", label: "Latitude chantier (optionnel)", type: "number" as const },
+  { name: "lng", label: "Longitude chantier (optionnel)", type: "number" as const },
   { name: "land_area", label: "Surface du terrain (m²)", type: "number" as const },
   { name: "built_area", label: "Surface construite (m²)", type: "number" as const },
   { name: "house_type", label: "Type de maison", placeholder: "Villa basse, R+1…" },
@@ -76,6 +79,8 @@ function toValues(p: Project): Values {
     arrondissement: p.arrondissement ?? "",
     quartier: p.quartier ?? "",
     address: p.address ?? "",
+    lat: p.lat != null ? String(p.lat) : "",
+    lng: p.lng != null ? String(p.lng) : "",
     land_area: p.land_area != null ? String(p.land_area) : "",
     built_area: p.built_area != null ? String(p.built_area) : "",
     house_type: p.house_type ?? "",
@@ -96,6 +101,8 @@ function toPayload(v: Values) {
     arrondissement: orNull(g("arrondissement")),
     quartier: orNull(g("quartier")),
     address: orNull(g("address")),
+    lat: toNumber(g("lat")),
+    lng: toNumber(g("lng")),
     land_area: toNumber(g("land_area")),
     built_area: toNumber(g("built_area")),
     house_type: orNull(g("house_type")),
@@ -165,6 +172,7 @@ function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("tous");
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "budget">("recent");
+  const [showMap, setShowMap] = useState(false);
 
   const visible = useMemo(() => {
     const list = projects.filter((p) => {
@@ -182,6 +190,22 @@ function ProjectsPage() {
       return String(b.created_at).localeCompare(String(a.created_at));
     });
   }, [projects, statusFilter, query, sortBy]);
+
+  const mapPoints = useMemo(
+    () =>
+      visible
+        .filter((p) => p.lat != null && p.lng != null)
+        .map((p) => ({
+          id: p.id,
+          lat: p.lat as number,
+          lng: p.lng as number,
+          title: p.name,
+          subtitle: [p.quartier, p.commune, p.city].filter(Boolean).join(" · ") || null,
+          kind: "project" as const,
+          badges: [labelOf(PROJECT_STATUSES, p.status)],
+        })),
+    [visible],
+  );
 
   return (
     <>
@@ -244,7 +268,28 @@ function ProjectsPage() {
             <SelectItem value="budget">Budget décroissant</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant={showMap ? "default" : "outline"} onClick={() => setShowMap((v) => !v)}>
+          <MapIcon className="size-4" /> Carte
+        </Button>
       </div>
+
+      {showMap &&
+        (mapPoints.length > 0 ? (
+          <div className="mb-4">
+            <PointsMap points={mapPoints} title="Carte des chantiers" height="h-[360px]" />
+            {visible.length > mapPoints.length && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {visible.length - mapPoints.length} chantier(s) sans coordonnées — renseignez
+                latitude/longitude dans la fiche du projet.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="panel mb-4 p-6 text-center text-sm text-muted-foreground">
+            Aucun chantier géolocalisé — renseignez la latitude et la longitude dans la fiche du
+            projet pour l'afficher sur la carte.
+          </div>
+        ))}
 
       {visible.length === 0 ? (
         <div className="panel p-10 text-center text-sm text-muted-foreground">

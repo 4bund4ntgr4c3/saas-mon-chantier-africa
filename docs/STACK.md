@@ -70,8 +70,8 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 
 - `src/lib/format.ts` : `fcfa()` **résout la devise par pays** (XOF défaut, XAF pour `cg`, CDF pour `cd`) ; listes `ORDER_STATUSES`, `DELIVERY_STATUSES`, `PRODUCT_UNITS`, `DOCUMENT_CATEGORIES`, `QUOTE_STATUSES`, `PAYMENT_METHODS`, `RESERVE_STATUSES`, `RESERVE_PRIORITIES`, `PROVIDER_DOMAINS`, `PROJECT_STATUSES`.
 - i18n : `src/lib/i18n.ts` (`tr(lang, key)`, `I18nKey`) — **navigation/header traduits**, écrans en FR.
-- Géolocalisation : `src/lib/geo.ts` (`haversineKm`, `useGeolocation`, `distanceKm`, `withinRadius`, `formatDistance`) — comparateur « près de moi » + recherche par rayon en boutique.
-- Cartes : `src/components/store-map.tsx` (`StoreMap`) — **Leaflet** (`react-leaflet` v5, `leaflet` ^1.9.4) multi-fournisseurs (OpenStreetMap / Esri World / CARTO Voyager), marqueurs, cercles de rayon de livraison, position utilisateur. La carte n'est montée qu'à la demande (pas de SSR).
+- Géolocalisation : `src/lib/geo.ts` (`haversineKm`, `useGeolocation`, `distanceKm`, `withinRadius`, `formatDistance`) — comparateur « près de moi » + recherche par rayon en boutique et prestataires.
+- Cartes : `src/components/store-map.tsx` (`StoreMap`) — **Leaflet** (`react-leaflet` v5, `leaflet` ^1.9.4) multi-fournisseurs (OpenStreetMap / Esri World / CARTO Voyager), marqueurs, cercles de rayon de livraison, position utilisateur. `src/components/points-map.tsx` (`PointsMap`) — carte générique réutilisable (projets, prestataires, suivi livraison), points typés (pin/project/provider/truck/target), polyligne itinéraire. Sélecteur de fond de carte partagé (`MAP_PROVIDERS`). La carte n'est montée qu'à la demande (pas de SSR).
 
 ### Composants partagés réutilisés (ne pas dupliquer)
 

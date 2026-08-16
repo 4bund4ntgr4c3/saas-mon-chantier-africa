@@ -45,7 +45,7 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 - **Prestataires BTP** : annuaire par domaine (13 domaines) + avis
 - **E-commerce** : boutiques, catalogue de matériaux, panier, commandes, livraison, transporteurs
 - **Comparateur de prix** : fiche produit enrichie, offres concurrentes, distance « près de moi », économies
-- **Géolocalisation** : carte des boutiques (Leaflet multi-fournisseurs), recherche « près de moi » avec rayon de livraison, badge distance sur les produits
+- **Géolocalisation** : carte des boutiques (Leaflet multi-fournisseurs), recherche « près de moi » avec rayon de livraison, badge distance sur les produits ; carte des chantiers et des prestataires (`PointsMap`), recherche « près de moi » dans l'annuaire prestataires, suivi de livraison sur carte avec position temps réel du transporteur
 - **Portail vendeur** : boutique, produits, commandes reçues, analytics (CA, panier moyen, meilleures ventes), suivi stock/prix, rayon de livraison
 
 ### Collaboration & multi-tenant

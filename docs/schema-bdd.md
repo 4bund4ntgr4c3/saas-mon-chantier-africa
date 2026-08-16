@@ -124,7 +124,7 @@ erDiagram
 
 | Table                           | Rôle                                                                                                                                |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `projects`                      | Chantiers : nom, localisation, surfaces, budget global, dates.                                                                      |
+| `projects`                      | Chantiers : nom, localisation, surfaces, budget global, dates. **V11 t2** : `lat`/`lng` (géolocalisation, carte projets).           |
 | `categories`                    | Postes de dépenses (standards + personnalisés par utilisateur).                                                                     |
 | `budget_lines`                  | Répartition budgétaire par catégorie et phase.                                                                                      |
 | `expenses`                      | Dépenses : date, libellé, catégorie, fournisseur, entreprise, montant FCFA, paiement.                                               |
@@ -160,9 +160,9 @@ erDiagram
 | `product_prices`                      | **Vague 2** : historique des prix (trigger sur `products.price`).                                                                                                              |
 | `product_inventory`                   | **Vague 2** : mouvements de stock (vente, réassort, ajustement, retour, annulation).                                                                                           |
 | `carts` / `cart_items`                | Paniers d'achat.                                                                                                                                                               |
-| `orders` / `order_items`              | Commandes (statut workflow complet).                                                                                                                                           |
-| `drivers` / `vehicles` / `deliveries` | Livraison : transporteurs, véhicules, planning.                                                                                                                                |
-| `providers` / `provider_reviews`      | Annuaire des prestataires BTP (13 domaines) et avis (flag `verified`).                                                                                                         |
+| `orders` / `order_items`              | Commandes (statut workflow complet). `orders.lat`/`lng` (coordonnées de livraison).                                                                                           |
+| `drivers` / `vehicles` / `deliveries` | Livraison : transporteurs, véhicules, planning. **V11 t2** : `deliveries.current_lat`/`current_lng`/`position_updated_at` (suivi temps réel sur carte).                        |
+| `providers` / `provider_reviews`      | Annuaire des prestataires BTP (13 domaines) et avis (flag `verified`). **V11 t2** : `lat`/`lng` (recherche « près de moi », carte).                                                |
 | `market_reviews`                      | **Vague 6** : avis étendus boutique/produit/transporteur (`target_type` + `target_id`), flag `verified`, contrainte `UNIQUE (user_id, target_type, target_id)` anti-faux avis. |
 | `verification_documents`              | **Vague 6** : documents de vérification soumis par les professionnels (type, statut `en_attente/approuve/rejete`, note admin, réviseur).                                       |
 

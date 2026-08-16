@@ -3,6 +3,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import {
   Award,
   Eye,
+  LocateFixed,
   Mail,
   MapPin,
   MessageCircle,
@@ -16,6 +17,7 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { AccessBadgeDialog } from "@/components/access-badge-dialog";
+import { PointsMap, type MapPoint } from "@/components/points-map";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +33,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { frDate, labelOf, PROVIDER_DOMAINS } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { formatDistance, haversineKm, useGeolocation } from "@/lib/geo";
 import {
   useAddProviderReview,
   useDeleteRow,
@@ -84,6 +88,8 @@ const FIELDS: Field[] = [
   { name: "website", label: "Site web" },
   { name: "city", label: "Ville" },
   { name: "commune", label: "Commune" },
+  { name: "lat", label: "Latitude (optionnel)", type: "number" },
+  { name: "lng", label: "Longitude (optionnel)", type: "number" },
 ];
 
 function toPayload(v: Values): Record<string, unknown> {
@@ -101,8 +107,12 @@ function toPayload(v: Values): Record<string, unknown> {
     website: orNull(g("website")),
     city: orNull(g("city")),
     commune: orNull(g("commune")),
+    lat: toNumber(g("lat")),
+    lng: toNumber(g("lng")),
   };
 }
+
+const NEARBY_RADII = [2, 5, 10, 25] as const;
 
 function Stars({ value }: { value: number }) {
   return (
@@ -131,20 +141,67 @@ function ProvidersPage() {
   const [q, setQ] = useState("");
   const [domain, setDomain] = useState("all");
   const [certifiedOnly, setCertifiedOnly] = useState(false);
+  const [locate, setLocate] = useState(false);
+  const [radiusKm, setRadiusKm] = useState<number>(10);
+  const { position } = useGeolocation(locate);
 
   const isOwner = (p: Provider) => !!uid && p.user_id === uid;
 
+  const providerDistances = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!position) return map;
+    for (const p of providers) {
+      if (p.lat == null || p.lng == null) continue;
+      map.set(p.id, haversineKm(position.lat, position.lng, p.lat, p.lng));
+    }
+    return map;
+  }, [position, providers]);
+
+  const nearbyProviders = useMemo(() => {
+    if (!position) return new Set<string>();
+    const set = new Set<string>();
+    for (const [id, km] of providerDistances) {
+      if (km <= radiusKm) set.add(id);
+    }
+    return set;
+  }, [position, radiusKm, providerDistances]);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return providers.filter((p) => {
+    const list = providers.filter((p) => {
       if (domain !== "all" && p.category !== domain) return false;
       if (certifiedOnly && !p.verified) return false;
+      if (locate && position && !nearbyProviders.has(p.id)) return false;
       if (!needle) return true;
       return [p.name, p.services, p.city, p.commune, p.contact_name, p.certifications]
         .filter(Boolean)
         .some((s) => (s as string).toLowerCase().includes(needle));
     });
-  }, [providers, q, domain, certifiedOnly]);
+    if (locate && position) {
+      return [...list].sort(
+        (a, b) =>
+          (providerDistances.get(a.id) ?? Infinity) - (providerDistances.get(b.id) ?? Infinity),
+      );
+    }
+    return list;
+  }, [providers, q, domain, certifiedOnly, locate, position, nearbyProviders, providerDistances]);
+
+  const mapPoints = useMemo<MapPoint[]>(
+    () =>
+      filtered
+        .filter((p) => p.lat != null && p.lng != null)
+        .map((p) => ({
+          id: p.id,
+          lat: p.lat as number,
+          lng: p.lng as number,
+          title: p.name,
+          subtitle: [p.commune, p.city].filter(Boolean).join(" · ") || null,
+          kind: "provider" as const,
+          distanceKm: providerDistances.get(p.id) ?? null,
+          badges: p.category ? [labelOf(PROVIDER_DOMAINS, p.category)] : [],
+        })),
+    [filtered, providerDistances],
+  );
 
   const certifiedCount = providers.filter((p) => p.verified).length;
 
@@ -199,7 +256,46 @@ function ProvidersPage() {
         >
           <ShieldCheck className="size-4" /> Certifiés uniquement
         </Button>
+        <Button
+          variant={locate ? "default" : "outline"}
+          onClick={() => setLocate((v) => !v)}
+          className={cn(locate && !position && "opacity-70")}
+        >
+          <LocateFixed className="size-4" />
+          {locate ? (position ? "Position activée" : "Localisation…") : "Près de moi"}
+        </Button>
+        {locate && position && (
+          <Select value={String(radiusKm)} onValueChange={(v) => setRadiusKm(Number(v))}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Rayon" />
+            </SelectTrigger>
+            <SelectContent>
+              {NEARBY_RADII.map((r) => (
+                <SelectItem key={r} value={String(r)}>
+                  Rayon {r} km
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
+
+      {locate && (
+        <div className="mb-5">
+          {mapPoints.length > 0 || position ? (
+            <PointsMap points={mapPoints} position={position} title="Carte des prestataires" />
+          ) : (
+            <div className="panel p-6 text-center text-sm text-muted-foreground">
+              Aucun prestataire géolocalisé pour l'instant.
+            </div>
+          )}
+          {position && nearbyProviders.size > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {nearbyProviders.size} prestataire(s) dans un rayon de {radiusKm} km
+            </p>
+          )}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="panel p-10 text-center text-sm text-muted-foreground">
@@ -232,6 +328,11 @@ function ProvidersPage() {
                 <span className="text-xs text-muted-foreground">({p.review_count} avis)</span>
                 {p.category && (
                   <Badge variant="outline">{labelOf(PROVIDER_DOMAINS, p.category)}</Badge>
+                )}
+                {providerDistances.has(p.id) && (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="size-3" /> à {formatDistance(providerDistances.get(p.id)!)}
+                  </span>
                 )}
               </div>
 
@@ -335,6 +436,8 @@ function ProvidersPage() {
             website: editing.website ?? "",
             city: editing.city ?? "",
             commune: editing.commune ?? "",
+            lat: editing.lat != null ? String(editing.lat) : "",
+            lng: editing.lng != null ? String(editing.lng) : "",
           }}
           onSubmit={async (v) => save.mutateAsync({ id: editing.id, values: toPayload(v) })}
         />
