@@ -43,6 +43,7 @@ import {
 import { useAccountType, accountTypeLabel } from "@/lib/roles";
 import { fcfa } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { askLlmAssistant, clipHistory, summarizeAnalysis } from "@/lib/llm-assistant";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
   component: AssistantPage,
@@ -52,6 +53,7 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  via?: "llm";
 };
 
 type Suggestion = {
@@ -132,14 +134,6 @@ function AssistantPage() {
     } catch {
       activeConvId = conversations[0]?.id ?? null;
     }
-    if (activeConvId) {
-      addAction.mutate({
-        conversationId: activeConvId,
-        actionType: inferType(q),
-        title: q,
-        payload: { question: q },
-      });
-    }
 
     const analysis: Analysis = {
       requirements,
@@ -152,10 +146,38 @@ function AssistantPage() {
       tasks,
     };
     const reply = buildReply(q, roleLabel, accountType, analysis);
+
+    // Question ouverte (aucune intention reconnue) → LLM si configuré, sinon règles.
+    let replyText = reply.text;
+    let via: "llm" | undefined;
+    if (reply.intent === "info") {
+      const history = clipHistory(messages.map((m) => ({ role: m.role, text: m.text })));
+      const llmText = await askLlmAssistant({
+        question: q,
+        history,
+        roleLabel,
+        summary: summarizeAnalysis(analysis),
+      });
+      if (llmText) {
+        replyText = llmText;
+        via = "llm";
+      }
+    }
+
+    if (activeConvId) {
+      addAction.mutate({
+        conversationId: activeConvId,
+        actionType: inferType(q),
+        title: q,
+        payload: via === "llm" ? { question: q, source: "llm" } : { question: q },
+      });
+    }
+
     const assistantMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
-      text: reply.text,
+      text: replyText,
+      ...(via ? { via } : {}),
     };
     setMessages((m) => [...m, assistantMsg]);
     setSuggestions(reply.suggestions);
@@ -237,6 +259,11 @@ function ChatLog({
               : "mr-auto border-border bg-card",
           )}
         >
+          {m.via === "llm" && (
+            <Badge variant="outline" className="mb-1.5 text-[10px]">
+              <Sparkles className="mr-1 size-3" /> IA générative
+            </Badge>
+          )}
           {m.text}
         </div>
       ))}

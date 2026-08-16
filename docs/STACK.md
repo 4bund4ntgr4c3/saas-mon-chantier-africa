@@ -59,6 +59,11 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 - Chaque hook de `data.ts` a une branche `isGuestMode()` pour fonctionner sans compte.
 - Inscription → seed d'un projet démo (signalé `demo_requests` pour la démo commerciale).
 
+### Server functions & secrets
+
+- Pattern `createServerFn` + zod : `src/lib/demo-requests.functions.ts` (submitDemoRequest), `src/lib/llm-assistant.functions.ts` (`askLlm` — LLM compatible OpenAI, clé `LLM_API_KEY`/`LLM_BASE_URL`/`LLM_MODEL` lue uniquement côté serveur via `process.env`).
+- Helpers LLM clients : `src/lib/llm-assistant.ts` (`summarizeAnalysis`, `buildLlmSystemPrompt`, `clipHistory`, `askLlmAssistant`) — repli transparent sur le moteur de règles si non configuré.
+
 ### Gates de fonctionnalités & rôles
 
 - `src/components/feature-gate.tsx` : `<FeatureGate feature="…">` active/désactive des modules.

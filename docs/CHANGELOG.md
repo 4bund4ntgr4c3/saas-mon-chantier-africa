@@ -4,6 +4,26 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.38 — Vague 7 (clôture) : Branchage LLM pour les réponses ouvertes de l'assistant (2026-08-16)
+
+### Serveur (`src/lib/llm-assistant.functions.ts`)
+
+- ✅ Server function `askLlm` (pattern `createServerFn` + zod, cf. `demo-requests.functions.ts`) : appel **compatible OpenAI** (OpenAI, Groq, OpenRouter, DeepSeek…), clé API lue uniquement côté serveur (`LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`), timeout 25 s, repli silencieux `{ text: null }` en cas d'erreur.
+
+### Helpers clients (`src/lib/llm-assistant.ts`)
+
+- ✅ `summarizeAnalysis` — compaction du contexte chantier (budget/dépensé/reste, avancement tâches, besoins matériaux, risques rupture, panier) en quelques lignes.
+- ✅ `buildLlmSystemPrompt` — rôle BâtiBénin, réponse en français, FCFA, 180 mots max, chiffres uniquement issus du contexte, action concrète en conclusion.
+- ✅ `clipHistory` — mémoire courte (6 derniers tours non vides).
+- ✅ Tests unitaires (`src/lib/llm-assistant.test.ts`).
+
+### Intégration (`assistant.tsx`)
+
+- ✅ Quand aucune intention n'est reconnue (`intent "info"`), la question est envoyée au LLM avec l'historique et le résumé du chantier ; badge **« IA générative »** sur ces réponses.
+- ✅ Repli transparent sur le moteur de règles si le LLM n'est pas configuré (`LLM_API_KEY` absente) ou en erreur — les intentions reconnues (achats, budget, planning, stock, recommandations) restent 100 % locales et déterministes.
+- ✅ `ai_actions.payload` enregistre `source: "llm"` pour tracer les réponses génératives.
+- ⚠️ Pas de persistance des messages (state local, inchangé) ; `.env.example` et `docs/guide-deploiement.md` documentent les 3 nouvelles variables optionnelles.
+
 ## v0.37 — Vague 10 (clôture) : Plans d'étage interactifs & visites (2026-08-16)
 
 - ✅ Composant `FloorPlanViewer` (`src/components/floor-plan-viewer.tsx`) : plan d'étage interactif alimenté par les vrais lots (`property_units`) — sélecteur d'étage (RDC + étages), lots colorés par statut (disponible / réservé / vendu), surface/pièces/prix, compteur par étage, légende.

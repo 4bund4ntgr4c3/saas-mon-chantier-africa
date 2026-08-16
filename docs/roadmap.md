@@ -109,14 +109,14 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - ✅ Avis étendus : transporteurs, vendeurs, produits
 - ✅ Avis vérifiés + lutte anti-faux avis
 
-## Vague 7 — IA 🔄
+## Vague 7 — IA ✅
 
 - ✅ Notes vocales + speech-to-text « Parler au chantier » (bouton micro, Web Speech)
 - ✅ Assistant conversationnel par rôle (`ai_conversations`, `ai_actions`) — assistant à base de règles, IA Achats (liste + estimation + panier), recommandations produits
 - ✅ IA achats avancé : comparaison multi-boutiques (meilleure offre en stock par besoin), calcul de quantités (multiple de la commande minimale), économie estimée
 - ✅ IA fournisseur : prévision de stock 30 j (vélocité, jours restants, réappro suggéré) pour le rôle quincaillerie + panel et intention « stock »
 - ✅ Descriptions IA de produits (générateur à base de règles + bouton dans Ma boutique)
-- ⬜ Branchage LLM (optionnel) pour des réponses ouvertes
+- ✅ Branchage LLM (optionnel) pour des réponses ouvertes — server function `askLlm` compatible OpenAI (`LLM_API_KEY`/`LLM_BASE_URL`/`LLM_MODEL`, clé côté serveur uniquement), résumé de chantier en prompt système, mémoire 6 tours, badge « IA générative », repli transparent sur le moteur de règles si non configuré
 
 ## Vague 8 — Notifications multi-canal 🔄
 
