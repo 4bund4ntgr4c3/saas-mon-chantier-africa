@@ -23,8 +23,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCurrentProject } from "@/context/project-context";
-import { useDeleteRow, useDuplicateProject, useSaveRow, type Project } from "@/lib/data";
+import {
+  useBudgetLines,
+  useDeleteRow,
+  useDuplicateProject,
+  useExpenses,
+  useSaveRow,
+  useTasks,
+  type Project,
+} from "@/lib/data";
 import { ProjectMembersButton } from "@/components/project-members";
 import { fcfa, frDate, labelOf, num, PROJECT_STATUSES } from "@/lib/format";
 
@@ -169,6 +184,7 @@ function ProjectsPage() {
   const remove = useDeleteRow("projects");
   const duplicate = useDuplicateProject();
   const [editing, setEditing] = useState<Project | null>(null);
+  const [detail, setDetail] = useState<Project | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("tous");
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "budget">("recent");
@@ -300,7 +316,14 @@ function ProjectsPage() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((p) => (
-            <article key={p.id} className="panel flex flex-col p-4">
+            <article
+              key={p.id}
+              className="panel flex cursor-pointer flex-col p-4 transition-colors hover:border-primary/50"
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("button, a, [role=button]")) return;
+                setDetail(p);
+              }}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="font-display text-base font-semibold">{p.name}</h2>
@@ -387,6 +410,154 @@ function ProjectsPage() {
           onSubmit={async (v) => save.mutateAsync({ id: editing.id, values: toPayload(v) })}
         />
       )}
+
+      {detail && (
+        <ProjectDetailDialog
+          project={detail}
+          active={projectId === detail.id}
+          onActivate={() => setProjectId(detail.id)}
+          onEdit={() => {
+            setEditing(detail);
+            setDetail(null);
+          }}
+          onClose={() => setDetail(null)}
+        />
+      )}
     </>
+  );
+}
+
+function ProjectDetailDialog({
+  project: p,
+  active,
+  onActivate,
+  onEdit,
+  onClose,
+}: {
+  project: Project;
+  active: boolean;
+  onActivate: () => void;
+  onEdit: () => void;
+  onClose: () => void;
+}) {
+  const { data: budgetLines = [] } = useBudgetLines(p.id);
+  const { data: expenses = [] } = useExpenses(p.id);
+  const { data: tasks = [] } = useTasks(p.id);
+
+  const budget = Number(p.budget ?? 0);
+  const planned = budgetLines.reduce((s, l) => s + Number(l.planned_amount), 0);
+  const spent = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const consumed = planned > 0 ? Math.min(100, Math.round((spent / planned) * 100)) : 0;
+  const doneTasks = tasks.filter((t) => t.status === "terminee").length;
+
+  const duration = (() => {
+    if (!p.start_date || !p.end_date) return null;
+    const days = Math.round(
+      (new Date(p.end_date).getTime() - new Date(p.start_date).getTime()) / 86_400_000,
+    );
+    return days > 0 ? `${num(days)} jours` : null;
+  })();
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex flex-wrap items-center gap-2 font-display">
+            {p.name}
+            <Badge variant="outline">{labelOf(PROJECT_STATUSES, p.status)}</Badge>
+          </DialogTitle>
+          <DialogDescription>
+            {[p.quartier, p.commune, p.city].filter(Boolean).join(" · ") ||
+              "Localisation non renseignée"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          <div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Budget consommé</span>
+              <span className={consumed > 90 ? "num text-destructive" : "num"}>
+                {consumed}% · {fcfa(spent)} / {fcfa(planned || budget)}
+              </span>
+            </div>
+            <Progress value={consumed} className="mt-1.5 h-1.5" />
+          </div>
+
+          <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+            <div>
+              <dt className="text-muted-foreground">Budget global</dt>
+              <dd className="num font-semibold text-primary">{fcfa(budget)}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Dépenses</dt>
+              <dd className="num">
+                {fcfa(spent)} · {expenses.length} saisie(s)
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Tâches</dt>
+              <dd className="num">
+                {doneTasks}/{tasks.length} terminée(s)
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Terrain</dt>
+              <dd className="num">{p.land_area ? `${num(Number(p.land_area))} m²` : "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Surface construite</dt>
+              <dd className="num">{p.built_area ? `${num(Number(p.built_area))} m²` : "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Niveaux</dt>
+              <dd className="num">{p.levels ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Type</dt>
+              <dd>{p.house_type ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Début</dt>
+              <dd>{frDate(p.start_date)}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Fin prévue</dt>
+              <dd>{frDate(p.end_date)}</dd>
+            </div>
+            {duration && (
+              <div>
+                <dt className="text-muted-foreground">Durée prévue</dt>
+                <dd className="num">{duration}</dd>
+              </div>
+            )}
+            <div className="col-span-2">
+              <dt className="text-muted-foreground">Adresse</dt>
+              <dd>
+                {[p.address, p.arrondissement, p.quartier, p.commune, p.city]
+                  .filter(Boolean)
+                  .join(", ") || "—"}
+              </dd>
+            </div>
+          </dl>
+
+          <ChecklistProgress project={p} />
+
+          <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+            <Button
+              size="sm"
+              variant={active ? "default" : "secondary"}
+              onClick={onActivate}
+              disabled={active}
+            >
+              {active ? "Chantier actif" : "Activer ce chantier"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={onEdit}>
+              <Pencil className="mr-1.5 size-4" /> Modifier
+            </Button>
+            <ProjectMembersButton projectId={p.id} />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -4,6 +4,11 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.39 — Projets : fiche détail au clic sur une carte (2026-08-16)
+
+- 🔧 Page Projets : cliquer sur une carte chantier ouvre désormais une **fiche détail** (`ProjectDetailDialog`) au lieu de ne rien faire — budget consommé (barre de progression dépensé/planifié), résumé financier (budget global, dépenses, tâches), caractéristiques (surfaces, niveaux, type, dates, durée, adresse complète), checklist de démarrage, et actions rapides (Activer ce chantier, Modifier, Membres).
+- 🔧 Les clics sur les boutons internes des cartes (Activer, modifier, dupliquer…) ne déclenchent plus l'ouverture de la fiche.
+
 ## v0.38 — Vague 7 (clôture) : Branchage LLM pour les réponses ouvertes de l'assistant (2026-08-16)
 
 ### Serveur (`src/lib/llm-assistant.functions.ts`)
