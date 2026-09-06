@@ -1,4 +1,5 @@
 import { frDate } from "@/lib/format";
+import { fileStamp, pdfFooter, pdfHeader, pdfTableTheme, slug } from "@/lib/pdf-theme";
 
 export type ReportData = {
   title: string;
@@ -10,16 +11,6 @@ export type ReportData = {
   rightAlign?: number[];
 };
 
-const fileStamp = () => new Date().toISOString().slice(0, 10);
-
-const slug = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase() || "rapport";
-
 export async function exportReportPdf(data: ReportData) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import("jspdf"),
@@ -27,21 +18,17 @@ export async function exportReportPdf(data: ReportData) {
   ]);
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.text(data.title, 40, 46);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Chantier : ${data.projectName}`, 40, 66);
-  doc.text(`Édité le ${frDate(new Date().toISOString())}`, 40, 81);
+  const startY = pdfHeader(doc, {
+    title: data.title,
+    subtitle: `Chantier : ${data.projectName}`,
+    meta: `Édité le ${frDate(new Date().toISOString())}`,
+  });
 
   const columnStyles: Record<number, { halign: "right" }> = {};
   (data.rightAlign ?? []).forEach((i) => (columnStyles[i] = { halign: "right" }));
 
   autoTable(doc, {
-    startY: 100,
+    startY,
     head: [
       data.columns.map((c, i) => ({
         content: c,
@@ -51,12 +38,11 @@ export async function exportReportPdf(data: ReportData) {
     body: data.rows,
     ...(data.total ? { foot: [data.total] } : {}),
     theme: "grid",
-    styles: { font: "helvetica", fontSize: 9, cellPadding: 5 },
-    headStyles: { fillColor: [24, 24, 27], textColor: 255 },
-    footStyles: { fillColor: [244, 244, 245], textColor: 20, fontStyle: "bold" },
+    ...pdfTableTheme,
     columnStyles,
   });
 
+  pdfFooter(doc);
   doc.save(`${slug(data.title)}-${slug(data.projectName)}-${fileStamp()}.pdf`);
 }
 

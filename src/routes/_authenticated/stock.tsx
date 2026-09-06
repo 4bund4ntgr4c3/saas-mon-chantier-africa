@@ -4,6 +4,7 @@ import { AlertTriangle, Boxes, ListPlus, Minus, Pencil, Plus, Trash2 } from "luc
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
 import { QuickAddWizard } from "@/components/quick-add-wizard";
+import { SupplierNetworkDialog } from "@/components/supplier-network-dialog";
 import { RecordDialog, toNumber, orNull, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +107,7 @@ function StockPage() {
         subtitle={`${num(materials.length)} référence(s) · valeur du stock ${fcfa(totalValue)}`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <SupplierNetworkDialog />
             <QuickAddWizard
               title="Ajouter un matériau"
               description="Dictez le matériau en une phrase, ou avancez champ par champ."

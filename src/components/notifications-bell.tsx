@@ -1,24 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  AlertTriangle,
-  Bell,
-  BellRing,
-  ClipboardList,
-  FileText,
-  Handshake,
-  ListChecks,
-  Package,
-  ShieldCheck,
-  Sparkles,
-  Truck,
-  Wallet,
-} from "lucide-react";
+import { AlertTriangle, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { NotificationKindIcon } from "@/components/notification-kind-icon";
 import { useCurrentProject } from "@/context/project-context";
 import {
   useAuditLogs,
@@ -31,7 +19,6 @@ import {
   usePayments,
   useQuotes,
   type AppNotification,
-  type AppNotificationKind,
   type AuditLog,
 } from "@/lib/data";
 import { fcfa, frDate, labelOf, num, PAYMENT_METHODS } from "@/lib/format";
@@ -293,20 +280,30 @@ export function NotificationsBell() {
                 </li>
               )}
               {businessAlerts.map((a) => (
-                <li key={a.id} className="px-3 py-2 text-sm">
-                  <p className="flex items-start gap-1.5 leading-snug">
-                    <AlertTriangle
-                      className={`mt-0.5 size-3.5 shrink-0 ${
-                        a.severity === "danger" ? "text-destructive" : "text-accent"
+                <li
+                  key={a.id}
+                  className="px-3 py-2 text-sm transition-colors hover:bg-muted/60 dark:hover:bg-white/5"
+                >
+                  <p className="flex items-start gap-2 leading-snug">
+                    <span
+                      className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full ${
+                        a.severity === "danger"
+                          ? "bg-red-500/10 text-red-600 dark:bg-red-400/15 dark:text-red-300"
+                          : "bg-amber-500/15 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
                       }`}
-                    />
+                    >
+                      <AlertTriangle className="size-3.5" />
+                    </span>
                     <span className="font-medium">{a.title}</span>
                   </p>
-                  <p className="mt-0.5 pl-5 text-xs text-muted-foreground">{a.detail}</p>
+                  <p className="mt-0.5 pl-9 text-xs text-muted-foreground">{a.detail}</p>
                 </li>
               ))}
               {alerts.map((l) => (
-                <li key={l.id} className="px-3 py-2 text-sm">
+                <li
+                  key={l.id}
+                  className="px-3 py-2 text-sm transition-colors hover:bg-muted/60 dark:hover:bg-white/5"
+                >
                   <p className="leading-snug">{notificationText(l)}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{relative(l.created_at)}</p>
                 </li>
@@ -327,32 +324,28 @@ export function NotificationsBell() {
   );
 }
 
-const KIND_ICONS: Record<AppNotificationKind, typeof Bell> = {
-  alerte: BellRing,
-  commande: Package,
-  livraison: Truck,
-  paiement: Wallet,
-  devis: FileText,
-  rapport: ClipboardList,
-  litige: Handshake,
-  verification: ShieldCheck,
-  assistant: Sparkles,
-};
-
 function NotificationRow({ notification }: { notification: AppNotification }) {
-  const Icon = KIND_ICONS[notification.kind] ?? Bell;
   const unread = !notification.read_at;
   return (
-    <li className={cn("px-3 py-2 text-sm", unread && "bg-primary/5")}>
-      <p className="flex items-start gap-1.5 leading-snug">
-        <Icon className={cn("mt-0.5 size-3.5 shrink-0 text-primary")} />
+    <li
+      className={cn(
+        "px-3 py-2 text-sm transition-colors hover:bg-muted/60 dark:hover:bg-white/5",
+        unread && "border-l-2 border-l-primary bg-primary/5 dark:bg-primary/10",
+      )}
+    >
+      <p className="flex items-start gap-2 leading-snug">
+        <NotificationKindIcon
+          kind={notification.kind}
+          className="size-7"
+          iconClassName="size-3.5"
+        />
         <span className="font-medium">{notification.title}</span>
-        {unread && <span className="mt-1 ml-1 size-1.5 shrink-0 rounded-full bg-primary" />}
+        {unread && <span className="mt-1.5 ml-1 size-1.5 shrink-0 rounded-full bg-primary" />}
       </p>
       {notification.body && (
-        <p className="mt-0.5 pl-5 text-xs text-muted-foreground">{notification.body}</p>
+        <p className="mt-0.5 pl-9 text-xs text-muted-foreground">{notification.body}</p>
       )}
-      <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
+      <p className="mt-0.5 pl-9 text-xs text-muted-foreground">
         {relative(notification.created_at)}
       </p>
     </li>

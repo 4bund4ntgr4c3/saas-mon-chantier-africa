@@ -2264,7 +2264,7 @@ export function demoSeedBudgetLines(projectId: string, budget: number) {
 }
 
 /** Duplique un projet et toutes ses données liées (mode invité). Renvoie le nouvel id. */
-export function demoDuplicateProject(projectId: string): string {
+export function demoDuplicateProject(projectId: string, template = false): string {
   const project = (db["projects"] as DemoRow[]).find((p) => p["id"] === projectId);
   if (!project) throw new Error("Projet introuvable");
   const newId = uid();
@@ -2278,6 +2278,37 @@ export function demoDuplicateProject(projectId: string): string {
     (db[table] as DemoRow[]).push(dest);
     return dest;
   };
+
+  // Mode modèle : structure seule (budget + besoins + tâches à faire), sans historique.
+  if (template) {
+    const tpl = copy("projects", project);
+    tpl.id = newId;
+    tpl["name"] = `${project["name"]} — modèle`;
+    tpl["status"] = "planifie";
+
+    (db["budget_lines"] as DemoRow[])
+      .filter((l) => l["project_id"] === projectId)
+      .forEach((l) => copy("budget_lines", l));
+
+    (db["material_requirements"] as DemoRow[])
+      .filter((r) => r["project_id"] === projectId)
+      .forEach((r) => {
+        const dest = copy("material_requirements", r);
+        dest["quantity_ordered"] = 0;
+        dest["quantity_delivered"] = 0;
+        dest["quantity_consumed"] = 0;
+        dest["status"] = "besoin";
+      });
+
+    (db["tasks"] as DemoRow[])
+      .filter((t) => t["project_id"] === projectId)
+      .forEach((t) => {
+        const dest = copy("tasks", t);
+        dest["status"] = "a_faire";
+      });
+
+    return newId;
+  }
 
   const newProject = copy("projects", project);
   newProject.id = newId;

@@ -1,4 +1,14 @@
 import { fcfa, frDate } from "@/lib/format";
+import {
+  fileStamp,
+  pdfColors,
+  pdfFooter,
+  pdfHeader,
+  pdfKpiRow,
+  pdfSectionTitle,
+  pdfTableTheme,
+  slug,
+} from "@/lib/pdf-theme";
 
 export type BudgetExportRow = {
   phase: string;
@@ -13,16 +23,6 @@ export type BudgetExportData = {
   rows: BudgetExportRow[];
   unassigned: number;
 };
-
-const fileStamp = () => new Date().toISOString().slice(0, 10);
-
-const slug = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase() || "chantier";
 
 function totals(data: BudgetExportData) {
   const planned = data.rows.reduce((s, r) => s + r.planned, 0);
@@ -45,35 +45,40 @@ export async function exportBudgetPdf(data: BudgetExportData) {
   const t = totals(data);
   const rows = activeRows(data);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Rapport budgétaire — prévu vs réalisé", 40, 48);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Chantier : ${data.projectName}`, 40, 68);
-  doc.text(`Édité le ${frDate(new Date().toISOString())}`, 40, 83);
-
-  autoTable(doc, {
-    startY: 100,
-    theme: "plain",
-    styles: { font: "helvetica", fontSize: 10 },
-    body: [
-      ["Enveloppe du projet", fcfa(data.projectBudget)],
-      ["Budget planifié par poste", fcfa(t.planned)],
-      ["Dépenses réelles", fcfa(t.spent)],
-      [t.ecart < 0 ? "Dépassement" : "Reste à dépenser", fcfa(Math.abs(t.ecart))],
-    ],
-    columnStyles: { 0: { cellWidth: 220 }, 1: { fontStyle: "bold" } },
+  let y = pdfHeader(doc, {
+    title: "Rapport budgétaire",
+    subtitle: `Prévu vs réalisé — Chantier : ${data.projectName}`,
+    meta: `Édité le ${frDate(new Date().toISOString())}`,
   });
 
+  y = pdfKpiRow(doc, y, [
+    { label: "Enveloppe du projet", value: fcfa(data.projectBudget) },
+    { label: "Budget planifié par poste", value: fcfa(t.planned) },
+    { label: "Dépenses réelles", value: fcfa(t.spent), tone: "amber" },
+    {
+      label: t.ecart < 0 ? "Dépassement" : "Reste à dépenser",
+      value: fcfa(Math.abs(t.ecart)),
+      tone: t.ecart < 0 ? "red" : "green",
+    },
+  ]);
+
+  y = pdfSectionTitle(doc, y, "Détail par phase et par poste");
+
   let phase = "";
-  const body: (string | number)[][] = [];
+  const body: (string | number | object)[][] = [];
   for (const r of rows) {
     if (r.phase !== phase) {
       phase = r.phase;
       body.push([
-        { content: phase.toUpperCase(), colSpan: 5, styles: { fontStyle: "bold" } } as never,
+        {
+          content: phase.toUpperCase(),
+          colSpan: 5,
+          styles: {
+            fontStyle: "bold",
+            textColor: pdfColors.ink,
+            fillColor: pdfColors.softBg,
+          },
+        } as never,
       ]);
     }
     const ecart = r.planned - r.spent;
@@ -81,16 +86,28 @@ export async function exportBudgetPdf(data: BudgetExportData) {
       r.category,
       fcfa(r.planned),
       fcfa(r.spent),
-      fcfa(ecart),
+      {
+        content: fcfa(ecart),
+        styles: { textColor: ecart < 0 ? pdfColors.red : pdfColors.graphite },
+      },
       r.planned > 0 ? `${Math.round((r.spent / r.planned) * 100)} %` : "—",
     ]);
   }
   if (data.unassigned > 0) {
-    body.push(["Dépenses sans poste", fcfa(0), fcfa(data.unassigned), fcfa(-data.unassigned), "—"]);
+    body.push([
+      "Dépenses sans poste",
+      fcfa(0),
+      fcfa(data.unassigned),
+      {
+        content: fcfa(-data.unassigned),
+        styles: { textColor: pdfColors.red },
+      },
+      "—",
+    ]);
   }
 
   autoTable(doc, {
-    startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
+    startY: y,
     head: [
       [
         "Poste",
@@ -103,9 +120,7 @@ export async function exportBudgetPdf(data: BudgetExportData) {
     body: body.length ? body : [["Aucune donnée budgétaire", "", "", "", ""]],
     foot: [["Total", fcfa(t.planned), fcfa(t.spent), fcfa(t.ecart), ""]],
     theme: "grid",
-    styles: { font: "helvetica", fontSize: 9, cellPadding: 5 },
-    headStyles: { fillColor: [24, 24, 27], textColor: 255 },
-    footStyles: { fillColor: [244, 244, 245], textColor: 20, fontStyle: "bold" },
+    ...pdfTableTheme,
     columnStyles: {
       1: { halign: "right" },
       2: { halign: "right" },
@@ -114,6 +129,7 @@ export async function exportBudgetPdf(data: BudgetExportData) {
     },
   });
 
+  pdfFooter(doc);
   doc.save(`budget-${slug(data.projectName)}-${fileStamp()}.pdf`);
 }
 

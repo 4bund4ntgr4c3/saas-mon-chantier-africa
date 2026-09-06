@@ -269,7 +269,23 @@ function LandingFooter() {
                   to="/auth"
                   className="text-foreground/80 transition-colors hover:text-primary"
                 >
+                  Se connecter
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/auth"
+                  className="text-foreground/80 transition-colors hover:text-primary"
+                >
                   Créer un compte
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/reset-password"
+                  className="text-foreground/80 transition-colors hover:text-primary"
+                >
+                  Mot de passe oublié
                 </Link>
               </li>
             </ul>

@@ -3,6 +3,9 @@ import { useMemo, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { FeatureGate } from "@/components/feature-gate";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { RebarInspectionDialog } from "@/components/rebar-inspection-dialog";
+import { LightningGroundingDialog } from "@/components/lightning-grounding-dialog";
+import { FireSafetyDialog } from "@/components/fire-safety-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -90,7 +93,10 @@ function AuditPage() {
         title="Journal d'audit"
         subtitle={`${filtered.length} action(s) sensible(s) tracée(s) sur ce chantier`}
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <FireSafetyDialog />
+            <LightningGroundingDialog />
+            <RebarInspectionDialog />
             <Select value={entity} onValueChange={setEntity}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Module" />

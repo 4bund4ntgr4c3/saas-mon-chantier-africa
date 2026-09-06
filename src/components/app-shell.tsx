@@ -1,43 +1,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  AlertTriangle,
-  BarChart3,
-  BellRing,
-  Boxes,
-  Building2,
-  CalendarDays,
-  DraftingCompass,
-  FileText,
-  FolderOpen,
-  Gauge,
-  Hammer,
-  Handshake,
-  HardHat,
-  Images,
-  Landmark,
-  ListChecks,
-  LogOut,
-  MessageSquare,
-  NotebookPen,
-  Package,
-  PiggyBank,
-  Plus,
-  Search,
-  ShieldCheck,
-  Settings,
-  Sparkles,
-  Receipt,
-  ShoppingCart,
-  Store,
-  Inbox,
-  Users,
-  Wallet,
-  Truck,
-  TicketCheck,
-  Wrench,
-} from "lucide-react";
-import { type ReactNode, useEffect } from "react";
+import { Hammer, HardHat, LogOut, Plus } from "lucide-react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -48,78 +18,20 @@ import {
 } from "@/components/ui/select";
 import { useCurrentProject } from "@/context/project-context";
 import { useIsAdmin, useRegisterDeviceToken } from "@/lib/data";
-import { accessFor, accountTypeLabel, useAccountType, type Feature } from "@/lib/roles";
+import { accessFor, accountTypeLabel, useAccountType } from "@/lib/roles";
+import { ADMIN_SECTION, NAV_MAIN, NAV_SECTIONS, type NavEntry, type NavSection } from "@/lib/nav";
 import { Badge } from "@/components/ui/badge";
 import { exitGuestMode, useGuestMode } from "@/lib/guest-mode";
 import { GuestBanner } from "@/components/guest-banner";
 import { OfflineBanner } from "@/components/offline-banner";
+import { CommandPalette } from "@/components/command-palette";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { ProjectInvitesButton } from "@/components/project-invites";
 import { QuickExpenseDialog } from "@/components/quick-expense";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { usePreferences } from "@/context/preferences-context";
-import { tr, type I18nKey } from "@/lib/i18n";
+import { tr } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-
-const NAV = [
-  {
-    to: "/tableau-de-bord",
-    labelKey: "nav.tableau-de-bord",
-    icon: Gauge,
-    feature: "tableau-de-bord",
-  },
-  { to: "/projets", labelKey: "nav.projets", icon: HardHat, feature: "projets" },
-  { to: "/journal", labelKey: "nav.journal", icon: NotebookPen, feature: "journal" },
-  { to: "/reserves", labelKey: "nav.reserves", icon: AlertTriangle, feature: "journal" },
-  { to: "/messages", labelKey: "nav.messages", icon: MessageSquare, feature: "journal" },
-  { to: "/plans", labelKey: "nav.plans", icon: DraftingCompass, feature: "documents" },
-  { to: "/documents", labelKey: "nav.documents", icon: FolderOpen, feature: "documents" },
-  { to: "/budget", labelKey: "nav.budget", icon: PiggyBank, feature: "budget" },
-  { to: "/depenses", labelKey: "nav.depenses", icon: Receipt, feature: "depenses" },
-  { to: "/devis", labelKey: "nav.devis", icon: FileText, feature: "devis" },
-  { to: "/paiements", labelKey: "nav.paiements", icon: Wallet, feature: "paiements" },
-  { to: "/calendrier", labelKey: "nav.calendrier", icon: CalendarDays, feature: "calendrier" },
-  { to: "/fournisseurs", labelKey: "nav.fournisseurs", icon: Store, feature: "fournisseurs" },
-  { to: "/entreprises", labelKey: "nav.entreprises", icon: Building2, feature: "entreprises" },
-  { to: "/facturation", labelKey: "nav.facturation", icon: Landmark, feature: "facturation" },
-  { to: "/stock", labelKey: "nav.stock", icon: Boxes, feature: "stock" },
-  { to: "/materiaux", labelKey: "nav.materiaux", icon: Package, feature: "stock" },
-  { to: "/photos", labelKey: "nav.photos", icon: Images, feature: "photos" },
-  { to: "/taches", labelKey: "nav.taches", icon: ListChecks, feature: "taches" },
-  { to: "/prestataires", labelKey: "nav.prestataires", icon: Handshake, feature: "marketplace" },
-  {
-    to: "/demandes-devis",
-    labelKey: "nav.demandes-devis",
-    icon: TicketCheck,
-    feature: "marketplace",
-  },
-  { to: "/litiges", labelKey: "nav.litiges", icon: ShieldCheck, feature: "marketplace" },
-  { to: "/boutique", labelKey: "nav.boutique", icon: Store, feature: "marketplace" },
-  { to: "/panier", labelKey: "nav.panier", icon: ShoppingCart, feature: "marketplace" },
-  { to: "/commandes", labelKey: "nav.commandes", icon: Package, feature: "marketplace" },
-  { to: "/ma-boutique", labelKey: "nav.ma-boutique", icon: Truck, feature: "marketplace" },
-  { to: "/location", labelKey: "nav.location", icon: Wrench, feature: "marketplace" },
-  { to: "/immobilier", labelKey: "nav.immobilier", icon: Building2, feature: "marketplace" },
-  { to: "/rapports", labelKey: "nav.rapports", icon: BarChart3, feature: "rapports" },
-  { to: "/recherche", labelKey: "nav.recherche", icon: Search, feature: "recherche" },
-  { to: "/alertes", labelKey: "nav.alertes", icon: BellRing, feature: "alertes" },
-  { to: "/notifications", labelKey: "nav.notifications", icon: BellRing, feature: "alertes" },
-  { to: "/assistant", labelKey: "nav.assistant", icon: Sparkles, feature: "assistant" },
-  { to: "/audit", labelKey: "nav.audit", icon: ShieldCheck, feature: "audit" },
-  { to: "/parametres", labelKey: "nav.parametres", icon: Settings, feature: "parametres" },
-] as const satisfies readonly {
-  to: string;
-  labelKey: I18nKey;
-  icon: typeof Gauge;
-  feature: Feature;
-}[];
-
-const ADMIN_NAV = [
-  { to: "/admin", labelKey: "admin.administration", icon: ShieldCheck },
-  { to: "/admin/utilisateurs", labelKey: "admin.utilisateurs", icon: Users },
-  { to: "/admin/demandes-demo", labelKey: "admin.demandes-demo", icon: Inbox },
-  { to: "/admin/verifications", labelKey: "admin.verifications", icon: ShieldCheck },
-] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { projects, projectId, setProjectId } = useCurrentProject();
@@ -151,10 +63,45 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
     await supabase.auth.signOut();
   }
-  const allowed = NAV.filter((item) => accessFor(accountType, item.feature) !== "none").map(
-    ({ to, labelKey, icon }) => ({ to, labelKey, icon }),
+
+  const visible = (item: NavEntry) =>
+    !item.feature || accessFor(accountType, item.feature) !== "none";
+
+  // Sections repliables : les items interdits au rôle sont retirés, les sections
+  // devenues vides disparaissent complètement du menu.
+  const sections = useMemo<readonly NavSection[]>(() => {
+    const filtered = NAV_SECTIONS.map((section) => ({
+      ...section,
+      items: section.items.filter(visible),
+    })).filter((section) => section.items.length > 0);
+    return isAdmin ? [...filtered, ADMIN_SECTION] : filtered;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountType, isAdmin]);
+
+  const activeSectionIds = useMemo(
+    () =>
+      sections
+        .filter((section) => section.items.some((item) => pathname.startsWith(item.to)))
+        .map((section) => section.id),
+    [sections, pathname],
   );
-  const nav = isAdmin ? [...allowed, ...ADMIN_NAV] : allowed;
+
+  // La section contenant la page courante reste ouverte (sans fermer celles
+  // ouvertes manuellement par l'utilisateur).
+  const [openSections, setOpenSections] = useState<string[]>(() => [...activeSectionIds]);
+  useEffect(() => {
+    setOpenSections((prev) => {
+      const missing = activeSectionIds.filter((id) => !prev.includes(id));
+      return missing.length ? [...prev, ...missing] : prev;
+    });
+  }, [activeSectionIds]);
+
+  // Liste à plat pour la barre de navigation mobile.
+  const nav = useMemo<readonly NavEntry[]>(
+    () => [...NAV_MAIN.filter(visible), ...sections.flatMap((section) => section.items)],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sections],
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,8 +118,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Badge variant="outline" className="mb-4 self-start">
             {accountTypeLabel(accountType)}
           </Badge>
-          <nav className="flex flex-1 flex-col gap-1">
-            {nav.map((item) => {
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto pb-2">
+            {NAV_MAIN.filter(visible).map((item) => {
               const active = pathname.startsWith(item.to);
               return (
                 <Link
@@ -189,6 +136,52 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
+            <Accordion
+              type="multiple"
+              value={openSections}
+              onValueChange={setOpenSections}
+              className="mt-1 flex flex-col gap-0.5"
+            >
+              {sections.map((section) => {
+                const sectionActive = activeSectionIds.includes(section.id);
+                return (
+                  <AccordionItem key={section.id} value={section.id} className="border-b-0">
+                    <AccordionTrigger
+                      className={cn(
+                        "rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:no-underline",
+                        sectionActive && "font-medium text-sidebar-accent-foreground",
+                      )}
+                    >
+                      <span className="flex items-center gap-3">
+                        <section.icon className="size-4" />
+                        {tr(lang, section.labelKey)}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1">
+                      <div className="flex flex-col gap-0.5">
+                        {section.items.map((item) => {
+                          const active = pathname.startsWith(item.to);
+                          return (
+                            <Link
+                              key={item.to}
+                              to={item.to}
+                              className={cn(
+                                "flex items-center gap-3 rounded-md py-1.5 pl-9 pr-3 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                active &&
+                                  "bg-sidebar-accent font-medium text-sidebar-accent-foreground shadow-[inset_2px_0_0_0_var(--sidebar-primary)]",
+                              )}
+                            >
+                              <item.icon className="size-4" />
+                              {tr(lang, item.labelKey)}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </nav>
           <Button
             variant="ghost"
@@ -225,6 +218,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Select>
             </div>
             <div className="flex items-center gap-2">
+              <CommandPalette />
               <QuickExpenseDialog
                 trigger={
                   <Button

@@ -21,6 +21,12 @@ import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
 import { FloorPlanViewer } from "@/components/floor-plan-viewer";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { RentalYieldDialog } from "@/components/rental-yield-dialog";
+import { BankLoanDialog } from "@/components/bank-loan-dialog";
+import { DeveloperFeasibilityDialog } from "@/components/developer-feasibility-dialog";
+import { DeveloperCashflowDialog } from "@/components/developer-cashflow-dialog";
+import { VefaContractDialog } from "@/components/vefa-contract-dialog";
+import { HomeInsuranceDialog } from "@/components/home-insurance-dialog";
+import { RentalCashflowDialog } from "@/components/rental-cashflow-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -160,6 +166,12 @@ function ImmobilierPage() {
         subtitle={`${programs.length} programme(s) · gestion des immeubles, lots et dossiers clients`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <RentalCashflowDialog />
+            <HomeInsuranceDialog />
+            <DeveloperFeasibilityDialog />
+            <DeveloperCashflowDialog />
+            <VefaContractDialog />
+            <BankLoanDialog />
             <RentalYieldDialog />
             {canEdit && (
               <RecordDialog

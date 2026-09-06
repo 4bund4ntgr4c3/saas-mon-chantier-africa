@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
-import { ChevronDown, ListTree, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ListTree, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
 import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { QuickAddWizard } from "@/components/quick-add-wizard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,7 @@ function QuotesPage() {
   const { data: suppliers = [] } = useSuppliers();
   const { data: companies = [] } = useCompanies();
   const save = useSaveRow("quotes", "Devis enregistré");
+  const setStatus = useSaveRow("quotes", "Statut du devis mis à jour");
   const remove = useDeleteRow("quotes");
   const addItem = useSaveRow("quote_items", "Ligne ajoutée");
   const removeItem = useDeleteRow("quote_items");
@@ -125,20 +127,23 @@ function QuotesPage() {
         subtitle={`${quotes.length} devis · ${fcfa(total)} cumulés`}
         action={
           canEdit ? (
-            <RecordDialog
-              title="Nouveau devis"
-              fields={fields}
-              initial={{
-                status: "en_attente",
-                quote_date: new Date().toISOString().slice(0, 10),
-              }}
-              trigger={
-                <Button>
-                  <Plus className="size-4" /> Ajouter un devis
-                </Button>
-              }
-              onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <SignaturePadDialog documentTitle="Devis des Travaux" />
+              <RecordDialog
+                title="Nouveau devis"
+                fields={fields}
+                initial={{
+                  status: "en_attente",
+                  quote_date: new Date().toISOString().slice(0, 10),
+                }}
+                trigger={
+                  <Button>
+                    <Plus className="size-4" /> Ajouter un devis
+                  </Button>
+                }
+                onSubmit={async (v) => save.mutateAsync({ values: toPayload(v) })}
+              />
+            </div>
           ) : undefined
         }
       />
@@ -224,6 +229,48 @@ function QuotesPage() {
                       <div className="flex justify-end gap-1">
                         {canEdit && (
                           <>
+                            {q.status === "en_attente" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="bg-success text-success-foreground hover:bg-success/80"
+                                  title="Accepter ce devis"
+                                  disabled={setStatus.isPending}
+                                  onClick={() =>
+                                    setStatus.mutate({ id: q.id, values: { status: "accepte" } })
+                                  }
+                                >
+                                  <Check className="mr-1.5 size-4" /> Accepter
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive"
+                                  title="Rejeter ce devis"
+                                  disabled={setStatus.isPending}
+                                  onClick={() => {
+                                    if (confirm(`Rejeter le devis « ${q.label} » ?`))
+                                      setStatus.mutate({ id: q.id, values: { status: "rejete" } });
+                                  }}
+                                >
+                                  <X className="mr-1.5 size-4" /> Rejeter
+                                </Button>
+                              </>
+                            )}
+                            {(q.status === "rejete" || q.status === "accepte") && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                title="Remettre le devis en attente"
+                                disabled={setStatus.isPending}
+                                onClick={() =>
+                                  setStatus.mutate({ id: q.id, values: { status: "en_attente" } })
+                                }
+                              >
+                                <RotateCcw className="mr-1.5 size-4" /> Rouvrir
+                              </Button>
+                            )}
                             <Button size="icon" variant="ghost" onClick={() => setEditing(q)}>
                               <Pencil className="size-4" />
                             </Button>

@@ -19,6 +19,7 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import { FeatureGate, ReadOnlyNotice } from "@/components/feature-gate";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
+import { LeaseAgreementDialog } from "@/components/lease-agreement-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -183,20 +184,23 @@ function LocationPage() {
         title="Location de matériel"
         subtitle={`${available.length} équipement(s) disponible(s) à la location · ${myEquipment.length} dans mon parc`}
         action={
-          canEdit ? (
-            <RecordDialog
-              title="Ajouter du matériel à louer"
-              description="Définissez les tarifs (jour/semaine), la caution et l'état du matériel."
-              fields={EQUIPMENT_FIELDS}
-              submitLabel="Enregistrer"
-              trigger={
-                <Button size="sm">
-                  <Plus className="mr-1.5 size-4" /> Ajouter du matériel
-                </Button>
-              }
-              onSubmit={async (v) => saveEquipment.mutateAsync({ values: toEquipmentPayload(v) })}
-            />
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-2">
+            <LeaseAgreementDialog />
+            {canEdit && (
+              <RecordDialog
+                title="Ajouter du matériel à louer"
+                description="Définissez les tarifs (jour/semaine), la caution et l'état du matériel."
+                fields={EQUIPMENT_FIELDS}
+                submitLabel="Enregistrer"
+                trigger={
+                  <Button size="sm">
+                    <Plus className="mr-1.5 size-4" /> Ajouter du matériel
+                  </Button>
+                }
+                onSubmit={async (v) => saveEquipment.mutateAsync({ values: toEquipmentPayload(v) })}
+              />
+            )}
+          </div>
         }
       />
 

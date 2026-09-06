@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
   BellRing,
+  CalendarClock,
   FileText,
   Globe,
   Languages,
@@ -18,6 +19,12 @@ import { PageHeader } from "@/components/app-shell";
 import { SubscriptionPlansDialog } from "@/components/subscription-plans";
 import { InsuranceDialog } from "@/components/insurance-dialog";
 import { PaymentGatewayDialog } from "@/components/payment-gateway-dialog";
+import { PushNotificationsToggle } from "@/components/push-notifications-toggle";
+import { WhatsAppCloudDialog } from "@/components/whatsapp-cloud-dialog";
+import { UtilityBillsDialog } from "@/components/utility-bills-dialog";
+import { LightningGroundingDialog } from "@/components/lightning-grounding-dialog";
+import { FireSafetyDialog } from "@/components/fire-safety-dialog";
+import { ElectricalLoadDialog } from "@/components/electrical-load-dialog";
 import { RecordDialog, toNumber, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -359,16 +366,45 @@ function SettingsPage() {
     }
     const permission = await Notification.requestPermission();
     setPermStatus(permission);
-    if (permission === "granted") {
-      let token = window.localStorage.getItem("device_token_web");
-      if (!token) {
-        token = `web-${crypto.randomUUID()}`;
-        window.localStorage.setItem("device_token_web", token);
-      }
-      registerDevice.mutate({ token, platform: "web" });
-      toast.success("Notifications navigateur activées");
-    } else {
+    if (permission !== "granted") {
       toast.error("Autorisation refusée — activez-la dans votre navigateur");
+      return;
+    }
+    let token = window.localStorage.getItem("device_token_web");
+    if (!token) {
+      token = `web-${crypto.randomUUID()}`;
+      window.localStorage.setItem("device_token_web", token);
+    }
+    registerDevice.mutate({ token, platform: "web" });
+    toast.success("Notifications navigateur activées");
+
+    // Push web réel (Web Push + VAPID) si la clé publique est configurée.
+    await subscribeRealPush();
+  }
+
+  /**
+   * Abonne ce navigateur au push Web Push (VAPID). L'abonnement complet est
+   * stocké dans device_tokens (token = JSON de la subscription, plateforme
+   * « web_push ») pour être utilisé par l'envoi serveur.
+   */
+  async function subscribeRealPush() {
+    const vapidKey = import.meta.env["VITE_VAPID_PUBLIC_KEY"] as string | undefined;
+    if (!vapidKey || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const existing = await registration.pushManager.getSubscription();
+      const subscription =
+        existing ??
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
+        }));
+      registerDevice.mutate({
+        token: JSON.stringify(subscription.toJSON()),
+        platform: "web_push",
+      });
+    } catch (e) {
+      console.warn("Push web non activé", e);
     }
   }
 
@@ -484,6 +520,12 @@ function SettingsPage() {
         subtitle="Vos informations, votre mot de passe et vos postes de dépenses personnalisés"
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <ElectricalLoadDialog />
+            <FireSafetyDialog />
+            <LightningGroundingDialog />
+            <UtilityBillsDialog />
+            <WhatsAppCloudDialog />
+            <PushNotificationsToggle />
             <PaymentGatewayDialog />
             <InsuranceDialog />
             <SubscriptionPlansDialog />
@@ -759,6 +801,16 @@ function SettingsPage() {
                 <Send className="mr-1.5 size-4" />
                 Envoyer les alertes maintenant
               </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={sendEmail.isPending || !toggles.weekly_digest}
+                onClick={() => sendEmail.mutate("digest")}
+                title="Tableau budget par chantier + dépenses des 7 derniers jours"
+              >
+                <CalendarClock className="mr-1.5 size-4" />
+                Rapport hebdo maintenant
+              </Button>
             </div>
           </form>
         )}
@@ -836,4 +888,12 @@ function SettingsPage() {
       )}
     </>
   );
+}
+
+/** Décode une clé publique VAPID base64url en Uint8Array (PushManager.subscribe). */
+function urlBase64ToUint8Array(base64: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const normalized = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(normalized);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }

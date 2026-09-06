@@ -1,22 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import {
-  Bell,
-  BellOff,
-  BellRing,
-  CheckCheck,
-  ClipboardList,
-  FileText,
-  Handshake,
-  Package,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-  Truck,
-  Wallet,
-} from "lucide-react";
+import { Bell, BellOff, BellRing, CheckCheck, Trash2 } from "lucide-react";
 import { FeatureGate } from "@/components/feature-gate";
 import { PageHeader } from "@/components/app-shell";
+import { NotificationKindIcon } from "@/components/notification-kind-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,18 +35,6 @@ export const Route = createFileRoute("/_authenticated/notifications")({
     </FeatureGate>
   ),
 });
-
-const KIND_ICONS: Record<AppNotificationKind, typeof Bell> = {
-  alerte: BellRing,
-  commande: Package,
-  livraison: Truck,
-  paiement: Wallet,
-  devis: FileText,
-  rapport: ClipboardList,
-  litige: Handshake,
-  verification: ShieldCheck,
-  assistant: Sparkles,
-};
 
 const KIND_FILTERS: (AppNotificationKind | "all")[] = [
   "all",
@@ -163,13 +138,10 @@ function NotificationRow({
   onToggleRead: (read: boolean) => void;
   onDelete: () => void;
 }) {
-  const Icon = KIND_ICONS[n.kind] ?? Bell;
   const unread = !n.read_at;
   const body = (
     <div className={cn("flex flex-1 items-start gap-3", unread && "font-medium")}>
-      <Icon
-        className={cn("mt-0.5 size-4 shrink-0", unread ? "text-primary" : "text-muted-foreground")}
-      />
+      <NotificationKindIcon kind={n.kind} className="mt-0.5" />
       <div className="min-w-0">
         <p className="text-sm leading-snug">{n.title}</p>
         {n.body && <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>}
@@ -184,7 +156,12 @@ function NotificationRow({
   );
 
   return (
-    <li className={cn("flex items-start gap-2 px-4 py-3", unread && "bg-primary/5")}>
+    <li
+      className={cn(
+        "flex items-start gap-2 px-4 py-3 transition-colors hover:bg-muted/60 dark:hover:bg-white/5",
+        unread && "border-l-2 border-l-primary bg-primary/5 dark:bg-primary/10",
+      )}
+    >
       {n.link ? (
         <a href={n.link} className="flex flex-1 items-start gap-3 hover:underline">
           {body}

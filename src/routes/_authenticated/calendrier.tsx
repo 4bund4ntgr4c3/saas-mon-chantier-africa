@@ -5,6 +5,7 @@ import { CalendarDays, CircleAlert, CircleCheck } from "lucide-react";
 import { FeatureGate } from "@/components/feature-gate";
 import { PageHeader } from "@/components/app-shell";
 import { GanttScheduleDialog } from "@/components/gantt-schedule-dialog";
+import { WeatherDelaysDialog } from "@/components/weather-delays-dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { isGuestMode } from "@/lib/guest-mode";
@@ -150,7 +151,12 @@ function CalendrierPage() {
       <PageHeader
         title="Calendrier des échéances"
         subtitle={`${events.length} échéance(s) · ${overdueCount} en retard · ${next7} dans les 7 jours`}
-        action={<GanttScheduleDialog projectName={projects[0]?.name ?? "Mon Chantier"} />}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <WeatherDelaysDialog />
+            <GanttScheduleDialog projectName={projects[0]?.name ?? "Mon Chantier"} />
+          </div>
+        }
       />
 
       {events.length === 0 ? (

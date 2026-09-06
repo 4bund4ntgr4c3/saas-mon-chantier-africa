@@ -733,21 +733,59 @@ export function useSaveRow(table: TableName, successMessage = "Enregistré") {
   });
 }
 
+/**
+ * Supprime une ligne et propose son annulation (toast « Annuler » 6 s) :
+ * la ligne complète est relue avant suppression puis réinsérée telle quelle.
+ */
 export function useDeleteRow(table: TableName) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string): Promise<Record<string, unknown> | null> => {
       if (isGuestMode()) {
+        const row =
+          demoRows<Record<string, unknown>>(table as DemoTableName).find((r) => r["id"] === id) ??
+          null;
         demoDelete(table as DemoTableName, id);
-        return;
+        return row;
       }
+      const { data: row } = await supabase.from(table).select("*").eq("id", id).maybeSingle();
       const { error } = await supabase.from(table).delete().eq("id", id);
       if (error) throw new Error(error.message);
+      return (row as Record<string, unknown> | null) ?? null;
     },
-    onSuccess: () => {
-      RELATED[table].forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
-      qc.invalidateQueries({ queryKey: ["audit_logs"] });
-      toast.success("Supprimé");
+    onSuccess: (row) => {
+      const invalidate = () => {
+        RELATED[table].forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
+        qc.invalidateQueries({ queryKey: ["audit_logs"] });
+      };
+      invalidate();
+      if (!row) {
+        toast.success("Supprimé");
+        return;
+      }
+      toast.success("Supprimé", {
+        action: {
+          label: "Annuler",
+          onClick: () => {
+            void (async () => {
+              try {
+                if (isGuestMode()) {
+                  demoInsert(table as DemoTableName, row);
+                } else {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const { error } = await (supabase.from(table) as any).insert(row);
+                  if (error) throw new Error(error.message);
+                }
+                invalidate();
+                toast.success("Suppression annulée");
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
+            })();
+          },
+        },
+        duration: 6000,
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -782,17 +820,12 @@ export function useImportRows(table: TableName) {
 export function useDuplicateProject() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (projectId: string) => {
-      if (isGuestMode()) return demoDuplicateProject(projectId);
-      const tables: TableName[] = [
-        "projects",
-        "budget_lines",
-        "expenses",
-        "payments",
-        "quotes",
-        "site_logs",
-        "documents",
-      ];
+    mutationFn: async (
+      input: string | { id: string; template?: boolean },
+    ): Promise<string | undefined> => {
+      const projectId = typeof input === "string" ? input : input.id;
+      const template = typeof input === "object" && input.template === true;
+      if (isGuestMode()) return demoDuplicateProject(projectId, template);
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) throw new Error("Session expirée");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -817,7 +850,7 @@ export function useDuplicateProject() {
         copy["updated_at"] = new Date().toISOString();
         idMap.set(oldId, copy["id"] as string);
         if (table === "projects") {
-          copy["name"] = `${copy["name"]} — copie`;
+          copy["name"] = template ? `${copy["name"]} — modèle` : `${copy["name"]} — copie`;
           copy["status"] = "planifie";
         }
         return copy;
@@ -833,6 +866,34 @@ export function useDuplicateProject() {
       newProject["id"] = newId;
       newProject["project_id"] = newId;
       await insert("projects", [newProject]);
+
+      // Modèle : structure seule (budget + besoins remis à zéro + tâches à faire).
+      if (template) {
+        await insert(
+          "budget_lines",
+          (await byTable("budget_lines")).map((r) => clone(r, "budget_lines")),
+        );
+        await insert(
+          "material_requirements",
+          (await byTable("material_requirements")).map((r) => {
+            const c = clone(r, "material_requirements");
+            c["quantity_ordered"] = 0;
+            c["quantity_delivered"] = 0;
+            c["quantity_consumed"] = 0;
+            c["status"] = "besoin";
+            return c;
+          }),
+        );
+        await insert(
+          "tasks",
+          (await byTable("tasks")).map((t) => {
+            const c = clone(t, "tasks");
+            c["status"] = "a_faire";
+            return c;
+          }),
+        );
+        return newId;
+      }
 
       for (const t of ["budget_lines", "expenses", "quotes", "site_logs", "documents"] as const) {
         const rows = await byTable(t);
@@ -855,10 +916,14 @@ export function useDuplicateProject() {
 
       return newId;
     },
-    onSuccess: () => {
+    onSuccess: (_, input) => {
       RELATED["projects"].forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
       qc.invalidateQueries({ queryKey: ["audit_logs"] });
-      toast.success("Projet dupliqué");
+      toast.success(
+        typeof input === "object" && input.template
+          ? "Modèle de chantier créé (structure seule, sans historique)"
+          : "Projet dupliqué",
+      );
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1177,7 +1242,7 @@ type SendEmailResult = {
 
 export function useSendNotificationEmail() {
   return useMutation({
-    mutationFn: async (mode: "now" | "test") => {
+    mutationFn: async (mode: "now" | "test" | "digest") => {
       if (isGuestMode()) throw new Error("Connectez-vous pour recevoir les notifications");
       const { data, error } = await supabase.functions.invoke("email-notifications", {
         body: { mode, force: true },

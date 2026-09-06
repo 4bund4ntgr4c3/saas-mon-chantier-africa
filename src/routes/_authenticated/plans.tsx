@@ -5,6 +5,11 @@ import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { InteractivePlanViewerDialog } from "@/components/interactive-plan-viewer";
+import { RebarInspectionDialog } from "@/components/rebar-inspection-dialog";
+import { SoilFoundationsDialog } from "@/components/soil-foundations-dialog";
+import { SepticTankDialog } from "@/components/septic-tank-dialog";
+import { WaterBoosterDialog } from "@/components/water-booster-dialog";
+import { ZoningFootprintDialog } from "@/components/zoning-footprint-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
@@ -84,6 +89,11 @@ function PlansPage() {
         subtitle={`${plans.length} plan(s) · ${project.name}`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <ZoningFootprintDialog />
+            <WaterBoosterDialog />
+            <SepticTankDialog />
+            <SoilFoundationsDialog />
+            <RebarInspectionDialog />
             <InteractivePlanViewerDialog planTitle={`Plan — ${project.name}`} />
             <input
               ref={fileRef}

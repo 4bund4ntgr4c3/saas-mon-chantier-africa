@@ -16,6 +16,15 @@ import { MetreCalculatorDialog } from "@/components/metre-calculator";
 import { SolarCalculatorDialog } from "@/components/solar-calculator-dialog";
 import { TransportCostDialog } from "@/components/transport-cost-dialog";
 import { CarbonFootprintDialog } from "@/components/carbon-footprint-dialog";
+import { BulkPurchasingDialog } from "@/components/bulk-purchasing-dialog";
+import { MaterialKitsDialog } from "@/components/material-kits-dialog";
+import { FinishingsComparatorDialog } from "@/components/finishings-comparator-dialog";
+import { RainwaterHarvestingDialog } from "@/components/rainwater-harvesting-dialog";
+import { ConcreteMixDialog } from "@/components/concrete-mix-dialog";
+import { ThermalComfortDialog } from "@/components/thermal-comfort-dialog";
+import { SepticTankDialog } from "@/components/septic-tank-dialog";
+import { BoundaryWallDialog } from "@/components/boundary-wall-dialog";
+import { WaterBoosterDialog } from "@/components/water-booster-dialog";
 import { QuickAddWizard } from "@/components/quick-add-wizard";
 import { EntityDetailDialog, openDetailUnlessInteractive } from "@/components/entity-detail-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
@@ -204,6 +213,31 @@ function MateriauxPage() {
         subtitle={`${num(requirements.length)} besoin(s) · ${num(remainingTotal)} unité(s) restante(s) · ${fcfa(deliveredTotal)} livrés`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <MaterialKitsDialog
+              onApplyKit={async (kit) => {
+                if (!projectId) return;
+                for (const item of kit.items) {
+                  await addRequirement.mutateAsync({
+                    project_id: projectId,
+                    name: item.name,
+                    category: item.category,
+                    quantity_needed: item.quantity,
+                    unit: item.unit,
+                    unit_price: item.estimatedUnitPriceFcfa,
+                    supplier_id: null,
+                    notes: `Kit ${kit.title}`,
+                  });
+                }
+              }}
+            />
+            <BoundaryWallDialog />
+            <WaterBoosterDialog />
+            <SepticTankDialog />
+            <ThermalComfortDialog />
+            <ConcreteMixDialog />
+            <RainwaterHarvestingDialog />
+            <FinishingsComparatorDialog />
+            <BulkPurchasingDialog />
             <CarbonFootprintDialog projectName={project.name} />
             <TransportCostDialog />
             <SolarCalculatorDialog />

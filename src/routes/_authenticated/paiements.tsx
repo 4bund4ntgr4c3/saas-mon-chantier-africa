@@ -6,6 +6,8 @@ import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { MobileMoneyDialog } from "@/components/mobile-money-dialog";
 import { PaymentRemindersDialog } from "@/components/payment-reminders-dialog";
 import { PaymentGatewayDialog } from "@/components/payment-gateway-dialog";
+import { DeveloperCashflowDialog } from "@/components/developer-cashflow-dialog";
+import { FinalSettlementDialog } from "@/components/final-settlement-dialog";
 import { RecordDialog, orNull, toNumber, type Field, type Values } from "@/components/record-form";
 import { ImportDialog, type ImportColumn } from "@/components/import-csv";
 import { EntityDetailDialog, openDetailUnlessInteractive } from "@/components/entity-detail-dialog";
@@ -164,6 +166,8 @@ function PaymentsPage() {
         subtitle={`${payments.length} versement(s) · ${fcfa(total)}`}
         action={
           <div className="flex flex-wrap gap-2">
+            <FinalSettlementDialog />
+            <DeveloperCashflowDialog />
             <PaymentGatewayDialog />
             <PaymentRemindersDialog />
             <Button variant="outline" onClick={() => setMmOpen(true)}>

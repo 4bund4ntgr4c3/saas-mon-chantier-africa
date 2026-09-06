@@ -95,6 +95,12 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 - `RecordDialog` (`record-form.tsx`) : formulaire générique déclaratif (`Field[]`) + `toNumber`/`orNull`
 - `NotificationKindIcon` (`notification-kind-icon.tsx`) : pastille teintée par type de notification (`AppNotificationKind`), variants clair/sombre — utilisée par la cloche et `/notifications` ; ne pas réimplémenter d'icônes de kind localement
 - Saisie guidée & dictée : `QuickAddWizard` (`quick-add-wizard.tsx`, wizard pas-à-pas acceptant les mêmes `Field[]` que `RecordDialog` + `parseMapping`), `DictationButton` (`dictation-button.tsx`), hook `useDictation` + `isDictationSupported` (`src/lib/use-dictation.ts`), parseur de phrases dictées `parseSpokenItems`/`normalizeSpokenNumber` (`src/lib/spoken-item.ts`, tests `spoken-item.test.ts`). Ne jamais réimplémenter l'API Web Speech dans les pages — passer par `useDictation`/`DictationButton`.
+- Navigation : `NAV_MAIN` / `NAV_SECTIONS` / `ADMIN_SECTION` vivent dans **`src/lib/nav.ts`** (types `NavEntry`/`NavSection`) — sidebar `app-shell.tsx` et palette `command-palette.tsx` les consomment ; ne plus redéfinir la navigation localement.
+- Palette de commandes : `CommandPalette` (`command-palette.tsx`, cmdk + `ui/command.tsx`) — Ctrl/Cmd+K, changement de chantier, navigation filtrée par rôle, thème.
+- Signature électronique : `SignaturePad` (`signature-pad.tsx`) + `src/lib/esign.ts` (`documentFingerprint` SHA-256, `canonicalize`, `formatFingerprint`, tests) ; contrats via `ContractData.esign`.
+- Courbe en S : `src/lib/s-curve.ts` (`computeSCurve`, `smoothstep`, `physicalProgress`, tests) — utilisée par le tableau de bord, ne pas recalculer le phasing localement.
+- Export comptable : `src/lib/ohada-export.ts` (`ohadaAccountFor`, `buildOhadaJournal`, `exportOhadaExcel`, tests) — bouton dans Rapports.
+- Undo suppressions : intégré dans `useDeleteRow` (`data.ts`) — ne pas ajouter de dialogues de confirmation en amont, le toast « Annuler » couvre le besoin.
 
 ### UI — contraintes (déjà posées)
 
@@ -160,7 +166,7 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 npm run build      # génère routeTree.gen.ts + build complet
 npx tsc --noEmit   # 0 erreur attendue
 npx eslint .       # 0 erreur (warnings fast-refresh tolérés)
-npm run test       # 112 tests (dont spoken-item 13 — parseur vocal)
+npm run test       # 138 tests (dont spoken-item 13, s-curve 13, ohada 7, esign 6)
 ```
 
 ## 7. Prochaines étapes

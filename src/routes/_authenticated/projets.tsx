@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Copy, Map as MapIcon, Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Copy, LayoutTemplate, Map as MapIcon, Plus, Search, Trash2, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
 import { CostSimulatorDialog } from "@/components/cost-simulator-dialog";
+import { OwnerDashboardDialog } from "@/components/owner-dashboard-dialog";
+import { SoilFoundationsDialog } from "@/components/soil-foundations-dialog";
+import { ZoningFootprintDialog } from "@/components/zoning-footprint-dialog";
 import { PointsMap } from "@/components/points-map";
 import { useAccess } from "@/lib/roles";
 import { RecordDialog, orNull, toNumber, type Values } from "@/components/record-form";
@@ -230,6 +233,9 @@ function ProjectsPage() {
         subtitle="Tous vos chantiers de construction"
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <ZoningFootprintDialog />
+            <SoilFoundationsDialog />
+            <OwnerDashboardDialog />
             <CostSimulatorDialog />
             {canEdit && (
               <RecordDialog
@@ -377,6 +383,14 @@ function ProjectsPage() {
                   <>
                     <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(p.id)}>
                       <Copy className="size-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title="Créer un modèle : budget + besoins matériaux + tâches, sans l'historique"
+                      onClick={() => duplicate.mutate({ id: p.id, template: true })}
+                    >
+                      <LayoutTemplate className="size-4" />
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditing(p)}>
                       <Pencil className="size-4" />

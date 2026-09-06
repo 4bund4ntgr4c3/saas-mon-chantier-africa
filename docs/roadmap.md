@@ -8,22 +8,23 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 
 ## Fondations déjà en place (Phases 0-4)
 
-| Module                                                                                                                                                      | État |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| Paiement mobile money sandbox (Vague 4 fondations)                                                                                                          | ✅   |
-| Comptes 7 types + rôles admin étendus                                                                                                                       | ✅   |
-| Gestion de chantier (projets, budget, dépenses, devis, paiements, facturation, stock, tâches, photos, journal, réserves, plans, documents, messages)        | ✅   |
-| Marketplace prestataires + avis                                                                                                                             | ✅   |
-| Marketplace e-commerce (boutiques, produits, panier, commandes, livraison, transporteurs)                                                                   | ✅   |
-| Back-office admin                                                                                                                                           | ✅   |
-| PWA installable, i18n FR/EN (nav), multi-pays/devise, Conseil IA à base de règles                                                                           | ✅   |
-| Lignes de devis & factures (Vague 5 — quote_items, invoice_items)                                                                                           | ✅   |
-| Demande de devis en ligne (Vague 5 — quote_requests, quote_bids)                                                                                            | ✅   |
-| Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds)                                                                                   | ✅   |
-| Confiance & vérification (Vague 6 — verification_documents, market_reviews, avis vérifiés)                                                                  | ✅   |
-| IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales, achats multi-boutiques, prévision stock fournisseur, descriptions IA) | ✅   |
-| Saisie guidée pas-à-pas & dictée vocale (ajout de matériaux, besoins et lignes de devis — wizard + parseur de phrases dictées)                              | ✅   |
-| Tests unitaires (33), docs (schéma, installation, déploiement, changelog, stack)                                                                            | ✅   |
+| Module                                                                                                                                                                                                                                                       | État |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| Paiement mobile money sandbox (Vague 4 fondations)                                                                                                                                                                                                           | ✅   |
+| Comptes 7 types + rôles admin étendus                                                                                                                                                                                                                        | ✅   |
+| Gestion de chantier (projets, budget, dépenses, devis, paiements, facturation, stock, tâches, photos, journal, réserves, plans, documents, messages)                                                                                                         | ✅   |
+| Marketplace prestataires + avis                                                                                                                                                                                                                              | ✅   |
+| Marketplace e-commerce (boutiques, produits, panier, commandes, livraison, transporteurs)                                                                                                                                                                    | ✅   |
+| Back-office admin                                                                                                                                                                                                                                            | ✅   |
+| PWA installable, i18n FR/EN (nav), multi-pays/devise, Conseil IA à base de règles                                                                                                                                                                            | ✅   |
+| Lignes de devis & factures (Vague 5 — quote_items, invoice_items)                                                                                                                                                                                            | ✅   |
+| Demande de devis en ligne (Vague 5 — quote_requests, quote_bids)                                                                                                                                                                                             | ✅   |
+| Litiges & remboursements (Vague 5 — disputes, dispute_evidences, refunds)                                                                                                                                                                                    | ✅   |
+| Confiance & vérification (Vague 6 — verification_documents, market_reviews, avis vérifiés)                                                                                                                                                                   | ✅   |
+| IA (Vague 7 — ai_conversations, ai_actions, assistant conversationnel, notes vocales, achats multi-boutiques, prévision stock fournisseur, descriptions IA)                                                                                                  | ✅   |
+| Saisie guidée pas-à-pas & dictée vocale (ajout de matériaux, besoins et lignes de devis — wizard + parseur de phrases dictées)                                                                                                                               | ✅   |
+| Identité visuelle unifiée des exports PDF (`pdf-theme.ts` : bandeau de marque, cartes KPI, pied de page paginé — rapport, budget, fiche chantier, dossier, contrats) & notifications pleinement adaptées au mode sombre (pastilles par type, toasts teintés) | ✅   |
+| Tests unitaires (33), docs (schéma, installation, déploiement, changelog, stack)                                                                                                                                                                             | ✅   |
 
 ---
 
@@ -77,7 +78,7 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 
 **Page « Matériaux chantier »** (`materiaux.tsx`, nav) : table des besoins avec barre de progression, montant estimé, badge statut ; panneau « À commander encore » ; bouton « Livrer » qui met à jour automatiquement le besoin (statut `livre`/`partiel`) ; clôture en `termine` ; historique des 20 dernières livraisons.
 
-**Page publique « Nouveautés »** (`changelog.tsx`, lien footer landing) : journal des évolutions de la plateforme, accessible sans compte.
+**Page publique « Nouveautés »** (`changelog.tsx`, lien footer landing) : journal des évolutions de la plateforme, accessible sans compte — rend **toutes les versions de `docs/CHANGELOG.md` automatiquement** (import brut `?raw` + parser `src/lib/changelog.ts`, testé) ; plus aucune duplication manuelle des entrées.
 
 - Inventaire avancé : pertes, mouvements de stock liés aux commandes marketplace, lien vers `products` — reporté.
 
@@ -202,6 +203,83 @@ Légende d'état : ✅ fait · 🔄 en cours · ⬜ à faire
 - Application mobile autonome sous Expo / React Native
 - Passerelle live WhatsApp Cloud API avec webhooks entrants
 - Intégration bancaire directe EBICS / UEMOA
+
+## Vague 18 — Professionnalisation & ergonomie ✅
+
+- ✅ **Palette de commandes globale** (Ctrl/Cmd+K) : changement de chantier, navigation filtrée par rôle, actions — navigation centralisée dans `src/lib/nav.ts`
+- ✅ **Courbe en S** du tableau de bord (phasing smoothstep BTP, module `s-curve.ts` testé) + confrontation avancement physique vs financier
+- ✅ **Undo des suppressions** : `useDeleteRow` relit puis restaure la ligne via toast « Annuler » (6 s), Supabase et mode invité
+- ✅ **Export comptable SYSCOHADA** (`ohada-export.ts` testé) : écritures équilibrées 6x/401 + synthèse, bouton dans Rapports
+- ✅ **Signature électronique** des contrats & PV : `SignaturePad` + empreinte SHA-256 (`esign.ts` testé) intégrées au PDF
+- ✅ **Tableau de bord par rôle** (`RoleDashboardStrip`) : KPIs et raccourcis par `account_type`, visible sans chantier sélectionné
+- ✅ **Modèles de chantier** : duplication structure seule (budget + besoins remis à zéro + tâches à faire)
+- ✅ **Rapport hebdomadaire e-mail enrichi** (tableau budget par chantier + 7 derniers jours, mode `digest` immédiat)
+- ✅ **Push web réel** (Web Push + VAPID) : handlers `push`/`notificationclick` dans `sw.js`, abonnement depuis Paramètres (`VITE_VAPID_PUBLIC_KEY`)
+- ✅ i18n FR/EN du tableau de bord (clés `dash.*`)
+
+## Vague 19 — Signature Tactile Canvas, Mode Kiosque Chantier & Centrale d'Achats Groupés ✅
+
+- ✅ **Signature Électronique Tactile sur Écran** (`src/lib/signature.ts`, `src/components/signature-pad-dialog.tsx`)
+- ✅ **Mode Kiosque Terrain pour Conducteurs de Travaux** (`src/components/site-kiosk-dialog.tsx`)
+- ✅ **Gestionnaire Notifications Push & Alertes Locales** (`src/lib/push-notifications.ts`, `src/components/push-notifications-toggle.tsx`)
+- ✅ **Centrale d'Achats Groupés BTP & Remises de Volume** (`src/lib/bulk-purchasing.ts`, `src/components/bulk-purchasing-dialog.tsx`)
+- ✅ **Réseau Quincailleries Multi-Dépôts Régionaux** (`src/lib/supplier-network.ts`, `src/components/supplier-network-dialog.tsx`)
+
+## Vague 20 — Financement UEMOA, WhatsApp Cloud API, Carnet d'Entretien & Kits d'Ouvrages ✅
+
+- ✅ **Simulateur de Prêt Bancaire & Crédit Immobilier UEMOA** (`src/lib/bank-loan.ts`, `src/components/bank-loan-dialog.tsx`)
+- ✅ **Connecteur Transactionnel WhatsApp Cloud API** (`src/lib/whatsapp-cloud.ts`, `src/components/whatsapp-cloud-dialog.tsx`)
+- ✅ **Carnet d'Entretien Numérique & Maintenance Préventive** (`src/lib/maintenance-log.ts`, `src/components/maintenance-log-dialog.tsx`)
+- ✅ **Générateur de Kits Matériaux par Ouvrage Type** (`src/lib/material-kits-calculator.ts`, `src/components/material-kits-dialog.tsx`)
+
+## Vague 21 — Suite Promoteur Immobilier & Maître d'Ouvrage ✅
+
+- ✅ **Étude de Faisabilité & Bilan Financier de l'Opération** (`src/lib/developer-feasibility.ts`, `src/components/developer-feasibility-dialog.tsx`)
+- ✅ **Échéancier des Appels de Fonds & Trésorerie VEFA** (`src/lib/developer-cashflow.ts`, `src/components/developer-cashflow-dialog.tsx`)
+- ✅ **Générateur de Contrats de Réservation VEFA** (`src/lib/vefa-contract.ts`, `src/components/vefa-contract-dialog.tsx`)
+- ✅ **Cockpit Exécutif Propriétaire & Diaspora** (`src/lib/owner-dashboard.ts`, `src/components/owner-dashboard-dialog.tsx`)
+
+## Vague 22 — Suite Spéciale Propriétaire & Maître d'Ouvrage ✅
+
+- ✅ **Coffre-Fort Numérique Foncier du Propriétaire** (`src/lib/owner-vault.ts`, `src/components/owner-vault-dialog.tsx`)
+- ✅ **Comparateur & Arbitrage des Gammes de Finitions** (`src/lib/finishings-comparator.ts`, `src/components/finishings-comparator-dialog.tsx`)
+- ✅ **Guide d'Inspection & Checklist de Réception des Clés** (`src/lib/handover-checklist.ts`, `src/components/handover-checklist-dialog.tsx`)
+- ✅ **Simulateur de Factures Énergétiques Post-Emménagement SBEE / SONEB** (`src/lib/utility-bills-estimator.ts`, `src/components/utility-bills-dialog.tsx`)
+
+## Vague 23 — Suite Propriétaire & Gestion Patrimoniale ✅
+
+- ✅ **Assurance Multirisque Habitation (MRH) & Risques Inondations** (`src/lib/home-insurance.ts`, `src/components/home-insurance-dialog.tsx`)
+- ✅ **Rentabilité Locative Meublé vs Nu & Cash-Flow Bailleur** (`src/lib/rental-cashflow.ts`, `src/components/rental-cashflow-dialog.tsx`)
+- ✅ **Dimensionnement Cuve à Eau & Récupération Pluviale** (`src/lib/rainwater-harvesting.ts`, `src/components/rainwater-harvesting-dialog.tsx`)
+- ✅ **Générateur de Bail d'Habitation Conforme Loi 2017-15 Bénin** (`src/lib/lease-agreement.ts`, `src/components/lease-agreement-dialog.tsx`)
+
+## Vague 24 — Performance Chantier, Qualité Béton & Sécurité ✅
+
+- ✅ **Formulation & Dosage des Bétons B25 / B20 / B15** (`src/lib/concrete-mix.ts`, `src/components/concrete-mix-dialog.tsx`)
+- ✅ **Registre de Présence Ouvriers & Contrôle EPI** (`src/lib/worker-attendance.ts`, `src/components/worker-attendance-dialog.tsx`)
+- ✅ **Audit & Contrôle Ferraillage / Enrobage Côtier** (`src/lib/rebar-inspection.ts`, `src/components/rebar-inspection-dialog.tsx`)
+- ✅ **Journal d'Intempéries & Ajustement du Calendrier** (`src/lib/weather-delays.ts`, `src/components/weather-delays-dialog.tsx`)
+
+## Vague 25 — Diagnostics Avant-Projet, Structure & Confort ✅
+
+- ✅ **Capacité Portante des Sols & Choix des Fondations** (`src/lib/soil-foundations.ts`, `src/components/soil-foundations-dialog.tsx`)
+- ✅ **Confort Thermique Passif Tropical & Maçonnerie BTC** (`src/lib/thermal-comfort.ts`, `src/components/thermal-comfort-dialog.tsx`)
+- ✅ **Dimensionnement Prise de Terre & Protection Foudre** (`src/lib/lightning-grounding.ts`, `src/components/lightning-grounding-dialog.tsx`)
+- ✅ **Générateur d'Ordres de Service (OS) & Avenants Contractuels** (`src/lib/service-orders.ts`, `src/components/service-orders-dialog.tsx`)
+
+## Vague 26 — Assainissement, Clôtures, Sécurité Incendie & Décompte Général Définitif DGD ✅
+
+- ✅ **Dimensionnement Fosse Septique Toutes Eaux & Puits Perdu** (`src/lib/septic-tank.ts`, `src/components/septic-tank-dialog.tsx`)
+- ✅ **Calculateur de Mur de Clôture & Sécurisation Périphérique** (`src/lib/boundary-wall.ts`, `src/components/boundary-wall-dialog.tsx`)
+- ✅ **Guide de Sécurité Incendie & Extincteurs** (`src/lib/fire-safety.ts`, `src/components/fire-safety-dialog.tsx`)
+- ✅ **Décompte Général Définitif (DGD) & Retenue de Garantie 5%** (`src/lib/final-settlement.ts`, `src/components/final-settlement-dialog.tsx`)
+
+## Vague 27 — VRD, Raccordements SBEE/SONEB, Déchets & Urbanisme ✅
+
+- ✅ **Bilan de Puissance Électrique & Raccordement SBEE** (`src/lib/electrical-load.ts`, `src/components/electrical-load-dialog.tsx`)
+- ✅ **Dimensionnement Surpresseur SONEB & Hauteur Manométrique HMT** (`src/lib/water-booster.ts`, `src/components/water-booster-dialog.tsx`)
+- ✅ **Plan de Gestion & Valorisation des Déchets de Chantier** (`src/lib/waste-management.ts`, `src/components/waste-management-dialog.tsx`)
+- ✅ **Calculateur d'Emprise au Sol (CES), COS & Reculs Réglementaires** (`src/lib/zoning-footprint.ts`, `src/components/zoning-footprint-dialog.tsx`)
 
 ---
 

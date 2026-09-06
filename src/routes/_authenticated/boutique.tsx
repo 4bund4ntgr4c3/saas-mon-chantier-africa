@@ -6,6 +6,8 @@ import { FeatureGate } from "@/components/feature-gate";
 import { ProductDetailDialog } from "@/components/product-compare";
 import { StoreMap } from "@/components/store-map";
 import { TransportCostDialog } from "@/components/transport-cost-dialog";
+import { BulkPurchasingDialog } from "@/components/bulk-purchasing-dialog";
+import { MaterialKitsDialog } from "@/components/material-kits-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -130,7 +132,13 @@ function BoutiquePage() {
       <PageHeader
         title="Boutique de matériaux"
         subtitle={`${products.length} produit(s) · ${stores.length} boutique(s) · ${lowStockCount} en rupture`}
-        action={<TransportCostDialog />}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <MaterialKitsDialog />
+            <BulkPurchasingDialog />
+            <TransportCostDialog />
+          </div>
+        }
       />
 
       <div className="panel mb-5 flex flex-wrap items-center gap-3 p-3">

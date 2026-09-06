@@ -18,6 +18,12 @@ import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { ReadOnlyNotice } from "@/components/feature-gate";
 import { LaborManagementDialog } from "@/components/labor-management";
 import { SafetyAuditDialog } from "@/components/safety-audit-dialog";
+import { SiteKioskDialog } from "@/components/site-kiosk-dialog";
+import { HandoverChecklistDialog } from "@/components/handover-checklist-dialog";
+import { ConcreteMixDialog } from "@/components/concrete-mix-dialog";
+import { WorkerAttendanceDialog } from "@/components/worker-attendance-dialog";
+import { ServiceOrdersDialog } from "@/components/service-orders-dialog";
+import { WasteManagementDialog } from "@/components/waste-management-dialog";
 import { useAccess } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -198,6 +204,12 @@ function JournalPage() {
         subtitle={`${logs.length} entrée(s) · avancement déclaré ${latestProgress}% · ${withDifficulties} difficulté(s) signalée(s)`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <WasteManagementDialog />
+            <ServiceOrdersDialog projectName={project.name} />
+            <WorkerAttendanceDialog projectName={project.name} />
+            <ConcreteMixDialog />
+            <HandoverChecklistDialog projectName={project.name} />
+            <SiteKioskDialog projectName={project.name} />
             <SafetyAuditDialog projectName={project.name} />
             <LaborManagementDialog />
             {canEdit && (

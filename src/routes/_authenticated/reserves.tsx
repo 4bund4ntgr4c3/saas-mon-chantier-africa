@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, Circle, Pencil, Plus, RotateCcw, Trash2 } 
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
 import { InteractivePlanViewerDialog } from "@/components/interactive-plan-viewer";
+import { HandoverChecklistDialog } from "@/components/handover-checklist-dialog";
 import { RecordDialog, orNull, type Field, type Values } from "@/components/record-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -113,6 +114,7 @@ function ReservesPage() {
         subtitle={`${openCount} réserve(s) ouverte(s) sur ${reserves.length}`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <HandoverChecklistDialog projectName={project.name} />
             <InteractivePlanViewerDialog planTitle={`Réserves sur plan — ${project.name}`} />
             <RecordDialog
               title="Nouvelle réserve"

@@ -18,6 +18,13 @@ import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { ContractGeneratorDialog } from "@/components/contract-generator-dialog";
 import { AccessBadgeDialog } from "@/components/access-badge-dialog";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { MaintenanceLogDialog } from "@/components/maintenance-log-dialog";
+import { VefaContractDialog } from "@/components/vefa-contract-dialog";
+import { OwnerVaultDialog } from "@/components/owner-vault-dialog";
+import { LeaseAgreementDialog } from "@/components/lease-agreement-dialog";
+import { ServiceOrdersDialog } from "@/components/service-orders-dialog";
+import { FinalSettlementDialog } from "@/components/final-settlement-dialog";
 import { EntityDetailDialog, openDetailUnlessInteractive } from "@/components/entity-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -128,6 +135,13 @@ function DocumentsPage() {
         subtitle={`${documents.length} pièce(s) archivée(s) · ${missingCount} catégorie(s) à compléter`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <OwnerVaultDialog projectName={project.name} />
+            <FinalSettlementDialog />
+            <ServiceOrdersDialog projectName={project.name} />
+            <LeaseAgreementDialog />
+            <VefaContractDialog />
+            <MaintenanceLogDialog />
+            <SignaturePadDialog documentTitle="Documents / PV Chantier" />
             <AccessBadgeDialog projectName={project.name} />
             <ContractGeneratorDialog projectName={project.name} />
             {canEdit && (

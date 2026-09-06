@@ -38,3 +38,39 @@ self.addEventListener("fetch", (event) => {
     }),
   );
 });
+
+// Push web réel (Web Push + VAPID) : payload JSON { title, body, url }.
+self.addEventListener("push", (event) => {
+  let payload = { title: "BâtiBénin", body: "", url: "/notifications" };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch (e) {
+    if (event.data) payload.body = event.data.text();
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/icons/icon-192.svg",
+      badge: "/icons/icon-192.svg",
+      tag: "batibenin-" + (payload.kind || "notif"),
+      data: { url: payload.url || "/notifications" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/notifications";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.focus();
+          if ("navigate" in client) client.navigate(url);
+          return;
+        }
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});

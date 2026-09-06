@@ -3,7 +3,9 @@
 // Alertes (quotidien) : paiements en retard ou à échéance (7 j), devis expirés
 // ou proches de l'expiration, postes de budget dépassés (>80 %), pièces
 // réglementaires manquantes, chantiers hors délai.
-// Digest hebdomadaire : récapitulatif optionnel envoyé au plus une fois / 7 j.
+// Digest hebdomadaire : rapport de la semaine — tableau budget/dépensé/restant
+// par chantier + dépenses des 7 derniers jours + points d'attention — envoyé
+// au plus une fois / 7 j.
 //
 // Variables d'environnement :
 //   RESEND_API_KEY        clé API Resend (obligatoire pour envoyer)
@@ -13,6 +15,7 @@
 // Modes :
 //   mode "now"       → envoie immédiatement les alertes de l'utilisateur appelant
 //   mode "test"      → e-mail de test sans contenu (bouton « E-mail de test »)
+//   mode "digest"    → envoie immédiatement le rapport hebdomadaire (bouton Paramètres)
 //   mode "scheduled" → parcourt tous les utilisateurs (appelé par le cron)
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -69,9 +72,20 @@ type Item = {
 };
 
 type Ctx = {
-  projects: { id: string; name: string; end_date: string | null; status: string }[];
+  projects: {
+    id: string;
+    name: string;
+    end_date: string | null;
+    status: string;
+    budget: number | null;
+  }[];
   categories: { id: string; name: string | null }[];
-  expenses: { category_id: string | null; amount: number }[];
+  expenses: {
+    category_id: string | null;
+    amount: number;
+    project_id: string;
+    expense_date: string | null;
+  }[];
   budgetLines: { category_id: string; planned_amount: number }[];
   payments: { amount: number; due_date: string | null; project_id: string }[];
   quotes: {
@@ -97,7 +111,7 @@ async function loadCtx(userId: string): Promise<Ctx> {
   };
   const { data: projects } = await db
     .from("projects")
-    .select("id, name, end_date, status")
+    .select("id, name, end_date, status, budget")
     .eq("user_id", userId);
   const ids = (projects ?? []).map((p) => p.id);
   if (ids.length === 0) return { ...empty, projects: projects ?? [] };
@@ -105,7 +119,7 @@ async function loadCtx(userId: string): Promise<Ctx> {
   const { data: categories } = await db.from("categories").select("id, name");
   const { data: expenses } = await db
     .from("expenses")
-    .select("category_id, amount")
+    .select("category_id, amount, project_id, expense_date")
     .in("project_id", ids);
   const { data: budgetLines } = await db
     .from("budget_lines")
@@ -237,7 +251,7 @@ function collectAlerts(ctx: Ctx, enabled: Set<string>): Item[] {
   return items;
 }
 
-function buildHtml(heading: string, intro: string, items: Item[]): string {
+function buildListHtml(items: Item[]): string {
   const list = items
     .map(
       (i) => `
@@ -247,15 +261,83 @@ function buildHtml(heading: string, intro: string, items: Item[]): string {
         </li>`,
     )
     .join("");
+  return `<ul style="list-style: none; margin: 0; padding: 0;">${list}</ul>`;
+}
+
+function buildHtml(heading: string, intro: string, items: Item[]): string {
   return `
     <div style="font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px;">
       <h2 style="margin: 0 0 8px; color: #0f172a;">${escapeHtml(heading)}</h2>
       <p style="margin: 0 0 20px; color: #4b5563;">${escapeHtml(intro)}</p>
-      ${items.length > 0 ? `<ul style="list-style: none; margin: 0; padding: 0;">${list}</ul>` : '<p style="color: #9ca3af;">Aucune alerte en cours.</p>'}
+      ${items.length > 0 ? buildListHtml(items) : '<p style="color: #9ca3af;">Aucune alerte en cours.</p>'}
       <p style="margin-top: 24px;">
         <a href="${escapeHtml(appUrl)}" style="display: inline-block; background: #f59e0b; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600;">Ouvrir BâtiBénin</a>
       </p>
       <p style="margin-top: 24px; color: #9ca3af; font-size: 12px;">Vous recevez cet e-mail selon vos préférences de notification dans Paramètres &gt; Notifications e-mail.</p>
+    </div>
+  `;
+}
+
+/** Tableau budgétaire par chantier du digest hebdomadaire (rapport de la semaine). */
+function buildDigestTable(ctx: Ctx): string {
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const rows = ctx.projects
+    .map((p) => {
+      const projectExpenses = ctx.expenses.filter((e) => e.project_id === p.id);
+      const spent = projectExpenses.reduce((s, e) => s + Number(e.amount), 0);
+      const spentThisWeek = projectExpenses
+        .filter((e) => e.expense_date && e.expense_date >= weekAgo)
+        .reduce((s, e) => s + Number(e.amount), 0);
+      const budget = Number(p.budget ?? 0);
+      const ratio = budget > 0 ? Math.round((spent / budget) * 100) : null;
+      return { p, spent, spentThisWeek, budget, ratio };
+    })
+    .filter((r) => r.budget > 0 || r.spent > 0);
+  if (rows.length === 0) return "";
+  const cells = rows
+    .map(
+      (r) => `
+          <tr>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; color: #111827; font-weight: 600;">${escapeHtml(r.p.name)}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #374151;">${fcfa(r.budget)}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #111827;">${fcfa(r.spent)}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; color: ${r.budget - r.spent < 0 ? "#dc2626" : "#059669"};">${fcfa(r.budget - r.spent)}</td>
+            <td style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #6b7280; font-size: 12px;">+${fcfa(r.spentThisWeek)} cette semaine${r.ratio !== null ? ` · ${r.ratio}%` : ""}</td>
+          </tr>`,
+    )
+    .join("");
+  return `
+      <h3 style="margin: 28px 0 10px; color: #0f172a;">Vos chantiers cette semaine</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead>
+          <tr style="background: #f9fafb;">
+            <th style="padding: 8px 10px; text-align: left; color: #6b7280; font-size: 11px; text-transform: uppercase;">Chantier</th>
+            <th style="padding: 8px 10px; text-align: right; color: #6b7280; font-size: 11px; text-transform: uppercase;">Budget</th>
+            <th style="padding: 8px 10px; text-align: right; color: #6b7280; font-size: 11px; text-transform: uppercase;">Dépensé</th>
+            <th style="padding: 8px 10px; text-align: right; color: #6b7280; font-size: 11px; text-transform: uppercase;">Restant</th>
+            <th style="padding: 8px 10px; text-align: right; color: #6b7280; font-size: 11px; text-transform: uppercase;">7 derniers jours</th>
+          </tr>
+        </thead>
+        <tbody>${cells}</tbody>
+      </table>`;
+}
+
+function buildDigestHtml(ctx: Ctx, items: Item[]): string {
+  const alerts =
+    items.length > 0
+      ? `<h3 style="margin: 28px 0 10px; color: #0f172a;">Points d'attention</h3>` +
+        buildListHtml(items)
+      : '<p style="margin-top: 24px; color: #9ca3af;">Aucune alerte en cours cette semaine. 👷</p>';
+  return `
+    <div style="font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px;">
+      <h2 style="margin: 0 0 8px; color: #0f172a;">Rapport hebdomadaire BâtiBénin</h2>
+      <p style="margin: 0 0 8px; color: #4b5563;">Voici le récapitulatif de vos chantiers au ${frDate(today())} :</p>
+      ${buildDigestTable(ctx)}
+      ${alerts}
+      <p style="margin-top: 24px;">
+        <a href="${escapeHtml(appUrl)}" style="display: inline-block; background: #f59e0b; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600;">Ouvrir BâtiBénin</a>
+      </p>
+      <p style="margin-top: 24px; color: #9ca3af; font-size: 12px;">Vous recevez cet e-mail selon vos préférences (Paramètres &gt; Notifications e-mail &gt; Récapitulatif hebdomadaire).</p>
     </div>
   `;
 }
@@ -381,12 +463,8 @@ async function runDigest(userId: string, email: string, prefs: Prefs, force: boo
   );
   const sent = await sendEmail(
     email,
-    "Votre récapitulatif hebdomadaire BâtiBénin",
-    buildHtml(
-      "Récapitulatif hebdomadaire",
-      `Points d'attention de vos chantiers au ${frDate(today())} :`,
-      items,
-    ),
+    "Votre rapport hebdomadaire BâtiBénin",
+    buildDigestHtml(ctx, items),
   );
   if (sent) await logSend(userId, "digest", items.length);
   return { sent, items: items.length };
@@ -457,7 +535,7 @@ Deno.serve(async (req) => {
     return json({ ok: true, ...summary });
   }
 
-  // mode "now"
+  // mode "now" / "digest"
   const userId = body.userId ?? caller;
   if (!userId) return json({ ok: false, error: "unauthorized" }, { status: 401 });
   if (!resendKey) return json({ ok: true, skipped: true, reason: "no_resend_key" });
@@ -470,6 +548,10 @@ Deno.serve(async (req) => {
     .eq("user_id", userId)
     .maybeSingle();
   const prefs: Prefs = prefsRow ? { ...DEFAULT_PREFS, ...prefsRow } : DEFAULT_PREFS;
+  if (mode === "digest") {
+    const result = await runDigest(userId, prefs.email || email, prefs, true);
+    return json({ ok: true, ...result });
+  }
   const result = await runAlerts(userId, prefs.email || email, prefs, force);
   return json({ ok: true, ...result });
 });

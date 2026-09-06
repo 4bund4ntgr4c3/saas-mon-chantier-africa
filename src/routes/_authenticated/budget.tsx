@@ -32,6 +32,12 @@ import { TontineDialog } from "@/components/tontine-dialog";
 import { SolarCalculatorDialog } from "@/components/solar-calculator-dialog";
 import { InsuranceDialog } from "@/components/insurance-dialog";
 import { RentalYieldDialog } from "@/components/rental-yield-dialog";
+import { BankLoanDialog } from "@/components/bank-loan-dialog";
+import { DeveloperFeasibilityDialog } from "@/components/developer-feasibility-dialog";
+import { FinishingsComparatorDialog } from "@/components/finishings-comparator-dialog";
+import { RentalCashflowDialog } from "@/components/rental-cashflow-dialog";
+import { BoundaryWallDialog } from "@/components/boundary-wall-dialog";
+import { WasteManagementDialog } from "@/components/waste-management-dialog";
 
 export const Route = createFileRoute("/_authenticated/budget")({
   head: () => ({
@@ -183,6 +189,16 @@ function BudgetPage() {
         subtitle={`${fcfa(planned)} planifiés · ${fcfa(spent)} dépensés · enveloppe projet ${fcfa(project.budget)}`}
         action={
           <div className="flex flex-wrap gap-2">
+            <WasteManagementDialog />
+            <BoundaryWallDialog />
+            <RentalCashflowDialog
+              defaultBudget={project.budget ? Number(project.budget) : 40000000}
+            />
+            <FinishingsComparatorDialog />
+            <DeveloperFeasibilityDialog
+              defaultBudget={project.budget ? Number(project.budget) : 50000000}
+            />
+            <BankLoanDialog defaultBudget={project.budget ? Number(project.budget) : 25000000} />
             <RentalYieldDialog defaultBudget={project.budget ? Number(project.budget) : 35000000} />
             <InsuranceDialog
               defaultBudget={project.budget ? Number(project.budget) : 25000000}

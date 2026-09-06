@@ -1,4 +1,16 @@
 import { fcfa, frDate } from "@/lib/format";
+import {
+  BRAND,
+  PAGE_MARGIN,
+  fileStamp,
+  pdfColors,
+  pdfFooter,
+  pdfHeader,
+  pdfKpiRow,
+  pdfSectionTitle,
+  pdfTableTheme,
+  slug,
+} from "@/lib/pdf-theme";
 
 export interface DossierChantierData {
   projectName: string;
@@ -28,104 +40,171 @@ export async function exportDossierChantierPdf(data: DossierChantierData) {
   const budgetRatio =
     data.totalBudget > 0 ? Math.round((data.totalSpent / data.totalBudget) * 100) : 0;
 
-  // Header stylisé
-  doc.setFillColor(30, 64, 175); // Bleu pro
-  doc.rect(0, 0, 595, 75, "F");
+  let y = pdfHeader(doc, {
+    title: "Dossier de suivi de chantier",
+    subtitle: `${data.projectName} — ${data.location || "Bénin"}`,
+    meta: `Maître d'ouvrage : ${data.clientName || "Non spécifié"} · Avancement global : ${data.progressPercent} % · Édité le ${frDate(new Date().toISOString())}`,
+  });
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(255, 255, 255);
-  doc.text("DOSSIER DE SUIVI DE CHANTIER", 40, 42);
+  y = pdfKpiRow(doc, y, [
+    { label: "Budget prévisionnel", value: fcfa(data.totalBudget) },
+    { label: "Engagé", value: `${fcfa(data.totalSpent)} (${budgetRatio} %)`, tone: "amber" },
+    {
+      label: remaining >= 0 ? "Restant disponible" : "Dépassement",
+      value: fcfa(Math.abs(remaining)),
+      tone: remaining >= 0 ? "green" : "red",
+    },
+    { label: "Avancement global", value: `${data.progressPercent} %` },
+  ]);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text("BâtiBénin — Plateforme de gestion de construction", 40, 60);
-
-  // Informations générales
-  doc.setTextColor(30, 41, 59);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("1. Fiche d'identification du projet", 40, 105);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Projet : ${data.projectName}`, 40, 125);
-  doc.text(`Localisation : ${data.location || "Bénin"}`, 40, 140);
-  doc.text(`Maître d'ouvrage / Promoteur : ${data.clientName || "Non spécifié"}`, 40, 155);
-  doc.text(`Date du rapport : ${frDate(new Date().toISOString())}`, 350, 125);
-  doc.text(`Avancement global : ${data.progressPercent}%`, 350, 140);
-
-  // Synthèse financière
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("2. Synthèse financière & budgétaire", 40, 185);
-
+  // 1. Fiche d'identification
+  y = pdfSectionTitle(doc, y, "1. Fiche d'identification du projet");
   autoTable(doc, {
-    startY: 195,
-    head: [["Indicateur financier", "Montant (FCFA)", "Commentaire"]],
+    startY: y,
+    theme: "plain",
+    ...pdfTableTheme,
+    styles: { font: "helvetica", fontSize: 9, cellPadding: 3.5 },
+    body: [
+      [
+        "Projet",
+        { content: data.projectName, styles: { fontStyle: "bold" } },
+        "Date du rapport",
+        { content: frDate(new Date().toISOString()), styles: { fontStyle: "bold" } },
+      ],
+      [
+        "Localisation",
+        { content: data.location || "Bénin", styles: { fontStyle: "bold" } },
+        "Photos documentées",
+        { content: String(data.recentPhotosCount), styles: { fontStyle: "bold" } },
+      ],
+      [
+        "Maître d'ouvrage",
+        { content: data.clientName || "Non spécifié", styles: { fontStyle: "bold" } },
+        "Avancement",
+        { content: `${data.progressPercent} %`, styles: { fontStyle: "bold" } },
+      ],
+    ],
+    columnStyles: {
+      0: { cellWidth: 105, textColor: pdfColors.muted },
+      2: { cellWidth: 105, textColor: pdfColors.muted },
+    },
+  });
+
+  // 2. Synthèse financière
+  y = pdfSectionTitle(
+    doc,
+    (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20,
+    "2. Synthèse financière & budgétaire",
+  );
+  autoTable(doc, {
+    startY: y,
+    head: [
+      [
+        "Indicateur financier",
+        { content: "Montant (FCFA)", styles: { halign: "right" } },
+        "Commentaire",
+      ],
+    ],
     body: [
       ["Budget prévisionnel total", fcfa(data.totalBudget), "Enveloppe initiale"],
       ["Dépenses réelles engagées", fcfa(data.totalSpent), `${budgetRatio}% du budget total`],
       [
         "Solde / Restant disponible",
-        fcfa(remaining),
+        {
+          content: fcfa(remaining),
+          styles: { textColor: remaining >= 0 ? pdfColors.green : pdfColors.red },
+        },
         remaining >= 0 ? "Budget sous contrôle" : "Dépassement",
       ],
     ],
     theme: "striped",
-    headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255] },
-    styles: { font: "helvetica", fontSize: 9 },
+    ...pdfTableTheme,
+    columnStyles: { 1: { halign: "right" } },
   });
 
-  // Phases & Jalons
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const finalY = (doc as any).lastAutoTable?.finalY ?? 280;
+  // 3. Phases & corps d'état avec statuts colorés
+  y = pdfSectionTitle(
+    doc,
+    (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 26,
+    "3. État des phases et corps d'état",
+  );
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("3. État des phases et corps d'état", 40, finalY + 25);
+  const statusStyles = {
+    done: { text: "Terminé", color: pdfColors.green },
+    in_progress: { text: "En cours", color: pdfColors.amberDeep },
+    pending: { text: "À venir", color: pdfColors.muted },
+  } as const;
 
   const phaseRows = data.phases.map((p) => [
     p.name,
-    p.status === "done" ? "Terminé" : p.status === "in_progress" ? "En cours" : "À venir",
+    {
+      content: statusStyles[p.status].text,
+      styles: {
+        textColor: statusStyles[p.status].color,
+        fontStyle: "bold" as const,
+      },
+    },
     fcfa(p.budget),
     fcfa(p.spent),
     p.budget > 0 ? `${Math.round((p.spent / p.budget) * 100)}%` : "-",
   ]);
 
   autoTable(doc, {
-    startY: finalY + 35,
-    head: [["Phase / Corps d'état", "Statut", "Prévu", "Réalisé", "Consommation"]],
+    startY: y,
+    head: [
+      [
+        "Phase / Corps d'état",
+        "Statut",
+        { content: "Prévu", styles: { halign: "right" } },
+        { content: "Réalisé", styles: { halign: "right" } },
+        { content: "Consommation", styles: { halign: "right" } },
+      ],
+    ],
     body:
       phaseRows.length > 0
         ? phaseRows
         : [
             [
               "Gros œuvre & Second œuvre",
-              "En cours",
+              {
+                content: statusStyles.in_progress.text,
+                styles: {
+                  textColor: statusStyles.in_progress.color,
+                  fontStyle: "bold" as const,
+                },
+              },
               fcfa(data.totalBudget),
               fcfa(data.totalSpent),
               `${budgetRatio}%`,
             ],
           ],
     theme: "grid",
-    headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255] },
-    styles: { font: "helvetica", fontSize: 9 },
+    ...pdfTableTheme,
+    columnStyles: {
+      2: { halign: "right" },
+      3: { halign: "right" },
+      4: { halign: "right" },
+    },
   });
 
-  // Note de bas de page
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const footerY = (doc as any).lastAutoTable?.finalY ?? 400;
-  doc.setFont("helvetica", "italic");
+  // 4. Notes de synthèse dans un encadré
+  const notesY =
+    (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 26;
+  y = pdfSectionTitle(doc, notesY, "4. Notes de synthèse");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text(
-    `Document généré automatiquement via BâtiBénin. Fait foi pour déblocage bancaire ou compte-rendu diaspora.`,
-    40,
-    footerY + 30,
-  );
+  doc.setTextColor(...pdfColors.graphite);
+  const notes = doc.splitTextToSize(data.summaryNotes || "Aucune note de synthèse.", 515);
+  const notesH = notes.length * 12 + 16;
+  doc.setFillColor(...pdfColors.softBg);
+  doc.setDrawColor(...pdfColors.line);
+  doc.setLineWidth(0.75);
+  doc.rect(PAGE_MARGIN, y, 515, notesH, "FD");
+  doc.text(notes, PAGE_MARGIN + 10, y + 18);
 
-  doc.save(
-    `Dossier-Chantier-${data.projectName.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.pdf`,
+  pdfFooter(
+    doc,
+    `Dossier généré via ${BRAND} — fait foi pour déblocage bancaire ou compte-rendu diaspora`,
   );
+  doc.save(`dossier-chantier-${slug(data.projectName)}-${fileStamp()}.pdf`);
 }

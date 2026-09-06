@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
+import { PushNotificationsToggle } from "@/components/push-notifications-toggle";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentProject } from "@/context/project-context";
 import { checklistMissingSteps } from "@/components/startup-checklist";
@@ -206,6 +207,7 @@ function AlertsPage() {
       <PageHeader
         title="Alertes"
         subtitle={`${alerts.length} alerte(s) sur le chantier « ${project.name} »`}
+        action={<PushNotificationsToggle projectName={project.name} />}
       />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">

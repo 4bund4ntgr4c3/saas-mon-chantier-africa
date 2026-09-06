@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FeatureGate } from "@/components/feature-gate";
 import { useMemo, useState } from "react";
-import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react";
+import { FileDown, FileSpreadsheet, Landmark, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { CarbonFootprintDialog } from "@/components/carbon-footprint-dialog";
@@ -68,7 +68,7 @@ function ReportsPage() {
   const { data: companies = [] } = useCompanies();
   const { data: lines = [] } = useBudgetLines(projectId);
   const [kind, setKind] = useState<ReportKind>("budget");
-  const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
+  const [exporting, setExporting] = useState<"pdf" | "excel" | "ohada" | null>(null);
 
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   const catPhase = useMemo(() => new Map(categories.map((c) => [c.id, c.phase])), [categories]);
@@ -232,13 +232,29 @@ function ReportsPage() {
     };
   }, [kind, project, expenses, categories, lines, catName, supName, compName, total]);
 
-  async function runExport(exportKind: "pdf" | "excel") {
-    if (!report) return;
+  async function runExport(exportKind: "pdf" | "excel" | "ohada") {
+    if (!report && exportKind !== "ohada") return;
     setExporting(exportKind);
     try {
+      if (exportKind === "ohada") {
+        const { exportOhadaExcel } = await import("@/lib/ohada-export");
+        await exportOhadaExcel({
+          projectName: project!.name,
+          expenses: expenses.map((e) => ({
+            id: e.id,
+            label: e.label,
+            amount: e.amount,
+            expense_date: e.expense_date,
+            categoryName: e.category_id ? (catName.get(e.category_id) ?? null) : null,
+            supplierName: e.supplier_id ? (supName.get(e.supplier_id) ?? null) : null,
+          })),
+        });
+        toast.success("Export comptable SYSCOHADA téléchargé");
+        return;
+      }
       const { exportReportExcel, exportReportPdf } = await import("@/lib/report-export");
-      if (exportKind === "pdf") await exportReportPdf(report);
-      else await exportReportExcel(report);
+      if (exportKind === "pdf") await exportReportPdf(report!);
+      else await exportReportExcel(report!);
       toast.success(`Rapport ${exportKind === "pdf" ? "PDF" : "Excel"} téléchargé`);
     } catch {
       toast.error("Export impossible. Réessayez.");
@@ -284,6 +300,15 @@ function ReportsPage() {
             >
               <FileSpreadsheet className="mr-2 size-4" />
               {exporting === "excel" ? "Export…" : "Excel"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => runExport("ohada")}
+              disabled={exporting !== null}
+              title="Écritures équilibrées pour votre comptable (Sage, SAARI…) — comptes indicatifs"
+            >
+              <Landmark className="mr-2 size-4" />
+              {exporting === "ohada" ? "Export…" : "Comptable OHADA"}
             </Button>
           </div>
         }

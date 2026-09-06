@@ -18,8 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, FileSignature, FileText, Scale, ShieldCheck } from "lucide-react";
+import { Download, FileSignature, FileText, PenLine, Scale, ShieldCheck } from "lucide-react";
 import { ContractData, ContractType, generateContractPdf } from "@/lib/contracts";
+import { documentFingerprint, formatFingerprint } from "@/lib/esign";
+import { SignaturePad } from "@/components/signature-pad";
 import { fcfa } from "@/lib/format";
 import { toast } from "sonner";
 
@@ -45,11 +47,14 @@ export function ContractGeneratorDialog({
   const [durationWeeks, setDurationWeeks] = useState(8);
   const [penaltyPerDay, setPenaltyPerDay] = useState(15000);
   const [generating, setGenerating] = useState(false);
+  const [clientSignature, setClientSignature] = useState<string | null>(null);
+  const [contractorSignature, setContractorSignature] = useState<string | null>(null);
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     try {
       setGenerating(true);
-      const data: ContractData = {
+      const signedAt = new Date().toISOString();
+      const base: ContractData = {
         contractType,
         projectName,
         projectLocation: "Cotonou / Abomey-Calavi, Bénin",
@@ -64,11 +69,39 @@ export function ContractGeneratorDialog({
         guaranteeRetentionRate: 0.05,
         startDate: new Date().toISOString().slice(0, 10),
       };
+      const esign: ContractData["esign"] = {};
+      if (clientSignature) {
+        esign.client = { name: clientName, signedAt, imageDataUrl: clientSignature };
+      }
+      if (contractorSignature) {
+        esign.contractor = {
+          name: contractorName,
+          signedAt,
+          imageDataUrl: contractorSignature,
+        };
+      }
+      if (esign.client || esign.contractor) {
+        esign.fingerprint = formatFingerprint(await documentFingerprint(base));
+      }
+      const data: ContractData = esign.client || esign.contractor ? { ...base, esign } : base;
 
       const doc = generateContractPdf(data);
       const filename = `${contractType === "entreprise_forfait" ? "Contrat_BTP" : "PV_Reception"}_${projectName.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
       doc.save(filename);
-      toast.success("Document PDF généré et téléchargé avec succès !");
+      if (esign?.fingerprint) {
+        toast.success("Document signé électroniquement !", {
+          description: `Empreinte d'intégrité : ${esign.fingerprint} — conservez-la pour vérifier le document.`,
+          duration: 10000,
+          action: {
+            label: "Copier",
+            onClick: () => {
+              void navigator.clipboard?.writeText(esign.fingerprint!);
+            },
+          },
+        });
+      } else {
+        toast.success("Document PDF généré et téléchargé avec succès !");
+      }
       setOpen(false);
     } catch {
       toast.error("Erreur lors de la génération du document");
@@ -223,6 +256,30 @@ export function ContractGeneratorDialog({
             </div>
           )}
 
+          {/* SIGNATURE ÉLECTRONIQUE (OPTIONNELLE) */}
+          <div className="space-y-2 border-t pt-3">
+            <span className="flex items-center gap-1 font-bold uppercase tracking-wider text-muted-foreground">
+              <PenLine className="size-3 text-emerald-600" />
+              Signature électronique (optionnel)
+            </span>
+            <p className="text-[11px] text-muted-foreground">
+              Signez ci-dessous au doigt ou à la souris : la signature, son horodatage et une
+              empreinte d'intégrité sont intégrés au PDF.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <SignaturePad
+                label={`Maître d'ouvrage — ${clientName}`}
+                value={clientSignature}
+                onChange={setClientSignature}
+              />
+              <SignaturePad
+                label={`Entrepreneur — ${contractorName}`}
+                value={contractorSignature}
+                onChange={setContractorSignature}
+              />
+            </div>
+          </div>
+
           {/* ACTIONS */}
           <div className="flex items-center justify-between border-t pt-3">
             <span className="text-[11px] text-muted-foreground">
@@ -235,7 +292,11 @@ export function ContractGeneratorDialog({
               className="gap-1.5 text-xs bg-emerald-700 hover:bg-emerald-800 text-white"
             >
               <Download className="h-3.5 w-3.5" />
-              {generating ? "Génération…" : "Télécharger le PDF prêt à signer"}
+              {generating
+                ? "Génération…"
+                : clientSignature || contractorSignature
+                  ? "Télécharger le PDF signé"
+                  : "Télécharger le PDF prêt à signer"}
             </Button>
           </div>
         </div>

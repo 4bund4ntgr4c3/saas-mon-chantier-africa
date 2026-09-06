@@ -23,16 +23,16 @@ Vérifiez la présence de `sw.js` et `manifest.json` dans `.output/public/` avan
 
 Définissez côté serveur/hébergeur les mêmes variables que `.env` :
 
-| Variable                        | Obligatoire | Usage                                              |
-| ------------------------------- | ----------- | -------------------------------------------------- |
-| `VITE_SUPABASE_URL`             | oui         | Client (injectée au build)                         |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | oui         | Client                                             |
-| `VITE_SUPABASE_PROJECT_ID`      | oui         | Client                                             |
-| `SUPABASE_URL`                  | oui         | Serveur/nitro                                      |
-| `SUPABASE_PUBLISHABLE_KEY`      | oui         | Serveur                                            |
-| `LLM_API_KEY`                   | non         | Assistant IA générative (aucune clé = repli règles) |
+| Variable                        | Obligatoire | Usage                                                                                |
+| ------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| `VITE_SUPABASE_URL`             | oui         | Client (injectée au build)                                                           |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | oui         | Client                                                                               |
+| `VITE_SUPABASE_PROJECT_ID`      | oui         | Client                                                                               |
+| `SUPABASE_URL`                  | oui         | Serveur/nitro                                                                        |
+| `SUPABASE_PUBLISHABLE_KEY`      | oui         | Serveur                                                                              |
+| `LLM_API_KEY`                   | non         | Assistant IA générative (aucune clé = repli règles)                                  |
 | `LLM_BASE_URL`                  | non         | Endpoint compatible OpenAI (défaut `https://api.openai.com/v1`, ex. Groq/OpenRouter) |
-| `LLM_MODEL`                     | non         | Modèle (défaut `gpt-4o-mini`)                      |
+| `LLM_MODEL`                     | non         | Modèle (défaut `gpt-4o-mini`)                                                        |
 
 ## 3. Déploiement Cloudflare (recommandé)
 

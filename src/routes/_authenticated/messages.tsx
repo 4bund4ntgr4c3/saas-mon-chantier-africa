@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageSquare, Send } from "lucide-react";
 import { EmptyProjectNotice, PageHeader } from "@/components/app-shell";
 import { FeatureGate } from "@/components/feature-gate";
+import { WhatsAppCloudDialog } from "@/components/whatsapp-cloud-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCurrentProject } from "@/context/project-context";
@@ -48,6 +49,7 @@ function MessagesPage() {
       <PageHeader
         title="Messages du chantier"
         subtitle={`Conversation partagée · ${project.name}`}
+        action={<WhatsAppCloudDialog projectName={project.name} />}
       />
 
       <div className="panel flex h-[calc(100vh-280px)] min-h-[420px] flex-col">

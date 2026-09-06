@@ -15,7 +15,7 @@ Permettre à un particulier, un maître d'œuvre ou une entreprise de suivre l'e
 | Framework     | TanStack Start + TanStack Router (fichiers)                                          |
 | UI            | React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui (Radix)                          |
 | Données       | TanStack Query + Supabase (PostgreSQL, Auth, Storage, Edge Functions)                |
-| Exports       | PDF (jspdf) · Excel (xlsx)                                                           |
+| Exports       | PDF (jspdf, thème de marque unifié `pdf-theme.ts`) · Excel (xlsx)                    |
 | Cartes        | Leaflet (`react-leaflet` v5) — multi-fournisseurs (OSM / Esri / CARTO)               |
 | Notifications | Resend (e-mail) + notifications persistées multi-canal (in-app, push, SMS, WhatsApp) |
 | Tests         | Vitest + jsdom                                                                       |
@@ -27,18 +27,23 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 
 ### Suivi de chantier
 
-- Tableau de bord : budget global, dépenses, restant, coût au m², avancement, graphiques, évolution mensuelle
-- Projets multi-chantiers, catégories de dépenses adaptées au Bénin
+- Tableau de bord : budget global, dépenses, restant, coût au m², avancement, graphiques, évolution mensuelle, **courbe en S** (budget cumulé prévu vs réel, phasing BTP) confrontée à l'**avancement physique des tâches**
+- **Tableau de bord par rôle** : titre, KPIs et raccourcis adaptés au type de compte (particulier, maître d'œuvre, artisan, quincaillerie, transporteur, promoteur, entreprise)
+- Projets multi-chantiers, catégories de dépenses adaptées au Bénin, **modèles de chantier** (duplication de la structure budget + besoins + tâches, sans historique)
 - Dépenses (FCFA, quantité, prix unitaire, moyen de paiement, photo/PDF, observations), fournisseurs, entreprises, devis avec comparaison, paiements (comptant, partiel, acompte, solde), facturation, stock de matériaux, matériaux chantier (besoins, commandes, livraisons), tâches & planning, photos, journal de chantier, réserves, plans, documents, messages
+- **Annulation des suppressions** : toast « Annuler » (6 s) sur toutes les suppressions, la ligne supprimée est restaurée telle quelle
 
 ### Alertes & notifications
 
-- Alertes métier (budget dépassant 80 %, échéances, paiements en retard, documents manquants), notifications e-mail (quotidiennes + digest hebdomadaire), préférences dans Paramètres
-- Notifications persistées multi-canal (in-app dans la cloche, push navigateur, SMS/WhatsApp configurables) : commandes, paiements, livraisons — page « Mes notifications » avec historique et filtres, canaux préférentiels dans Paramètres, appareils web enregistrés pour le push
+- Alertes métier (budget dépassant 80 %, échéances, paiements en retard, documents manquants), notifications e-mail (quotidiennes + **rapport hebdomadaire enrichi** : tableau budget par chantier + dépenses des 7 derniers jours, envoyable à la demande), préférences dans Paramètres
+- Notifications persistées multi-canal (in-app dans la cloche, **push web réel Web Push/VAPID** via service worker, SMS/WhatsApp configurables) : commandes, paiements, livraisons — page « Mes notifications » avec historique et filtres, canaux préférentiels dans Paramètres, appareils web enregistrés pour le push
+- Interface claire/sombre cohérente sur toute la chaîne notifications : pastilles colorées par type (commande, paiement, livraison…), états non lus et toasts teintés selon la gravité
 
 ### Rapports & recherche
 
 - Rapports par mois/catégorie/fournisseur/commune/entreprise, budget prévu vs réalisé, coût moyen au m², exports PDF et Excel, recherche globale
+- **Export comptable SYSCOHADA (OHADA)** : écritures de journal équilibrées (comptes 6x / 401) + synthèse par compte, prêtes à saisir dans Sage/SAARI
+- Exports PDF à l'identité BâtiBénin (bandeau de marque, cartes KPI, écarts et statuts colorés, pied de page paginé) : rapports, budget prévu/réalisé, fiche récapitulative, dossier de suivi (banque & diaspora), contrats BTP et PV de réception — **contrats et PV signables électroniquement** (pad tactile, horodatage, empreinte SHA-256 d'intégrité)
 
 ### Marketplace
 
@@ -109,7 +114,8 @@ Voir [docs/STACK.md](docs/STACK.md) pour les versions exactes et les conventions
 
 ### Expérience
 
-- PWA installable, i18n FR/EN (navigation), multi-pays/devise (FCFA/XOF, XAF, CDF), mode invité démo, tour guidé, conseiller IA à base de règles, page publique « Nouveautés » (changelog)
+- PWA installable, i18n FR/EN (navigation, shell **et tableau de bord**), multi-pays/devise (FCFA/XOF, XAF, CDF), mode invité démo, tour guidé, conseiller IA à base de règles, page publique « Nouveautés » (changelog auto-synchronisé depuis `docs/CHANGELOG.md` via import brut)
+- **Palette de commandes Ctrl/Cmd+K** : changement de chantier, navigation par rôle et actions rapides depuis n'importe quelle page
 - **Saisie guidée pas-à-pas avec dictée vocale** : ajoutez un matériau, un besoin ou une ligne de devis en dictant une seule phrase (« 10 sacs de ciment à 4500 francs ») — quantité, unité et prix reconnus automatiquement, ou champ par champ avec micro sur chaque étape, puis « Ajouter un autre… » pour enchaîner
 
 ## Technologies (détail)

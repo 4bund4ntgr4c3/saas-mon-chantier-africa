@@ -1,4 +1,14 @@
 import { fcfa, frDate, labelOf, PROJECT_STATUSES } from "@/lib/format";
+import {
+  fileStamp,
+  pdfColors,
+  pdfFooter,
+  pdfHeader,
+  pdfKpiRow,
+  pdfSectionTitle,
+  pdfTableTheme,
+  slug,
+} from "@/lib/pdf-theme";
 
 export type ProjectSummaryData = {
   project: {
@@ -25,14 +35,6 @@ export type ProjectSummaryData = {
   quotesCount: number;
 };
 
-const slug = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase() || "chantier";
-
 export async function exportProjectSummaryPdf(data: ProjectSummaryData) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import("jspdf"),
@@ -44,16 +46,26 @@ export async function exportProjectSummaryPdf(data: ProjectSummaryData) {
   const budget = Number(project.budget ?? 0);
   const remaining = budget - data.spent;
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Fiche récapitulative du chantier", 40, 48);
+  let y = pdfHeader(doc, {
+    title: "Fiche récapitulative du chantier",
+    subtitle: `Chantier : ${project.name}`,
+    meta: `Statut : ${labelOf(PROJECT_STATUSES, project.status)} · Édité le ${frDate(new Date().toISOString())}`,
+  });
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Chantier : ${project.name}`, 40, 68);
-  doc.text(`Édité le ${frDate(new Date().toISOString())}`, 40, 83);
+  y = pdfKpiRow(doc, y, [
+    { label: "Budget global", value: fcfa(budget) },
+    { label: "Dépensé", value: fcfa(data.spent), tone: "amber" },
+    {
+      label: remaining >= 0 ? "Reste à dépenser" : "Dépassement",
+      value: fcfa(Math.abs(remaining)),
+      tone: remaining >= 0 ? "green" : "red",
+    },
+    { label: "Paiements enregistrés", value: fcfa(data.paid) },
+  ]);
 
-  const infoBody: [string, string | number][] = [
+  y = pdfSectionTitle(doc, y, "Caractéristiques");
+
+  const info: [string, string | number][] = [
     [
       "Localisation",
       [project.quartier, project.commune, project.city, project.address]
@@ -66,42 +78,51 @@ export async function exportProjectSummaryPdf(data: ProjectSummaryData) {
     ["Terrain", project.land_area ? `${project.land_area} m²` : "—"],
     ["Surface construite", project.built_area ? `${project.built_area} m²` : "—"],
     ["Type de maison", project.house_type || "—"],
-    ["Budget global", fcfa(budget)],
-    ["Dépensé", fcfa(data.spent)],
-    ["Reste à dépenser", fcfa(remaining)],
-    ["Paiements enregistrés", fcfa(data.paid)],
     ["Fournisseurs", data.suppliersCount],
     ["Entreprises", data.companiesCount],
     ["Dépenses", data.expensesCount],
     ["Devis", data.quotesCount],
   ];
+  // Fiche en deux colonnes label/valeur pour un rendu compact.
+  const infoBody = info.reduce<(string | object)[][]>((rows, [label, value], i) => {
+    if (i % 2 === 0) rows.push([label, { content: value, styles: { fontStyle: "bold" } }]);
+    else rows[rows.length - 1]?.push(label, { content: value, styles: { fontStyle: "bold" } });
+    return rows;
+  }, []);
 
   autoTable(doc, {
-    startY: 100,
+    startY: y,
     theme: "plain",
-    styles: { font: "helvetica", fontSize: 10 },
-    body: infoBody.map(([label, value]) => [
-      label,
-      { content: value, styles: { fontStyle: "bold" } },
-    ]),
-    columnStyles: { 0: { cellWidth: 160, textColor: [100, 100, 100] } },
+    ...pdfTableTheme,
+    headStyles: { fillColor: pdfColors.softBg, textColor: pdfColors.ink },
+    styles: { font: "helvetica", fontSize: 9, cellPadding: 4 },
+    body: infoBody,
+    columnStyles: {
+      0: { cellWidth: 100, textColor: pdfColors.muted },
+      2: { cellWidth: 100, textColor: pdfColors.muted },
+    },
   });
+
+  y = pdfSectionTitle(
+    doc,
+    (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 26,
+    "Dépenses par poste",
+  );
 
   const catBody: (string | number)[][] = data.spentByCategory
     .sort((a, b) => b.spent - a.spent)
     .map((c) => [c.name, fcfa(c.spent)]);
 
   autoTable(doc, {
-    startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
+    startY: y,
     head: [["Poste de dépense", { content: "Montant (FCFA)", styles: { halign: "right" } }]],
     body: catBody.length ? catBody : [["Aucune dépense enregistrée", ""]],
     foot: [["Total dépensé", fcfa(data.spent)]],
     theme: "grid",
-    styles: { font: "helvetica", fontSize: 9, cellPadding: 5 },
-    headStyles: { fillColor: [24, 24, 27], textColor: 255 },
-    footStyles: { fillColor: [244, 244, 245], textColor: 20, fontStyle: "bold" },
+    ...pdfTableTheme,
     columnStyles: { 1: { halign: "right" } },
   });
 
-  doc.save(`recap-${slug(project.name)}-${new Date().toISOString().slice(0, 10)}.pdf`);
+  pdfFooter(doc);
+  doc.save(`recap-${slug(project.name)}-${fileStamp()}.pdf`);
 }

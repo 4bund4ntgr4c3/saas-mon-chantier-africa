@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { MessageCircle, Pencil, Phone, Plus, Trash2, Upload } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
+import { SupplierNetworkDialog } from "@/components/supplier-network-dialog";
 import { RecordDialog, orNull, type Field, type Values } from "@/components/record-form";
 import { ImportDialog, type ImportColumn } from "@/components/import-csv";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ function SuppliersPage() {
         subtitle={`${suppliers.length} contact(s) matériaux`}
         action={
           <div className="flex flex-wrap gap-2">
+            <SupplierNetworkDialog />
             <ImportDialog
               title="Importer des fournisseurs"
               description="Téléversez un fichier CSV ou Excel pour ajouter plusieurs fournisseurs d'un coup."
