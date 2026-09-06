@@ -33,24 +33,35 @@ Définissez côté serveur/hébergeur les mêmes variables que `.env` :
 | `LLM_API_KEY`                   | non         | Assistant IA générative (aucune clé = repli règles)                                  |
 | `LLM_BASE_URL`                  | non         | Endpoint compatible OpenAI (défaut `https://api.openai.com/v1`, ex. Groq/OpenRouter) |
 | `LLM_MODEL`                     | non         | Modèle (défaut `gpt-4o-mini`)                                                        |
+| `VITE_VAPID_PUBLIC_KEY`         | non         | Push web réel (clé publique VAPID, injectée au build)                              |
 
-## 3. Déploiement Cloudflare (recommandé)
+> ⚠️ Les variables `VITE_*` sont injectées **au build** (client) : définissez-les avant `npm run build`. Les autres (`SUPABASE_*` serveur, `LLM_*`) sont des **secrets runtime** : `wrangler secret put <NOM>` côté Cloudflare, jamais dans le build client.
+
+## 3. Déploiement Cloudflare Workers (recommandé)
+
+Le build produit un **Worker** (preset `cloudflare-module`) : `.output/server/` (dont `wrangler.json` généré) + `.output/public/` (assets). Ne **pas** déployer en Pages statique (SSR perdu).
 
 ### Via Wrangler
 
 ```sh
 npm i -g wrangler
-wrangler pages deploy .output/public --project-name <mon-chantier>
+npm run build
+# secrets runtime (serveur uniquement) :
+wrangler secret put SUPABASE_URL
+wrangler secret put SUPABASE_PUBLISHABLE_KEY
+# LLM_* et VAPID privée : idem si utilisées
+# publier (depuis la racine, Nitro sait où est le prebuilt) :
+npx nitro deploy --prebuilt
+# ou directement :
+wrangler deploy --config .output/server/wrangler.json
 ```
 
-> Le preset nitro `cloudflare` génère déjà la configuration adaptée au build.
+### Déploiement continu (dashboard Cloudflare)
 
-### Via le dashboard Cloudflare Pages
-
-1. Créez un projet **Cloudflare Pages**.
-2. Framework : **Static** (aucun), répertoire de sortie : `.output/public`.
-3. Renseignez les variables d'environnement de l'étape 2.
-4. Déployez (ou branchez le repo pour le déploiement continu).
+1. Créez un projet **Workers** branché au repo.
+2. Commande build : `npm ci && npm run build` ; les variables `VITE_*` vont dans les **variables de build**.
+3. Secrets runtime (`SUPABASE_*`, `LLM_*`) dans **Settings → Variables → Secrets**.
+4. `wrangler.json` est généré à chaque build dans `.output/server/` (nom auto `4bund4ntgr4c3-saas-mon-chantier-africa`, modifiable via `NITRO_*` ou un `wrangler.toml` racine).
 
 ## 4. Déploiement Node/Netlify
 

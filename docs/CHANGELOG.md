@@ -4,6 +4,13 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.59 — Correctif guide déploiement Cloudflare Workers (2026-09-06)
+
+- 🐛 `docs/guide-deploiement.md` — la section Cloudflare décrivait à tort un déploiement **Pages statique** (SSR perdu) ; corrigée vers le **Worker** réellement produit (`nitro cloudflare-module`, `.output/server/wrangler.json`) : `npx nitro deploy --prebuilt` / `wrangler deploy`, secrets runtime via `wrangler secret put`, distinction `VITE_*` (build) vs secrets serveur, ajout `VITE_VAPID_PUBLIC_KEY` au tableau.
+- ✅ Dry-run Wrangler validé : 193 modules bundlés (7,8 Mo), 186 assets, binding `ASSETS` OK — prêt à publier après `wrangler login` + secrets.
+
+---
+
 ## v0.58 — Retrait total de la dépendance Lovable (2026-09-06)
 
 - 🗑️ Supprimés : paquets `@lovable.dev/cloud-auth-js` et `@lovable.dev/vite-tanstack-config` (`package.json`), dossier `.lovable/`, `src/integrations/lovable/`, `src/lib/lovable-error-reporting.ts`, lockfile `bun.lock` + `bunfig.toml` (npm seul gestionnaire : `package-lock.json` fait foi).
