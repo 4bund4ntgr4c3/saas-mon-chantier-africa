@@ -1,6 +1,6 @@
 # Guide de déploiement — BâtiBénin
 
-Application **TanStack Start** (SSR) buildée par **Vite** et empaquetée par **Nitro**. Le preset de build par défaut vise **Cloudflare** (config `@lovable.dev/vite-tanstack-config`).
+Application **TanStack Start** (SSR) buildée par **Vite** et empaquetée par **Nitro**. Le preset de build par défaut vise **Cloudflare** (config `nitro({ defaultPreset: "cloudflare-module" })` dans `vite.config.ts`, `NITRO_PRESET` restant prioritaire).
 
 ## Vue d'ensemble
 

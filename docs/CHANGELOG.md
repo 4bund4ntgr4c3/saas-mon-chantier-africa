@@ -4,6 +4,16 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.58 — Retrait total de la dépendance Lovable (2026-09-06)
+
+- 🗑️ Supprimés : paquets `@lovable.dev/cloud-auth-js` et `@lovable.dev/vite-tanstack-config` (`package.json`), dossier `.lovable/`, `src/integrations/lovable/`, `src/lib/lovable-error-reporting.ts`, lockfile `bun.lock` + `bunfig.toml` (npm seul gestionnaire : `package-lock.json` fait foi).
+- ✅ `vite.config.ts` — config Vite standard équivalente au preset retiré : `tailwindcss`, `tsConfigPaths`, `tanstackStart` (dont `server.entry: "server"` + protection d'imports), `viteReact`, `nitro({ defaultPreset: "cloudflare-module" })` au build uniquement, injection `VITE_*`, alias `@`, `server { host: "::", port: 8080 }`.
+- 🔧 OAuth Google (`auth.tsx`) via Supabase Auth natif (`signInWithOAuth` + `redirectTo`) ; erreurs root (`__root.tsx`) loggées en `console.error` ; messages « Connect Supabase in Lovable Cloud » reformulés (clients supabase).
+- 🗑️ Docs : bloc Lovable (`AGENTS.md`), section « Build with Lovable » (`README.md`), ligne Auth (`docs/STACK.md`), mention preset (`docs/guide-deploiement.md`). Entrées historiques du changelog conservées (ex. v0.5x).
+- ⚠️ `bun.lock` supprimé — si bun est utilisé quelque part, régénérer via `bun install` avant de recommiter ce fichier.
+
+---
+
 ## v0.57 — Vague 27 : VRD, Raccordements SBEE/SONEB, Déchets & Urbanisme (2026-08-26)
 
 ### Bilan de Puissance Électrique & Raccordement SBEE (`src/lib/electrical-load.ts`, `src/components/electrical-load-dialog.tsx`)

@@ -18,7 +18,7 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 | Charts        | recharts                                                        | 2.15.4                                                               |
 | Exports       | jspdf, jspdf-autotable, xlsx, html2canvas                       | 4.2.1 · 5.0.8 · 0.18.5                                               |
 | Notifications | Resend (Edge Function `email-notifications`)                    | —                                                                    |
-| Emails / Auth | `@lovable.dev/cloud-auth-js`                                    | 1.1.2                                                                |
+| Emails / Auth | Supabase Auth natif (`signInWithOAuth` Google + e-mail/mot de passe) | — |
 | Déploiement   | Vercel / Cloudflare Workers (preset `cloudflare-module`, Nitro) | `nitro` 3.0.260603-beta                                              |
 | Lint / Format | ESLint 9 + Prettier 3 (plugins)                                 | —                                                                    |
 | Tests         | Vitest 4.1.10 + jsdom 30                                        | —                                                                    |

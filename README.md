@@ -129,16 +129,6 @@ Stockage : Supabase Storage (buckets `documents`, `photos`)
 
 Projet prêt pour la production : RLS activée, journal d'audit, types générés, tests unitaires, eslint/prettier, build SSR Nitro. Livrables : schéma de BDD, guide d'installation, guide de déploiement, changelog, roadmap par vagues.
 
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/89f09aed-5680-4b1f-bf42-a5bd00ee953e).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
 ## Development
 
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
