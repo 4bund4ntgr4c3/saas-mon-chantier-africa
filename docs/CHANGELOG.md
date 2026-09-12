@@ -4,6 +4,18 @@ Ce document retrace **tous les changements depuis la première version**. Il est
 
 Conventions : `✅` ajouté · `🔧` amélioré · `🐛` corrigé · `🗑️` supprimé/nettoyé · `⚠️` à noter.
 
+## v0.60 — Nouveau projet Supabase : baseline reconstitué + 29 migrations appliquées (2026-09-06)
+
+- ✅ Projet `ufzgvryjnaqkehtzzqtz` : 29/29 migrations appliquées via CLI (pooler IPv4, le réseau local n'a pas d'IPv6).
+- ✅ `20260801000000_baseline-socle.sql` — les 12 tables socles créées hors migrations sur l'ancien projet sont reconstituées (profils, projets, catégories, fournisseurs, entreprises, dépenses, paiements, devis, journal, budget, demandes-démo, rôles) : enums, FK, RLS « propriétaire + admin », `seed_demo_data` (10 catégories standards + chantier témoin), trigger `on_auth_user_created`.
+- ✅ `20260801000001_stockage-photos-journal.sql` — buckets privés `photos` + `journal-photos` manquants (policies par dossier utilisateur, motif `documents`).
+- ✅ `20260815000001_profiles-membres.sql` — FK `project_members → profiles` + lecture des profils par les collaborateurs (noms des membres).
+- 🐛 `20260809000000` — `DROP VALUE IF EXISTS` invalide (jamais exécutable : ni syntaxe PG ni pooler/CLI) remplacé par recréation portable de l'enum, valeurs d'origine restaurées (`nouveau/contacte/traite`) pour rejouer les renommages à l'identique.
+- ✅ Vérifié en base : 64 tables toutes RLS, 259 policies, 4 buckets, trigger d'inscription testé de bout en bout (profil + rôle admin premier compte + projet démo + 10 catégories + 10 lignes budgétaires, puis nettoyage).
+- ⚠️ Reste : Edge Functions (`email-notifications`, `send-demo-confirmation`), secrets, config Auth — token fourni sans droits Management API (401), `.env` sorti du suivi git en préparation.
+
+---
+
 ## v0.59 — Correctif guide déploiement Cloudflare Workers (2026-09-06)
 
 - 🐛 `docs/guide-deploiement.md` — la section Cloudflare décrivait à tort un déploiement **Pages statique** (SSR perdu) ; corrigée vers le **Worker** réellement produit (`nitro cloudflare-module`, `.output/server/wrangler.json`) : `npx nitro deploy --prebuilt` / `wrangler deploy`, secrets runtime via `wrangler secret put`, distinction `VITE_*` (build) vs secrets serveur, ajout `VITE_VAPID_PUBLIC_KEY` au tableau.

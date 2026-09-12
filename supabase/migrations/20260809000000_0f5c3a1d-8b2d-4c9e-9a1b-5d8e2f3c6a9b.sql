@@ -17,10 +17,17 @@ UPDATE public.demo_requests SET status = 'contactee' WHERE status = 'planifie';
 UPDATE public.demo_requests SET status = 'nouvelle' WHERE status = 'archive';
 
 ALTER TYPE public.demo_request_status ADD VALUE IF NOT EXISTS 'refusee';
+-- NOTE (2026-09-06) : `DROP VALUE` n'est exécutable ni via le pooler ni dans
+-- le bloc transactionnel de `supabase db push` (0A000). Recréation portable
+-- équivalente (état final identique : nouvelle/contactee/convertie/refusee).
 DO $$ BEGIN
-  ALTER TYPE public.demo_request_status DROP VALUE IF EXISTS 'planifie';
-  ALTER TYPE public.demo_request_status DROP VALUE IF EXISTS 'archive';
-EXCEPTION WHEN dependent_objects_are_not_allowed THEN NULL; END $$;
+  CREATE TYPE public.demo_request_status_new AS ENUM ('nouvelle', 'contactee', 'convertie', 'refusee');
+  ALTER TABLE public.demo_requests ALTER COLUMN status DROP DEFAULT;
+  ALTER TABLE public.demo_requests ALTER COLUMN status TYPE public.demo_request_status_new USING status::text::public.demo_request_status_new;
+  ALTER TABLE public.demo_requests ALTER COLUMN status SET DEFAULT 'nouvelle'::public.demo_request_status_new;
+  DROP TYPE public.demo_request_status;
+  ALTER TYPE public.demo_request_status_new RENAME TO demo_request_status;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- 2) Suivi commercial + pièce jointe.
 ALTER TABLE public.demo_requests

@@ -110,7 +110,7 @@ Document de référence **vivant** : versions exactes des outils, scripts, conve
 ## 4. Base de données
 
 - Schéma PostgreSQL versionné dans `supabase/migrations/` (ordre chronologique par horodatage).
-- **État** : les migrations **ne sont pas encore appliquées** au projet Supabase (`zyiujrofyziewlpildyd`) — la CLI `supabase` n'est pas installée ; application manuelle via le SQL Editor du dashboard. Sans cela, les nouvelles tables ne fonctionnent qu'en mode invité (demo-store).
+- **État** : les 29 migrations sont appliquées au projet Supabase `ufzgvryjnaqkehtzzqtz` (2026-09-06) : 26 historiques + `20260801000000_baseline-socle.sql` (12 tables socles reconstituées : RLS, seed, trigger inscription), `20260801000001_stockage-photos-journal.sql`, `20260815000001_profiles-membres.sql`. Vérifié : 64 tables RLS, 259 policies, 4 buckets, trigger signup testé.
 - Buckets Storage : `documents` (plans, documents), `photos` (photos produits/chantier), `journal-photos`.
 - RLS activée partout ; pas de clef de service côté client (clef publishable).
 - Détails par table : voir `docs/schema-bdd.md`.
